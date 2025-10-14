@@ -21,3 +21,12 @@ Abi: 1802699c46940bd8480d26552ecc6f020aa14ddffde957cac9684f60ebfb5186
 Description: {fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams.
 Status: install ok installed
 
+Package: sdl3
+Version: 3.2.24
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: dae4ac48cf85b27117da8a30e38e19e7bc754fe8fbf574e428f5628dcdd3a974
+Description: Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
+Status: install ok installed
+

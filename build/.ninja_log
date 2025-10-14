@@ -1,3 +1,7 @@
 # ninja log v7
-3	264	7821597695077084	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
-265	882	7821597697707886	GameEngine.exe	35d2c99edeaf4794
+2	571	7821836006570083	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
+573	1390	7821836012285960	GameEngine.exe	7c591d372ffb1da6
+1	286	7821837205961837	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
+286	897	7821837208808300	GameEngine.exe	7c591d372ffb1da6
+1	286	7821838242497989	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
+286	760	7821838245345653	GameEngine.exe	7c591d372ffb1da6
