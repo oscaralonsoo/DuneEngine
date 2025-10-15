@@ -1,6 +1,12 @@
 {
   "dependencies": [
     "fmt",
-    "sdl3"
+    "glad",
+    "glm",
+    "sdl3",
+    {
+      "name": "imgui",
+      "features": ["docking-experimental"]
+    }
   ]
 }

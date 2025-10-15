@@ -11,7 +11,7 @@
 # =============================================================================
 
 # =============================================================================
-# Project: GameEngine
+# Project: DuneEngine
 # Configurations: Debug
 # =============================================================================
 
@@ -39,53 +39,53 @@ include CMakeFiles\rules.ninja
 #############################################
 # Logical path to working directory; prefix for absolute paths.
 
-cmake_ninja_workdir = C$:\Users\alons\Documents\GitHub\GameEngine\build\
+cmake_ninja_workdir = C$:\Users\alons\Documents\GitHub\DuneEngine\build\
 # =============================================================================
-# Object build statements for EXECUTABLE target GameEngine
+# Object build statements for EXECUTABLE target DuneEngine
 
 
 #############################################
-# Order-only phony target for GameEngine
+# Order-only phony target for DuneEngine
 
-build cmake_object_order_depends_target_GameEngine: phony || .
+build cmake_object_order_depends_target_DuneEngine: phony || .
 
-build CMakeFiles\GameEngine.dir\gameEngine.cpp.obj: CXX_COMPILER__GameEngine_unscanned_Debug C$:\Users\alons\Documents\GitHub\GameEngine\gameEngine.cpp || cmake_object_order_depends_target_GameEngine
+build CMakeFiles\DuneEngine.dir\main.cpp.obj: CXX_COMPILER__DuneEngine_unscanned_Debug C$:\Users\alons\Documents\GitHub\DuneEngine\main.cpp || cmake_object_order_depends_target_DuneEngine
   CONFIG = Debug
   DEFINES = -DFMT_SHARED
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 /utf-8
-  INCLUDES = -external:IC:\Users\alons\Documents\GitHub\GameEngine\build\vcpkg_installed\x64-windows\include -external:W0
-  OBJECT_DIR = CMakeFiles\GameEngine.dir
-  OBJECT_FILE_DIR = CMakeFiles\GameEngine.dir
-  TARGET_COMPILE_PDB = CMakeFiles\GameEngine.dir\
-  TARGET_PDB = GameEngine.pdb
+  INCLUDES = -external:IC:\Users\alons\Documents\GitHub\DuneEngine\build\vcpkg_installed\x64-windows\include -external:W0
+  OBJECT_DIR = CMakeFiles\DuneEngine.dir
+  OBJECT_FILE_DIR = CMakeFiles\DuneEngine.dir
+  TARGET_COMPILE_PDB = CMakeFiles\DuneEngine.dir\
+  TARGET_PDB = DuneEngine.pdb
 
 
 # =============================================================================
-# Link build statements for EXECUTABLE target GameEngine
+# Link build statements for EXECUTABLE target DuneEngine
 
 
 #############################################
-# Link the executable GameEngine.exe
+# Link the executable DuneEngine.exe
 
-build GameEngine.exe: CXX_EXECUTABLE_LINKER__GameEngine_Debug CMakeFiles\GameEngine.dir\gameEngine.cpp.obj | vcpkg_installed\x64-windows\debug\lib\fmtd.lib vcpkg_installed\x64-windows\debug\lib\SDL3.lib
+build DuneEngine.exe: CXX_EXECUTABLE_LINKER__DuneEngine_Debug CMakeFiles\DuneEngine.dir\main.cpp.obj | vcpkg_installed\x64-windows\debug\lib\fmtd.lib vcpkg_installed\x64-windows\debug\lib\SDL3.lib vcpkg_installed\x64-windows\debug\lib\glad.lib vcpkg_installed\x64-windows\debug\lib\glm.lib vcpkg_installed\x64-windows\debug\lib\imguid.lib
   CONFIG = Debug
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1
   LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console
-  LINK_LIBRARIES = vcpkg_installed\x64-windows\debug\lib\fmtd.lib  vcpkg_installed\x64-windows\debug\lib\SDL3.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
-  OBJECT_DIR = CMakeFiles\GameEngine.dir
-  POST_BUILD = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alons\Documents\GitHub\GameEngine\build && C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/Users/alons/Documents/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/alons/Documents/GitHub/GameEngine/build/GameEngine.exe -installedDir C:/Users/alons/Documents/GitHub/GameEngine/build/vcpkg_installed/x64-windows/debug/bin -OutVariable out"
+  LINK_LIBRARIES = vcpkg_installed\x64-windows\debug\lib\fmtd.lib  vcpkg_installed\x64-windows\debug\lib\SDL3.lib  vcpkg_installed\x64-windows\debug\lib\glad.lib  vcpkg_installed\x64-windows\debug\lib\glm.lib  vcpkg_installed\x64-windows\debug\lib\imguid.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
+  OBJECT_DIR = CMakeFiles\DuneEngine.dir
+  POST_BUILD = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alons\Documents\GitHub\DuneEngine\build && C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/Users/alons/Documents/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/alons/Documents/GitHub/DuneEngine/build/DuneEngine.exe -installedDir C:/Users/alons/Documents/GitHub/DuneEngine/build/vcpkg_installed/x64-windows/debug/bin -OutVariable out"
   PRE_LINK = cd .
-  TARGET_COMPILE_PDB = CMakeFiles\GameEngine.dir\
-  TARGET_FILE = GameEngine.exe
-  TARGET_IMPLIB = GameEngine.lib
-  TARGET_PDB = GameEngine.pdb
+  TARGET_COMPILE_PDB = CMakeFiles\DuneEngine.dir\
+  TARGET_FILE = DuneEngine.exe
+  TARGET_IMPLIB = DuneEngine.lib
+  TARGET_PDB = DuneEngine.pdb
 
 
 #############################################
 # Utility command for edit_cache
 
 build CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alons\Documents\GitHub\GameEngine\build && "C:\Program Files\CMake\bin\cmake-gui.exe" -SC:\Users\alons\Documents\GitHub\GameEngine -BC:\Users\alons\Documents\GitHub\GameEngine\build"
+  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alons\Documents\GitHub\DuneEngine\build && "C:\Program Files\CMake\bin\cmake-gui.exe" -SC:\Users\alons\Documents\GitHub\DuneEngine -BC:\Users\alons\Documents\GitHub\DuneEngine\build"
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
@@ -97,7 +97,7 @@ build edit_cache: phony CMakeFiles\edit_cache.util
 # Utility command for rebuild_cache
 
 build CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alons\Documents\GitHub\GameEngine\build && "C:\Program Files\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\alons\Documents\GitHub\GameEngine -BC:\Users\alons\Documents\GitHub\GameEngine\build"
+  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alons\Documents\GitHub\DuneEngine\build && "C:\Program Files\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\alons\Documents\GitHub\DuneEngine -BC:\Users\alons\Documents\GitHub\DuneEngine\build"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -107,7 +107,7 @@ build rebuild_cache: phony CMakeFiles\rebuild_cache.util
 # =============================================================================
 # Target aliases.
 
-build GameEngine: phony GameEngine.exe
+build DuneEngine: phony DuneEngine.exe
 
 # =============================================================================
 # Folder targets.
@@ -115,9 +115,9 @@ build GameEngine: phony GameEngine.exe
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/alons/Documents/GitHub/GameEngine/build
+# Folder: C:/Users/alons/Documents/GitHub/DuneEngine/build
 
-build all: phony GameEngine.exe
+build all: phony DuneEngine.exe
 
 # =============================================================================
 # Built-in targets
@@ -126,14 +126,14 @@ build all: phony GameEngine.exe
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja C$:\Users\alons\Documents\GitHub\GameEngine\build\cmake_install.cmake: RERUN_CMAKE | C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCXXInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCommonLanguageInclude.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeGenericSystem.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeInitializeConfigs.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeLanguageInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeRCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInitialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\CMakeCommonCompilerMacros.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\FeatureSummary.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCXXLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCommonLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-Initialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\WindowsPaths.cmake C$:\Users\alons\Documents\GitHub\GameEngine\CMakeLists.txt C$:\Users\alons\Documents\GitHub\GameEngine\vcpkg-configuration.json C$:\Users\alons\Documents\GitHub\GameEngine\vcpkg.json C$:\Users\alons\Documents\vcpkg\scripts\buildsystems\vcpkg.cmake CMakeCache.txt CMakeFiles\4.1.2\CMakeCCompiler.cmake CMakeFiles\4.1.2\CMakeCXXCompiler.cmake CMakeFiles\4.1.2\CMakeRCCompiler.cmake CMakeFiles\4.1.2\CMakeSystem.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config-version.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-debug.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-release.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3Config.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3ConfigVersion.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3headersTargets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-debug.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-release.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets.cmake
+build build.ninja C$:\Users\alons\Documents\GitHub\DuneEngine\build\cmake_install.cmake: RERUN_CMAKE | C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCXXInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCommonLanguageInclude.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeFindDependencyMacro.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeGenericSystem.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeInitializeConfigs.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeLanguageInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeRCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInitialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\CMakeCommonCompilerMacros.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\FeatureSummary.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCXXLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCommonLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-Initialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\WindowsPaths.cmake C$:\Users\alons\Documents\GitHub\DuneEngine\CMakeLists.txt C$:\Users\alons\Documents\GitHub\DuneEngine\vcpkg-configuration.json C$:\Users\alons\Documents\GitHub\DuneEngine\vcpkg.json C$:\Users\alons\Documents\vcpkg\scripts\buildsystems\vcpkg.cmake CMakeCache.txt CMakeFiles\4.1.2\CMakeCCompiler.cmake CMakeFiles\4.1.2\CMakeCXXCompiler.cmake CMakeFiles\4.1.2\CMakeRCCompiler.cmake CMakeFiles\4.1.2\CMakeSystem.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config-version.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-debug.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-release.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets.cmake vcpkg_installed\x64-windows\share\glad\gladConfig.cmake vcpkg_installed\x64-windows\share\glad\gladConfigVersion.cmake vcpkg_installed\x64-windows\share\glad\gladTargets-debug.cmake vcpkg_installed\x64-windows\share\glad\gladTargets-release.cmake vcpkg_installed\x64-windows\share\glad\gladTargets.cmake vcpkg_installed\x64-windows\share\glm\glmConfig-debug.cmake vcpkg_installed\x64-windows\share\glm\glmConfig-release.cmake vcpkg_installed\x64-windows\share\glm\glmConfig.cmake vcpkg_installed\x64-windows\share\glm\glmConfigVersion.cmake vcpkg_installed\x64-windows\share\imgui\imgui-config.cmake vcpkg_installed\x64-windows\share\imgui\imgui-targets-debug.cmake vcpkg_installed\x64-windows\share\imgui\imgui-targets-release.cmake vcpkg_installed\x64-windows\share\imgui\imgui-targets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3Config.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3ConfigVersion.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3headersTargets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-debug.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-release.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCXXInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCommonLanguageInclude.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeGenericSystem.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeInitializeConfigs.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeLanguageInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeRCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInitialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\CMakeCommonCompilerMacros.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\FeatureSummary.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCXXLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCommonLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-Initialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\WindowsPaths.cmake C$:\Users\alons\Documents\GitHub\GameEngine\CMakeLists.txt C$:\Users\alons\Documents\GitHub\GameEngine\vcpkg-configuration.json C$:\Users\alons\Documents\GitHub\GameEngine\vcpkg.json C$:\Users\alons\Documents\vcpkg\scripts\buildsystems\vcpkg.cmake CMakeCache.txt CMakeFiles\4.1.2\CMakeCCompiler.cmake CMakeFiles\4.1.2\CMakeCXXCompiler.cmake CMakeFiles\4.1.2\CMakeRCCompiler.cmake CMakeFiles\4.1.2\CMakeSystem.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config-version.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-debug.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-release.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3Config.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3ConfigVersion.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3headersTargets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-debug.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-release.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets.cmake: phony
+build C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCXXInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeCommonLanguageInclude.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeFindDependencyMacro.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeGenericSystem.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeInitializeConfigs.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeLanguageInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeRCInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\CMakeSystemSpecificInitialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\CMakeCommonCompilerMacros.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Compiler\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\FeatureSummary.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCXXLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Internal\CMakeCommonLinkerInformation.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Linker\MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Linker\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-Initialize.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-C.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC-CXX.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows-MSVC.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\Windows.cmake C$:\Program$ Files\CMake\share\cmake-4.1\Modules\Platform\WindowsPaths.cmake C$:\Users\alons\Documents\GitHub\DuneEngine\CMakeLists.txt C$:\Users\alons\Documents\GitHub\DuneEngine\vcpkg-configuration.json C$:\Users\alons\Documents\GitHub\DuneEngine\vcpkg.json C$:\Users\alons\Documents\vcpkg\scripts\buildsystems\vcpkg.cmake CMakeCache.txt CMakeFiles\4.1.2\CMakeCCompiler.cmake CMakeFiles\4.1.2\CMakeCXXCompiler.cmake CMakeFiles\4.1.2\CMakeRCCompiler.cmake CMakeFiles\4.1.2\CMakeSystem.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config-version.cmake vcpkg_installed\x64-windows\share\fmt\fmt-config.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-debug.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets-release.cmake vcpkg_installed\x64-windows\share\fmt\fmt-targets.cmake vcpkg_installed\x64-windows\share\glad\gladConfig.cmake vcpkg_installed\x64-windows\share\glad\gladConfigVersion.cmake vcpkg_installed\x64-windows\share\glad\gladTargets-debug.cmake vcpkg_installed\x64-windows\share\glad\gladTargets-release.cmake vcpkg_installed\x64-windows\share\glad\gladTargets.cmake vcpkg_installed\x64-windows\share\glm\glmConfig-debug.cmake vcpkg_installed\x64-windows\share\glm\glmConfig-release.cmake vcpkg_installed\x64-windows\share\glm\glmConfig.cmake vcpkg_installed\x64-windows\share\glm\glmConfigVersion.cmake vcpkg_installed\x64-windows\share\imgui\imgui-config.cmake vcpkg_installed\x64-windows\share\imgui\imgui-targets-debug.cmake vcpkg_installed\x64-windows\share\imgui\imgui-targets-release.cmake vcpkg_installed\x64-windows\share\imgui\imgui-targets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3Config.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3ConfigVersion.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3headersTargets.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-debug.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets-release.cmake vcpkg_installed\x64-windows\share\sdl3\SDL3sharedTargets.cmake: phony
 
 
 #############################################

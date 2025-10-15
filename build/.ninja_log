@@ -1,7 +1,4 @@
 # ninja log v7
-2	571	7821836006570083	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
-573	1390	7821836012285960	GameEngine.exe	7c591d372ffb1da6
-1	286	7821837205961837	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
-286	897	7821837208808300	GameEngine.exe	7c591d372ffb1da6
-1	286	7821838242497989	CMakeFiles/GameEngine.dir/gameEngine.cpp.obj	49848cc3e8895724
-286	760	7821838245345653	GameEngine.exe	7c591d372ffb1da6
+2	412	7822727412306084	CMakeFiles/DuneEngine.dir/main.cpp.obj	6a25fba7d75849a4
+413	890	7822727416417726	DuneEngine.exe	698986d5f90f8c3
+2	439	7822729798689545	DuneEngine.exe	698986d5f90f8c3
