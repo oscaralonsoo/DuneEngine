@@ -122,17 +122,14 @@ int main(int argc, char *args[])
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-
     float vertices[] = {
         0.5f, 0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f,
-        -0.5f, 0.5f, 0.0f
-    };
+        -0.5f, 0.5f, 0.0f};
     unsigned int indices[] = {
         0, 1, 3,
-        1, 2, 3
-    };
+        1, 2, 3};
 
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -166,6 +163,14 @@ int main(int argc, char *args[])
                 {
                     running = false;
                 }
+                else if (event.key.key == SDLK_1)
+                {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
+                }
+                else if (event.key.key == SDLK_2)
+                {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Fill mode
+                }
                 break;
             case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
                 int w, h;
@@ -183,7 +188,7 @@ int main(int argc, char *args[])
 
         glBindVertexArray(VAO);
 
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
