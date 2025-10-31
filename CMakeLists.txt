@@ -8,13 +8,6 @@ find_package(glad CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
-file(GLOB_RECURSE SOURCES
-    src/*.cpp
-    src/*.h
-)
-
-add_executable(DuneEngine src/main.cpp)
-
-target_include_directories(${PROJECT_NAME} PRIVATE src)
+add_executable(DuneEngine main.cpp)
 
 target_link_libraries(DuneEngine PRIVATE fmt::fmt SDL3::SDL3 glad::glad glm::glm imgui::imgui)
