@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include "../Render/Renderer.h"
 
 class Window;
 class Shader;
@@ -17,6 +16,4 @@ private:
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Shader> m_shader;
     std::unique_ptr<Mesh>   m_mesh;
-    Renderer m_renderer;
-    RenderMode m_renderMode = RenderMode::Solid;
 };

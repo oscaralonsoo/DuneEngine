@@ -8,7 +8,6 @@ public:
 
     // Crea un quad con índice (tu rectángulo 2 triángulos)
     void createQuad();
-    void CreateCube();
     void bind() const;
     void draw() const;
 

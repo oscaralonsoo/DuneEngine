@@ -8,29 +8,25 @@
 #include <iostream>
 
 
-static const char* kVS = R"(#version 140
-in vec3 aPos;
-in vec3 aColor;
+static const char* kVS = R"(#version 330 core
+layout(location = 0) in vec3 aPos;   // posición (x, y, z)
+layout(location = 1) in vec3 aColor; // color (r, g, b)
+
 out vec3 vColor;
 
-// MVP si ya lo usas; si no, deja identidad y listo
-uniform mat4 uMVP;
-
 void main() {
-    gl_Position = uMVP * vec4(aPos, 1.0);
-    vColor = aColor;
+    gl_Position = vec4(aPos, 1.0); 
+    vColor = vec3(1.0, 0.0, 1.0);              
 }
 )";
 
-static const char* kFS = R"(#version 140
+static const char* kFS = R"(#version 330 core
 in vec3 vColor;
+
 out vec4 FragColor;
 
-// multiplicador de color (para líneas traseras)
-uniform vec3 uTint; // por defecto (1,1,1)
-
 void main() {
-    FragColor = vec4(vColor * uTint, 1.0);
+    FragColor = vec4(vColor, 1.0); // usamos el color recibido
 }
 )";
 
@@ -38,13 +34,11 @@ bool App::init() {
     m_window = std::make_unique<Window>();
     if (!m_window->create("DuneEngine", 800, 600)) return false;
 
-    glEnable(GL_DEPTH_TEST);
-
     m_shader = std::make_unique<Shader>();
     if (!m_shader->compile(kVS, kFS)) return false;
 
     m_mesh = std::make_unique<Mesh>();
-    m_mesh->CreateCube();
+    m_mesh->createQuad();
 
     m_running = true;
     return true;
@@ -58,11 +52,10 @@ void App::run() {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) m_running = false;
-                switch (e.key.key) {
-                    case SDLK_ESCAPE: m_running = false; break;
-                    case SDLK_1: m_renderMode = RenderMode::WireHidden; break;
-                    case SDLK_2: m_renderMode = RenderMode::Solid; break;
-                }
+            else if (e.type == SDL_EVENT_KEY_DOWN) {
+                if (e.key.key == SDLK_ESCAPE) m_running = false;
+                else if (e.key.key == SDLK_1) wireframe = true;
+                else if (e.key.key == SDLK_2) wireframe = false;
             } else if (e.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
                 int w, h; m_window->getDrawableSize(w, h);
                 glViewport(0, 0, w, h);
@@ -73,8 +66,11 @@ void App::run() {
         renderer.clear(0.1f, 0.2f, 0.3f, 1.0f);
 
         m_shader->use();
-
-         m_renderer.renderMesh(*m_mesh, *m_shader, m_renderMode);
+        GLint program;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+        std::cout << "Shader activo: " << program << std::endl;
+        m_mesh->bind();
+        m_mesh->draw();
 
         m_window->swap();
     }
