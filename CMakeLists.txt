@@ -13,7 +13,7 @@ file(GLOB_RECURSE SOURCES
     src/*.h
 )
 
-add_executable(DuneEngine main.cpp)
+add_executable(DuneEngine src/main.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
