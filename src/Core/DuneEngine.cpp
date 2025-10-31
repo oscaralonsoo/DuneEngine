@@ -1,19 +1,33 @@
 #include "DuneEngine.h"
-#include "../Runetime/Window.h"
+#include "../Runtime/Window.h"
 #include "../Render/Shader.h"
-#include "../Render/Mesh.h"
+#include "../Assets/Mesh.h"
 #include "../Render/Renderer.h"
 
 #include <SDL3/SDL.h>
+#include <iostream>
+
 
 static const char* kVS = R"(#version 330 core
-layout(location=0) in vec3 aPos;
-void main(){ gl_Position = vec4(aPos, 1.0); }
+layout(location = 0) in vec3 aPos;   // posición (x, y, z)
+layout(location = 1) in vec3 aColor; // color (r, g, b)
+
+out vec3 vColor;
+
+void main() {
+    gl_Position = vec4(aPos, 1.0); 
+    vColor = vec3(1.0, 0.0, 1.0);              
+}
 )";
 
 static const char* kFS = R"(#version 330 core
+in vec3 vColor;
+
 out vec4 FragColor;
-void main(){ FragColor = vec4(1.0, 0.5, 0.2, 1.0); }
+
+void main() {
+    FragColor = vec4(vColor, 1.0); // usamos el color recibido
+}
 )";
 
 bool App::init() {
@@ -52,6 +66,9 @@ void App::run() {
         renderer.clear(0.1f, 0.2f, 0.3f, 1.0f);
 
         m_shader->use();
+        GLint program;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+        std::cout << "Shader activo: " << program << std::endl;
         m_mesh->bind();
         m_mesh->draw();
 

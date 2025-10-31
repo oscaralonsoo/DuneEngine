@@ -8,10 +8,10 @@ Mesh::~Mesh() {
 
 void Mesh::createQuad() {
     float vertices[] = {
-        0.5f,  0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-       -0.5f, -0.5f, 0.0f,
-       -0.5f,  0.5f, 0.0f
+        0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+       -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,
+       -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f  
     };
     unsigned int indices[] = { 0, 1, 3, 1, 2, 3 };
     m_indexCount = 6;
@@ -28,8 +28,11 @@ void Mesh::createQuad() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
 }

@@ -1,4 +1,4 @@
-#include "Core/App.h"
+#include "Core/DuneEngine.h"
 
 int main() {
     App app;
