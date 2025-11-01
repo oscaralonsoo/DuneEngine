@@ -13,6 +13,12 @@
 static glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
 static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 static glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+static bool  gFirstMouse = true;
+static float gYaw   = -90.0f;
+static float gPitch =  0.0f;
+static float gFov   =  45.0f;
+static float gLastX =  400.0f;
+static float gLastY =  300.0f;
 
 static float deltaTime = 0.0f;
 static float lastFrame = 0.0f;
@@ -145,6 +151,8 @@ int main(int argc, char *args[])
         return -1;
     }
 
+    SDL_SetWindowRelativeMouseMode(window, true);
+
     // --- Load OpenGL Functions ---
     // Initialize GLAD to load OpenGL function pointers
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress)))
@@ -175,7 +183,7 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader shader("7.2.camera.vs", "7.2.camera.fs");
+    Shader shader("7.3.camera.vs", "7.3.camera.fs");
 
     GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
@@ -257,6 +265,33 @@ int main(int argc, char *args[])
                 SDL_GetWindowSizeInPixels(window, &w, &h);
                 glViewport(0, 0, w, h);
                 break;
+                case SDL_EVENT_MOUSE_MOTION: {
+                    // deltas en modo relativo
+                    float xoffset = (float)event.motion.xrel;
+                    float yoffset = (float)event.motion.yrel; // y invertida manualmente
+                    const float sensitivity = 0.1f;
+                    xoffset *= sensitivity;
+                    yoffset *= sensitivity;
+
+                    gYaw   += xoffset;
+                    gPitch -= yoffset;        // invertimos aquí
+
+                    if (gPitch > 89.0f)  gPitch = 89.0f;
+                    if (gPitch < -89.0f) gPitch = -89.0f;
+
+                    glm::vec3 front;
+                    front.x = cos(glm::radians(gYaw)) * cos(glm::radians(gPitch));
+                    front.y = sin(glm::radians(gPitch));
+                    front.z = sin(glm::radians(gYaw)) * cos(glm::radians(gPitch));
+                    cameraFront = glm::normalize(front);
+                } break;
+
+                case SDL_EVENT_MOUSE_WHEEL: {
+                    gFov -= (float)event.wheel.y;  // rueda hacia arriba -> acercar
+                    if (gFov < 1.0f)  gFov = 1.0f;
+                    if (gFov > 45.0f) gFov = 45.0f;
+                } break;
+
             }
         }
 
@@ -287,11 +322,15 @@ int main(int argc, char *args[])
 
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-        int width, height; SDL_GetWindowSizeInPixels(window, &width, &height);
-        float aspect = (height > 0) ? (float)width / (float)height : 4.0f / 3.0f;
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        int width, height;
+        SDL_GetWindowSizeInPixels(window, &width, &height);
+        float aspect = (height > 0) ? (float)width / (float)height : 4.0f/3.0f;
 
-        // sube view/projection una vez
+        // antes: 45.0f fijo
+        // después: gFov (modificable con la rueda)
+        glm::mat4 projection = glm::perspective(glm::radians(gFov), aspect, 0.1f, 100.0f);
+
+        // sube a los uniforms (como ya haces)
         glUniformMatrix4fv(uView, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(uProj, 1, GL_FALSE, glm::value_ptr(projection));
 
