@@ -11,6 +11,51 @@
 
 #include <string>
 
+static float kCubeVertices[] = {
+    // back face
+    -0.5f,-0.5f,-0.5f, 0.0f,0.0f,
+     0.5f,-0.5f,-0.5f, 1.0f,0.0f,
+     0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+     0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+    -0.5f, 0.5f,-0.5f, 0.0f,1.0f,
+    -0.5f,-0.5f,-0.5f, 0.0f,0.0f,
+    // front face
+    -0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+     0.5f,-0.5f, 0.5f, 1.0f,0.0f,
+     0.5f, 0.5f, 0.5f, 1.0f,1.0f,
+     0.5f, 0.5f, 0.5f, 1.0f,1.0f,
+    -0.5f, 0.5f, 0.5f, 0.0f,1.0f,
+    -0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+    // left face
+    -0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+    -0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+    -0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+    -0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+    -0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+    -0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+    // right face
+     0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+     0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+     0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+     0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+     0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+     0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+    // bottom face
+    -0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+     0.5f,-0.5f,-0.5f, 1.0f,1.0f,
+     0.5f,-0.5f, 0.5f, 1.0f,0.0f,
+     0.5f,-0.5f, 0.5f, 1.0f,0.0f,
+    -0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+    -0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+    // top face
+    -0.5f, 0.5f,-0.5f, 0.0f,1.0f,
+     0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+     0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+     0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+    -0.5f, 0.5f, 0.5f, 0.0f,0.0f,
+    -0.5f, 0.5f,-0.5f, 0.0f,1.0f
+};
+
 static GLuint LoadTextureDevIL(const char* path, bool genMipmaps = true) {
     // 1) Leer el archivo en memoria
     std::ifstream f(path, std::ios::binary);
@@ -124,35 +169,22 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader shader("6.1.coordinate_systems.vs", "6.1.coordinate_systems.fs");
+    Shader shader("6.2.coordinate_systems.vs", "6.2.coordinate_systems.fs");
 
-    float vertices[] = {
-        0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f
-    };
-
-    unsigned int indices[] = {0, 1, 3, 1, 2, 3};
-
-    GLuint VAO, VBO, EBO;
+    GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(kCubeVertices), kCubeVertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    // location 0 -> vec3 position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // TexCoords -> location = 1 (offset de 6 floats)
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    // location 1 -> vec2 uv
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
@@ -202,7 +234,6 @@ int main(int argc, char *args[])
             }
         }
 
-        // Set clear color and clear framebuffer
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -213,8 +244,10 @@ int main(int argc, char *args[])
 
         shader.use();
 
+        // MODEL: rotación continua (eje 0.5,1,0 como en 6.2)
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f,
+                            glm::vec3(0.5f, 1.0f, 0.0f));
 
         // VIEW: alejar cámara en -Z
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
@@ -230,16 +263,20 @@ int main(int argc, char *args[])
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
+        // DIBUJO: sin EBO -> 36 vértices del cubo
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // 🔹 INTERCAMBIAR buffers (mostrar en pantalla)
+        // INTERCAMBIAR buffers (mostrar en pantalla)
         SDL_GL_SwapWindow(window);
 
     }
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+
+    glDeleteTextures(1, &texture1);
+    glDeleteTextures(1, &texture2);
 
     // Cleanup
     SDL_GL_DestroyContext(glContext);
