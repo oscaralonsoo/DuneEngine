@@ -9,17 +9,9 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include "camera.h" 
 
-static glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
-static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-static glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
-static bool  gFirstMouse = true;
-static float gYaw   = -90.0f;
-static float gPitch =  0.0f;
-static float gFov   =  45.0f;
-static float gLastX =  400.0f;
-static float gLastY =  300.0f;
-
+static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 static float deltaTime = 0.0f;
 static float lastFrame = 0.0f;
 
@@ -183,7 +175,7 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader shader("7.3.camera.vs", "7.3.camera.fs");
+    Shader shader("7.4.camera.vs", "7.4.camera.fs");
 
     GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
@@ -266,42 +258,24 @@ int main(int argc, char *args[])
                 glViewport(0, 0, w, h);
                 break;
                 case SDL_EVENT_MOUSE_MOTION: {
-                    // deltas en modo relativo
                     float xoffset = (float)event.motion.xrel;
-                    float yoffset = (float)event.motion.yrel; // y invertida manualmente
-                    const float sensitivity = 0.1f;
-                    xoffset *= sensitivity;
-                    yoffset *= sensitivity;
-
-                    gYaw   += xoffset;
-                    gPitch -= yoffset;        // invertimos aquí
-
-                    if (gPitch > 89.0f)  gPitch = 89.0f;
-                    if (gPitch < -89.0f) gPitch = -89.0f;
-
-                    glm::vec3 front;
-                    front.x = cos(glm::radians(gYaw)) * cos(glm::radians(gPitch));
-                    front.y = sin(glm::radians(gPitch));
-                    front.z = sin(glm::radians(gYaw)) * cos(glm::radians(gPitch));
-                    cameraFront = glm::normalize(front);
+                    float yoffset = (float)event.motion.yrel;
+                    camera.ProcessMouseMovement(xoffset, -yoffset); // invertir Y como en el tutorial
                 } break;
 
                 case SDL_EVENT_MOUSE_WHEEL: {
-                    gFov -= (float)event.wheel.y;  // rueda hacia arriba -> acercar
-                    if (gFov < 1.0f)  gFov = 1.0f;
-                    if (gFov > 45.0f) gFov = 45.0f;
+                    camera.ProcessMouseScroll((float)event.wheel.y); // rueda ↑ acerca, ↓ aleja
                 } break;
 
             }
         }
 
         const bool* ks = SDL_GetKeyboardState(NULL);
-        float speed = 2.5f * deltaTime;
-
-        if (ks[SDL_SCANCODE_W]) cameraPos += speed * cameraFront;
-        if (ks[SDL_SCANCODE_S]) cameraPos -= speed * cameraFront;
-        if (ks[SDL_SCANCODE_A]) cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
-        if (ks[SDL_SCANCODE_D]) cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+        float speed = 2.5f * deltaTime; // delta ya lo calculas
+        if (ks[SDL_SCANCODE_W]) camera.ProcessKeyboard(FORWARD,  deltaTime);
+        if (ks[SDL_SCANCODE_S]) camera.ProcessKeyboard(BACKWARD, deltaTime);
+        if (ks[SDL_SCANCODE_A]) camera.ProcessKeyboard(LEFT,     deltaTime);
+        if (ks[SDL_SCANCODE_D]) camera.ProcessKeyboard(RIGHT,    deltaTime);
 
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -320,19 +294,18 @@ int main(int argc, char *args[])
 
         float t = SDL_GetTicks() / 1000.0f;
 
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::mat4 view = camera.GetViewMatrix();
 
         int width, height;
         SDL_GetWindowSizeInPixels(window, &width, &height);
         float aspect = (height > 0) ? (float)width / (float)height : 4.0f/3.0f;
 
-        // antes: 45.0f fijo
-        // después: gFov (modificable con la rueda)
-        glm::mat4 projection = glm::perspective(glm::radians(gFov), aspect, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), aspect, 0.1f, 100.0f);
 
-        // sube a los uniforms (como ya haces)
+        // Sube a los uniforms como ya haces:
         glUniformMatrix4fv(uView, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(uProj, 1, GL_FALSE, glm::value_ptr(projection));
+
 
         glBindVertexArray(VAO);
         for (unsigned int i = 0; i < 10; ++i) {
