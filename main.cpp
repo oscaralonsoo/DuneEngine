@@ -1,23 +1,8 @@
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
+#include "Shader.h"
 
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "layout (location = 1) in vec3 aColor;\n"
-                                 "out vec3 ourColor;\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 "   gl_Position = vec4(aPos, 1.0);\n"
-                                 "   ourColor = aColor;\n"
-                                 "}\0";
-
-const char *fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "in vec3 ourColor;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   "   FragColor = vec4(ourColor, 1.0f);\n"
-                                   "}\n\0";
+Shader ourShader("3.3.shader.vs", "3.3.shader.fs");
 
 int main(int argc, char *args[])
 {
@@ -81,51 +66,7 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    // --- Vertex Shader ---
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    // Check for compilation errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        SDL_Log("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s", infoLog);
-    }
-
-    // --- Fragment Shader ---
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // Check for compilation errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        SDL_Log("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%s", infoLog);
-    }
-
-    // --- Shader Program ---
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    // Check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        SDL_Log("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s", infoLog);
-    }
-
-    // Shaders are linked into program, safe to delete
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader ourShader("3.3.shader.vs", "3.3.shader.fs");
 
     float vertices[] = {
         // posiciones         // colores
@@ -188,14 +129,8 @@ int main(int argc, char *args[])
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Activar el shader
-        glUseProgram(shaderProgram);
+        ourShader.use();
 
-        // 🔹 Actualizar el uniform dinámicamente (color animado)
-        float timeValue = (float)SDL_GetTicks() / 1000.0f; // tiempo en segundos
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
         // Dibujar el triángulo
         glBindVertexArray(VAO);
@@ -209,7 +144,7 @@ int main(int argc, char *args[])
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
+    glDeleteProgram(ourShader.ID);
 
     // Cleanup
     SDL_GL_DestroyContext(glContext);
