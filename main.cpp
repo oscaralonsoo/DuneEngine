@@ -8,8 +8,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <vector>
-
 #include <string>
+
+static glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+static glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+static float deltaTime = 0.0f;
+static float lastFrame = 0.0f;
 
 static float kCubeVertices[] = {
     // back face
@@ -93,7 +99,7 @@ static GLuint LoadTextureDevIL(const char* path, bool genMipmaps = true) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, genMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     if (genMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
 
     ilDeleteImages(1, &img);
@@ -169,7 +175,7 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader shader("6.3.coordinate_systems.vs", "6.3.coordinate_systems.fs");
+    Shader shader("7.2.camera.vs", "7.2.camera.fs");
 
     GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
@@ -215,8 +221,15 @@ int main(int argc, char *args[])
     };
 
     bool running = true;
+
+    lastFrame = SDL_GetTicks() / 1000.0f;
+
     while (running)
     {
+        float currentFrame = SDL_GetTicks() / 1000.0f;
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        if (deltaTime > 0.05f) deltaTime = 0.05f;
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -247,6 +260,14 @@ int main(int argc, char *args[])
             }
         }
 
+        const bool* ks = SDL_GetKeyboardState(NULL);
+        float speed = 2.5f * deltaTime;
+
+        if (ks[SDL_SCANCODE_W]) cameraPos += speed * cameraFront;
+        if (ks[SDL_SCANCODE_S]) cameraPos -= speed * cameraFront;
+        if (ks[SDL_SCANCODE_A]) cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+        if (ks[SDL_SCANCODE_D]) cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -257,34 +278,30 @@ int main(int argc, char *args[])
 
         shader.use();
 
-        // MODEL: rotación continua (eje 0.5,1,0 como en 6.2)
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f,
-                            glm::vec3(0.5f, 1.0f, 0.0f));
+        // cachea locations
+        GLint uModel = glGetUniformLocation(shader.ID, "model");
+        GLint uView  = glGetUniformLocation(shader.ID, "view");
+        GLint uProj  = glGetUniformLocation(shader.ID, "projection");
 
-        // VIEW: alejar cámara en -Z
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+        float t = SDL_GetTicks() / 1000.0f;
 
-        // PROJECTION: perspectiva
-        int width, height;
-        SDL_GetWindowSizeInPixels(window, &width, &height);
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+        int width, height; SDL_GetWindowSizeInPixels(window, &width, &height);
         float aspect = (height > 0) ? (float)width / (float)height : 4.0f / 3.0f;
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-        // Subir uniforms al shader
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // sube view/projection una vez
+        glUniformMatrix4fv(uView, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(uProj, 1, GL_FALSE, glm::value_ptr(projection));
 
-        // DIBUJO: sin EBO -> 36 vértices del cubo
         glBindVertexArray(VAO);
-        for (unsigned int i = 0; i < 10; i++) {
+        for (unsigned int i = 0; i < 10; ++i) {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i + SDL_GetTicks() / 1000.0f; // 🔹 rotación animada
-            model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
-
-            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            float angle = 20.0f * i; // grados
+            model = glm::rotate(model, glm::radians(angle) + t, glm::vec3(1.0f, 0.3f, 0.5f));
+            glUniformMatrix4fv(uModel, 1, GL_FALSE, glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
