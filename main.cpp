@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
 #include "shader_s.h"
+#include "stb_image.h"
 
 int main(int argc, char *args[])
 {
@@ -64,32 +65,57 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader ourShader("3.3.shader.vs", "3.3.shader.fs");
+    Shader shader("4.1.texture.vs", "4.1.texture.fs");
 
 
     float vertices[] = {
-        // posiciones         // colores
-        0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  // rojo
-        -0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  // verde
-        0.0f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f   // azul
+        0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f
     };
 
+    unsigned int indices[] = {0, 1, 3, 1, 2, 3};
 
-    unsigned int VBO, VAO;
+    GLuint VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int w, h, n;
+    unsigned char* data = stbi_load("resources/textures/container.jpg", &w, &h, &n, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        SDL_Log("No se pudo cargar la textura");
+    }
+    stbi_image_free(data);
+
+    shader.use();
+    glUniform1i(glGetUniformLocation(shader.ID, "texture1"), 0);
 
     bool running = true;
     while (running)
@@ -128,13 +154,14 @@ int main(int argc, char *args[])
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        ourShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tex);
 
-        // Dibujar el triángulo
+        shader.use();
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        // Intercambiar buffers
+        // 🔹 INTERCAMBIAR buffers (mostrar en pantalla)
         SDL_GL_SwapWindow(window);
 
     }
