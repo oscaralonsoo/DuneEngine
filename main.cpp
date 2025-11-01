@@ -169,7 +169,7 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader shader("6.2.coordinate_systems.vs", "6.2.coordinate_systems.fs");
+    Shader shader("6.3.coordinate_systems.vs", "6.3.coordinate_systems.fs");
 
     GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
@@ -200,6 +200,19 @@ int main(int argc, char *args[])
     shader.use();
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
+
+    glm::vec3 cubePositions[] = {
+        { 0.0f,  0.0f,  0.0f},
+        { 2.0f,  5.0f, -15.0f},
+        {-1.5f, -2.2f, -2.5f},
+        {-3.8f, -2.0f, -12.3f},
+        { 2.4f, -0.4f, -3.5f},
+        {-1.7f,  3.0f, -7.5f},
+        { 1.3f, -2.0f, -2.5f},
+        { 1.5f,  2.0f, -2.5f},
+        { 1.5f,  0.2f, -1.5f},
+        {-1.3f,  1.0f, -1.5f}
+    };
 
     bool running = true;
     while (running)
@@ -265,7 +278,16 @@ int main(int argc, char *args[])
 
         // DIBUJO: sin EBO -> 36 vértices del cubo
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (unsigned int i = 0; i < 10; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i + SDL_GetTicks() / 1000.0f; // 🔹 rotación animada
+            model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
+
+            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
 
         // INTERCAMBIAR buffers (mostrar en pantalla)
         SDL_GL_SwapWindow(window);
