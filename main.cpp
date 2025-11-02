@@ -11,6 +11,8 @@
 #include <string>
 #include "camera.h" 
 #include "model.h"
+#include <cfloat> 
+#include <cctype>
 
 struct AABB { glm::vec3 min, max; };
 
@@ -24,6 +26,15 @@ static float deltaTime = 0.0f;
 static float lastFrame = 0.0f;
 bool rightMouseHeld = false;
 bool altHeld = false;
+
+struct SceneItem {
+    std::unique_ptr<Model> model;
+    glm::mat4              M = glm::mat4(1.0f);
+    GLuint                 overrideTex = 0;
+};
+
+static std::vector<SceneItem> gScene;
+static int gSelectedIndex = -1;
 
 static float kCubeVertices[] = {
     // back face
@@ -163,6 +174,41 @@ static AABB ComputeModelAABB(const Model& m, const glm::mat4& modelMatrix)
     return box;
 }
 
+static bool HasExt(const std::string& p, const char* ext) {
+    auto i = p.find_last_of('.');
+    if (i == std::string::npos) return false;
+    std::string e = p.substr(i+1);
+    for (auto& c : e) c = (char)tolower((unsigned char)c);
+    std::string want = ext;
+    for (auto& c : want) c = (char)tolower((unsigned char)c);
+    return e == want;
+}
+
+static bool IsModelPath(const std::string& p) {
+    return HasExt(p,"fbx") || HasExt(p,"obj") || HasExt(p,"dae") ||
+           HasExt(p,"gltf")|| HasExt(p,"glb") || HasExt(p,"3ds") ||
+           HasExt(p,"ply")  || HasExt(p,"blend");
+}
+
+static bool IsImagePath(const std::string& p) {
+    return HasExt(p,"png") || HasExt(p,"jpg") || HasExt(p,"jpeg") ||
+           HasExt(p,"tga") || HasExt(p,"bmp") || HasExt(p,"psd")  ||
+           HasExt(p,"gif") || HasExt(p,"hdr") || HasExt(p,"pic");
+}
+
+// Carga un modelo y lo deja delante de la cámara
+static int AddModelFromFile(const char* path)
+{
+    SceneItem it;
+    it.model = std::make_unique<Model>(path);
+    // Colócalo ~2.5m frente a la cámara actual
+    glm::vec3 front = camera.Front; // viene de tu Camera :contentReference[oaicite:2]{index=2}
+    glm::vec3 pos   = camera.Position + front * 2.5f;
+    it.M = glm::translate(glm::mat4(1.0f), pos);
+    gScene.push_back(std::move(it));
+    return (int)gScene.size()-1;
+}
+
 int main(int argc, char *args[])
 {
     // --- Initialize SDL ---
@@ -200,6 +246,11 @@ int main(int argc, char *args[])
         SDL_Quit();
         return -1;
     }
+
+    SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_TEXT, true);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_BEGIN, true);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_COMPLETE, true);
 
     SDL_SetWindowRelativeMouseMode(window, false);
 
@@ -242,6 +293,14 @@ int main(int argc, char *args[])
     Model house("resources/objects/house/BakerHouse.fbx");
 
     house.SetOverrideTexture(texHouse);
+
+    SceneItem first;
+    first.model = std::make_unique<Model>("resources/objects/house/BakerHouse.fbx");
+    first.overrideTex = texHouse;
+    first.model->SetOverrideTexture(texHouse);
+    first.M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    gScene.push_back(std::move(first));
+    gSelectedIndex = 0;
 
     GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
@@ -339,32 +398,30 @@ int main(int argc, char *args[])
 
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    // Construye matrices actuales
                     int w, h; SDL_GetWindowSizeInPixels(window, &w, &h);
                     glm::mat4 view = camera.GetViewMatrix();
                     float aspect = (h > 0) ? (float)w/(float)h : 4.0f/3.0f;
                     glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), aspect, 0.1f, 100.0f);
 
-                    // La misma model matrix con la que dibujas la casa
-                    glm::mat4 M = glm::mat4(1.0f);
-                    M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
-                    M = glm::scale(M, glm::vec3(1.0f));
-
-                    // AABB en mundo del modelo
-                    AABB houseBox = ComputeModelAABB(house, M);
-
-                    // Rayo desde cursor
                     glm::vec3 ro, rd;
-                    BuildRayFromScreen(event.button.x, event.button.y, w, h, view, proj, ro, rd);
+                    BuildRayFromScreen(event.button.x, event.button.y, w, h, view, proj, ro, rd); // ya la tienes :contentReference[oaicite:6]{index=6}
 
-                    float tHit;
-                    if (RayIntersectsAABB(ro, rd, houseBox, &tHit)) {
-                        gHasSelection = true;
-                        gOrbitTarget = 0.5f * (houseBox.min + houseBox.max); // centro de la AABB
+                    float bestT = FLT_MAX;
+                    int bestIdx = -1;
+                    for (int i = 0; i < (int)gScene.size(); ++i) {
+                        AABB box = ComputeModelAABB(*gScene[i].model, gScene[i].M);
+                        float tHit;
+                        if (RayIntersectsAABB(ro, rd, box, &tHit) && tHit < bestT) {
+                            bestT = tHit; bestIdx = i;
+                        }
+                    }
+                    gHasSelection = (bestIdx >= 0);
+                    gSelectedIndex = bestIdx;
+                    if (gHasSelection) {
+                        AABB box = ComputeModelAABB(*gScene[bestIdx].model, gScene[bestIdx].M);
+                        gOrbitTarget   = 0.5f * (box.min + box.max);
                         gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
-                        SDL_Log("Seleccionada la casa (dist=%.2f)", gOrbitDistance);
-                    } else {
-                        gHasSelection = false;
+                        SDL_Log("Seleccionado item %d", bestIdx);
                     }
                 }
                 else if (event.button.button == SDL_BUTTON_RIGHT) {
@@ -427,6 +484,38 @@ int main(int argc, char *args[])
                     altHeld = false;
                 }
                 break;
+            case SDL_EVENT_DROP_FILE:
+                {
+                    const char* dropped = event.drop.data;
+                    if (!dropped) break;
+                    std::string path = dropped;
+                    SDL_Log("Dropped: %s", path.c_str());
+
+                    if (IsModelPath(path)) {
+                        int idx = AddModelFromFile(path.c_str());
+                        if (idx >= 0) {
+                            gSelectedIndex = idx;
+                            // centra orbita en la AABB del nuevo modelo
+                            AABB box = ComputeModelAABB(*gScene[idx].model, gScene[idx].M); // tu función ya existe :contentReference[oaicite:4]{index=4}
+                            gHasSelection = true;
+                            gOrbitTarget  = 0.5f * (box.min + box.max);
+                            gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
+                        }
+                    } else if (IsImagePath(path)) {
+                        GLuint tex = LoadTextureDevIL(path.c_str(), /*mips=*/true);
+                        if (tex) {
+                            if (gSelectedIndex >= 0) {
+                                gScene[gSelectedIndex].overrideTex = tex;
+                                gScene[gSelectedIndex].model->SetOverrideTexture(tex); // soportado por tu Model :contentReference[oaicite:5]{index=5}
+                            } else {
+                                SDL_Log("Textura soltada sin selección; crea/selecciona un modelo para aplicarla.");
+                            }
+                        }
+                    } else {
+                        SDL_Log("Tipo de archivo no soportado para drop.");
+                    }
+                } break;
+
             }
         }
 
@@ -480,22 +569,18 @@ int main(int argc, char *args[])
         }
 
         modelShader.use();
-
         GLint mLoc = glGetUniformLocation(modelShader.ID, "model");
         GLint vLoc = glGetUniformLocation(modelShader.ID, "view");
         GLint pLoc = glGetUniformLocation(modelShader.ID, "projection");
 
-        // usa las mismas matrices view/projection que ya calculaste arriba
+        // mismas view/projection que ya calculas
         glUniformMatrix4fv(vLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(pLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-        // model matrix (ajusta la escala si se ve muy grande)
-        glm::mat4 M = glm::mat4(1.0f);
-        M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));  // bajarlo un poco
-        M = glm::scale(M, glm::vec3(1.0f));                   // si se ve gigante, usa 0.2f
-        glUniformMatrix4fv(mLoc, 1, GL_FALSE, glm::value_ptr(M));
-
-        house.Draw(modelShader);
+        for (size_t i = 0; i < gScene.size(); ++i) {
+            glUniformMatrix4fv(mLoc, 1, GL_FALSE, glm::value_ptr(gScene[i].M));
+            gScene[i].model->Draw(modelShader);
+        }
 
         // INTERCAMBIAR buffers (mostrar en pantalla)
         SDL_GL_SwapWindow(window);

@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.10)
 
 project(DuneEngine)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if (MSVC)
+    add_compile_options(/Zc:__cplusplus)
+endif()
+
 find_package(fmt CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)

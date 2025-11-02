@@ -21,6 +21,8 @@
 #include <cstring>
 using namespace std;
 
+#include <filesystem>
+
 // Usa tu cargador de DevIL del main.cpp
 extern unsigned int LoadTextureDevIL(const char* path, bool genMipmaps);
 
@@ -67,7 +69,8 @@ private:
             return;
         }
         // retrieve the directory path of the filepath
-        directory = path.substr(0, path.find_last_of('/'));
+        std::filesystem::path p = std::filesystem::u8path(path);
+        directory = p.parent_path().string();
 
         // process ASSIMP's root node recursively
         processNode(scene->mRootNode, scene);
@@ -215,13 +218,13 @@ private:
 };
 
 
-unsigned int TextureFromFile(const char *path, const string &directory, bool /*gamma*/)
+unsigned int TextureFromFile(const char *path, const std::string &directory, bool /*gamma*/)
 {
-    string filename = directory.empty()
-        ? string(path)
-        : (directory + '/' + string(path));
+    std::filesystem::path texRel = std::filesystem::u8path(path);
+    std::filesystem::path full = texRel.is_absolute()
+        ? texRel
+        : (directory.empty() ? texRel : std::filesystem::path(directory) / texRel);
 
-    // Devuelve directamente lo que sube tu pipeline de DevIL
-    return LoadTextureDevIL(filename.c_str(), /*genMipmaps=*/true);
+    return LoadTextureDevIL(full.string().c_str(), /*genMipmaps=*/true);
 }
 #endif
