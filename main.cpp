@@ -13,6 +13,65 @@
 #include "model.h"
 #include <cfloat> 
 #include <cctype>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_internal.h>
+#include <deque>
+#include <chrono>
+#include <SDL3/SDL_version.h>
+
+static bool gShowConsole     = true;
+static bool gShowConfig      = true;
+static bool gShowHierarchy   = true;
+static bool gShowInspector   = true;
+static bool gShowAbout       = false;
+
+static std::deque<float> gFpsHistory; // últimos N fps
+static const int kFpsHistoryMax = 200;
+
+static std::vector<std::string> gConsole; // consola
+static ImGuiTextFilter gConsoleFilter;
+
+static void DecomposeTRS(const glm::mat4& M, glm::vec3& outT, glm::vec3& outRdeg, glm::vec3& outS)
+{
+    // traslación
+    outT = glm::vec3(M[3]);
+    // escala
+    glm::vec3 X = glm::vec3(M[0]);
+    glm::vec3 Y = glm::vec3(M[1]);
+    glm::vec3 Z = glm::vec3(M[2]);
+    outS = glm::vec3(glm::length(X), glm::length(Y), glm::length(Z));
+    if (outS.x != 0) X /= outS.x;
+    if (outS.y != 0) Y /= outS.y;
+    if (outS.z != 0) Z /= outS.z;
+    // rotación (aprox, asumiendo sin shear; Euler YXZ)
+    float yaw   = atan2f(X.z, X.x);
+    float pitch = asinf(-X.y);
+    float roll  = atan2f(Z.y, Y.y);
+    outRdeg = glm::degrees(glm::vec3(pitch, yaw, roll));
+}
+
+// captura logs de SDL en la consola ImGui
+static void SDLLogToConsole(void* /*userdata*/, int category, SDL_LogPriority priority, const char* message)
+{
+    char buf[2048];
+    const char* pr =
+        priority == SDL_LOG_PRIORITY_ERROR ? "[ERROR] " :
+        priority == SDL_LOG_PRIORITY_WARN  ? "[WARN ] " :
+        priority == SDL_LOG_PRIORITY_INFO  ? "[INFO ] " :
+        priority == SDL_LOG_PRIORITY_DEBUG ? "[DEBUG] " : "[LOG  ] ";
+    SDL_snprintf(buf, sizeof(buf), "%s%s", pr, message);
+    gConsole.emplace_back(buf);
+    if (gConsole.size() > 2000) gConsole.erase(gConsole.begin(), gConsole.begin() + 500);
+}
+
+static void PushFpsSample(float dt)
+{
+    float fps = (dt > 0.f) ? (1.f / dt) : 0.f;
+    gFpsHistory.push_back(fps);
+    if ((int)gFpsHistory.size() > kFpsHistoryMax) gFpsHistory.pop_back();
+}
 
 struct AABB { glm::vec3 min, max; };
 
@@ -31,6 +90,7 @@ struct SceneItem {
     std::unique_ptr<Model> model;
     glm::mat4              M = glm::mat4(1.0f);
     GLuint                 overrideTex = 0;
+    std::string            name = "Item";
 };
 
 static std::vector<SceneItem> gScene;
@@ -269,10 +329,12 @@ static int AddModelFromFile(const char* path)
 {
     SceneItem it;
     it.model = std::make_unique<Model>(path);
-    // Colócalo ~2.5m frente a la cámara actual
-    glm::vec3 front = camera.Front; // viene de tu Camera :contentReference[oaicite:2]{index=2}
+    glm::vec3 front = camera.Front;
     glm::vec3 pos   = camera.Position + front * 2.5f;
     it.M = glm::translate(glm::mat4(1.0f), pos);
+    // nombre desde path
+    std::filesystem::path p = std::filesystem::u8path(path);
+    it.name = p.filename().string();
     gScene.push_back(std::move(it));
     return (int)gScene.size()-1;
 }
@@ -321,7 +383,7 @@ int main(int argc, char *args[])
 
     // --- Create Window ---
     // Create SDL window with OpenGL support
-    SDL_Window *window = SDL_CreateWindow("DuneEngine", 800, 600, SDL_WINDOW_OPENGL);
+    SDL_Window *window = SDL_CreateWindow("DuneEngine", 1920, 1080, SDL_WINDOW_OPENGL);
     if (!window)
     {
         SDL_Quit();
@@ -358,6 +420,20 @@ int main(int argc, char *args[])
 
     glEnable(GL_DEPTH_TEST);
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; 
+
+    ImGui::StyleColorsDark();
+
+    // Inicializa backends (SDL3 + OpenGL3)
+    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    // Redirige logs de SDL a la consola UI
+    SDL_SetLogOutputFunction(SDLLogToConsole, nullptr);
+
     ilInit();
     ilEnable(IL_ORIGIN_SET);
     ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
@@ -375,30 +451,32 @@ int main(int argc, char *args[])
     SDL_Log("OpenGL version (from GLAD): %d.%d", GLVersion.major, GLVersion.minor);
     SDL_Log("OpenGL profile (from GLAD): %s", GLAD_GL_VERSION_3_1 ? "Core 3.1+" : "Other");
 
-    Shader shader("7.4.camera.vs", "7.4.camera.fs");
+    Shader shader("Assets/shaders/Shader.vs", "Assets/shaders/Shader.fs");
 
-    Shader modelShader("1.model_loading.vs", "1.model_loading.fs");
+    Shader modelShader("Assets/shaders/ModelShader.vs", "Assets/shaders/ModelShader.fs");
 
-    GLuint texHouse = LoadTextureDevIL("resources/objects/house/Baker_house.png");
+    GLuint texHouse = LoadTextureDevIL("Assets/objects/house/Baker_house.png");
 
-    Model house("resources/objects/house/BakerHouse.fbx");
+    Model house("Assets/objects/house/BakerHouse.fbx");
 
     house.SetOverrideTexture(texHouse);
 
     SceneItem houseItem;
-    houseItem.model = std::make_unique<Model>("resources/objects/house/BakerHouse.fbx");
+    houseItem.model = std::make_unique<Model>("Assets/objects/house/BakerHouse.fbx");
     houseItem.overrideTex = texHouse;
     houseItem.model->SetOverrideTexture(texHouse);
     houseItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(-3.0f, -1.0f, 0.0f)); // más a la izquierda
     gScene.push_back(std::move(houseItem));
+    houseItem.name = "House";
 
     SceneItem backpackItem;
-    backpackItem.model = std::make_unique<Model>("resources/objects/backpack/backpack.obj");
+    backpackItem.model = std::make_unique<Model>("Assets/objects/backpack/backpack.obj");
     backpackItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)); // detrás, un poco separado
     gScene.push_back(std::move(backpackItem));
 
-    GLuint texture1 = LoadTextureDevIL("resources/textures/basic.jpg");
+    GLuint texture1 = LoadTextureDevIL("Assets/textures/basic.jpg");
     if (!texture1) SDL_Log("No se pudo cargar container.jpg");
+    backpackItem.name = "Backpack";
 
     shader.use();
     shader.setInt("texture1", 0);
@@ -411,6 +489,8 @@ int main(int argc, char *args[])
     cubeItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)); // más a la derecha
     gScene.push_back(std::move(cubeItem));
 
+    cubeItem.name = "Cube";
+
     bool running = true;
 
     lastFrame = SDL_GetTicks() / 1000.0f;
@@ -420,10 +500,283 @@ int main(int argc, char *args[])
         float currentFrame = SDL_GetTicks() / 1000.0f;
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
+        ImGuiViewport* vp = ImGui::GetMainViewport();
+
+        // Ventana invisible a pantalla completa que aloja el DockSpace
+        ImGui::SetNextWindowPos(vp->Pos);
+        ImGui::SetNextWindowSize(vp->Size);
+        ImGui::SetNextWindowViewport(vp->ID);
+        ImGuiWindowFlags host_flags = ImGuiWindowFlags_NoDocking
+            | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse
+            | ImGuiWindowFlags_NoResize   | ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus
+            | ImGuiWindowFlags_NoBackground; // deja ver tu escena
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::Begin("##DockSpaceHost", nullptr, host_flags);
+        ImGui::PopStyleVar(2);
+
+        // Crea el DockSpace
+        ImGuiID dockspace_id = ImGui::GetID("DuneEngineDockSpace");
+        ImGuiDockNodeFlags dock_flags = ImGuiDockNodeFlags_PassthruCentralNode; 
+        ImGui::DockSpace(dockspace_id, ImVec2(0,0), dock_flags);
+        ImGui::End();
+
+        // Construye el layout SOLO la primera vez (si no hay .ini previo)
+        static bool s_built = false;
+        if (!s_built && ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
+        {
+            s_built = true;
+
+            ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace | dock_flags);
+            ImGui::DockBuilderSetNodeSize(dockspace_id, vp->Size);
+
+            // Particiones: Left (jerarquía), Right (inspector+config), Down (console), Center (viewport)
+            ImGuiID dock_main   = dockspace_id;
+            ImGuiID dock_left   = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Left,  0.20f, nullptr, &dock_main);
+            ImGuiID dock_right  = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Right, 0.28f, nullptr, &dock_main);
+            ImGuiID dock_down   = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Down,  0.28f, nullptr, &dock_main);
+            ImGuiID dock_top    = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Up,    0.08f, nullptr, &dock_main);
+
+            // Ubica ventanas por nombre (deben existir con esos títulos)
+            ImGui::DockBuilderDockWindow("Hierarchy", dock_left);
+            ImGui::DockBuilderDockWindow("Inspector", dock_right);
+            ImGui::DockBuilderDockWindow("Config",    dock_right);
+            ImGui::DockBuilderDockWindow("Console",   dock_down);
+            ImGui::DockBuilderDockWindow("Toolbar",   dock_top);
+
+            ImGui::DockBuilderFinish(dockspace_id);
+        }
+
+        if (gShowConsole)
+        {
+            ImGui::Begin("Console", &gShowConsole);
+            gConsoleFilter.Draw("Filtro");
+            ImGui::Separator();
+            ImGui::BeginChild("ConsoleScroll", ImVec2(0,0), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+            for (auto& line : gConsole)
+                if (gConsoleFilter.PassFilter(line.c_str()))
+                    ImGui::TextUnformatted(line.c_str());
+            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+                ImGui::SetScrollHereY(1.0f);
+            ImGui::EndChild();
+            ImGui::End();
+        }
+        if (gShowInspector)
+        {
+            ImGui::Begin("Inspector", &gShowInspector);
+            if (gHasSelection && gSelectedIndex >= 0)
+            {
+                SceneItem& it = gScene[gSelectedIndex];
+
+                if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    glm::vec3 T, Rdeg, S;
+                    DecomposeTRS(it.M, T, Rdeg, S);
+                    ImGui::Text("Position:  (%.3f, %.3f, %.3f)", T.x, T.y, T.z);
+                    ImGui::Text("Rotation:  (%.1f, %.1f, %.1f) deg", Rdeg.x, Rdeg.y, Rdeg.z);
+                    ImGui::Text("Scale:     (%.3f, %.3f, %.3f)", S.x, S.y, S.z);
+                }
+
+                if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    size_t totalVerts = 0, totalIdx = 0;
+                    for (auto& m : it.model->meshes) { totalVerts += m.vertices.size(); totalIdx += m.indices.size(); }
+                    ImGui::Text("Meshes: %d", (int)it.model->meshes.size());
+                    ImGui::Text("Vertices: %d", (int)totalVerts);
+                    ImGui::Text("Indices: %d", (int)totalIdx);
+
+                    static bool showNormalsFace   = false; // TODO: implementar visualización
+                    static bool showNormalsVertex = false; // TODO: implementar visualización
+                    ImGui::Checkbox("Mostrar normales por cara (TODO)", &showNormalsFace);
+                    ImGui::Checkbox("Mostrar normales por vértice (TODO)", &showNormalsVertex);
+                }
+
+                if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    // recoge primera textura si existe
+                    GLuint texId = 0;
+                    std::string path = "(none)";
+                    if (!it.model->meshes.empty() && !it.model->meshes[0].textures.empty())
+                    {
+                        texId = it.model->meshes[0].textures[0].id;
+                        path  = it.model->meshes[0].textures[0].path;
+                    }
+                    ImGui::Text("Path: %s", path.c_str());
+
+                    if (texId != 0)
+                    {
+                        GLint w=0, h=0;
+                        glBindTexture(GL_TEXTURE_2D, texId);
+                        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH,  &w);
+                        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+                        ImGui::Text("Size: %dx%d", w, h);
+
+                        // checker preview toggle
+                        static bool showChecker = false;
+                        ImGui::Checkbox("Visualizar tablero blanco/negro (preview UI)", &showChecker);
+                        if (showChecker)
+                        {
+                            // Dibujamos un checker en la UI (no en el objeto) como indicador
+                            ImVec2 size(128, 128);
+                            ImDrawList* dl = ImGui::GetWindowDrawList();
+                            ImVec2 p = ImGui::GetCursorScreenPos();
+                            const int cells = 8;
+                            for (int y = 0; y < cells; ++y)
+                            for (int x = 0; x < cells; ++x)
+                            {
+                                ImU32 col = ((x+y)&1) ? IM_COL32(220,220,220,255) : IM_COL32(40,40,40,255);
+                                ImVec2 a = ImVec2(p.x + x*size.x/cells, p.y + y*size.y/cells);
+                                ImVec2 b = ImVec2(p.x + (x+1)*size.x/cells, p.y + (y+1)*size.y/cells);
+                                dl->AddRectFilled(a, b, col);
+                            }
+                            ImGui::Dummy(size);
+                        }
+
+                        // mini preview de la textura real
+                        ImGui::Text("Preview:");
+                        ImGui::Image((ImTextureID)(intptr_t)texId, ImVec2(128,128));
+                    }
+                }
+            }
+            else {
+                ImGui::Text("No hay selección.");
+            }
+            ImGui::End();
+        }
+
+        if (gShowHierarchy)
+        {
+            ImGui::Begin("Hierarchy", &gShowHierarchy);
+            for (int i = 0; i < (int)gScene.size(); ++i)
+            {
+                ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+                if (i == gSelectedIndex) flags |= ImGuiTreeNodeFlags_Selected;
+                ImGui::TreeNodeEx((void*)(intptr_t)i, flags, "%s##%d", gScene[i].name.c_str(), i);
+                if (ImGui::IsItemClicked())
+                {
+                    gSelectedIndex = i;
+                    gHasSelection = true;
+                    AABB box = ComputeModelAABB(*gScene[i].model, gScene[i].M);
+                    gOrbitTarget   = 0.5f * (box.min + box.max);
+                    gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
+                }
+            }
+            ImGui::End();
+        }
+
+
+        if (gShowConfig)
+        {
+            ImGui::Begin("Config", &gShowConfig);
+            // FPS graph
+            ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+            if (!gFpsHistory.empty()) {
+                static std::vector<float> fpsTmp;
+                fpsTmp.assign(gFpsHistory.begin(), gFpsHistory.end());
+                ImGui::PlotLines("##fps", fpsTmp.data(), (int)fpsTmp.size(), 0, nullptr, 0.0f, 200.0f, ImVec2(-1, 80));
+            }
+
+            ImGui::Separator();
+            // Info HW/SW
+            ImGui::Text("GPU Vendor: %s", (const char*)glGetString(GL_VENDOR));
+            ImGui::Text("GPU Renderer: %s", (const char*)glGetString(GL_RENDERER));
+            ImGui::Text("OpenGL: %s", (const char*)glGetString(GL_VERSION));
+            ImGui::Text("GLSL: %s", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+            // (Simple) Memoria aprox: solo mostramos tamaño de escena como ejemplo
+            ImGui::Separator();
+            ImGui::Text("Scene items: %d", (int)gScene.size());
+            ImGui::End();
+        }
+
+
+
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Exit", "Esc")) {
+                    // emula tu salida ordenada
+                    SDL_Event quit{}; quit.type = SDL_EVENT_QUIT;
+                    SDL_PushEvent(&quit);
+                }
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("View"))
+            {
+                ImGui::MenuItem("Console",     nullptr, &gShowConsole);
+                ImGui::MenuItem("Config",      nullptr, &gShowConfig);
+                ImGui::MenuItem("Hierarchy",   nullptr, &gShowHierarchy);
+                ImGui::MenuItem("Inspector",   nullptr, &gShowInspector);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Help"))
+            {
+                if (ImGui::MenuItem("Documentación del GitHub")) {
+                    SDL_OpenURL("https://github.com/oscaralonsoo/docs");
+                }
+                if (ImGui::MenuItem("Reportar un bug")) {
+                    SDL_OpenURL("https://github.com/oscaralonsoo/issues");
+                }
+                if (ImGui::MenuItem("Descargar último")) {
+                    SDL_OpenURL("https://github.com/oscaralonsoo/releases");
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("About")) gShowAbout = true;
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
+
+        // Toolbar simple
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("Toolbar", nullptr,
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::TextUnformatted("Primitives:");
+        ImGui::SameLine();
+        if (ImGui::Button("Add Cube"))
+        {
+            auto cube = CreateCubeModel(1.0f, 0);
+            SceneItem item;
+            item.model = std::move(cube);
+            item.name = "Cube";
+            // colócalo frente a la cámara
+            glm::vec3 pos = camera.Position + camera.Front * 2.5f;
+            item.M = glm::translate(glm::mat4(1.0f), pos);
+            gScene.push_back(std::move(item));
+        }
+        ImGui::End();
+
+        // --- About modal ---
+        if (gShowAbout) {
+            ImGui::OpenPopup("About DuneEngine");
+        }
+        if (ImGui::BeginPopupModal("About DuneEngine", &gShowAbout, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("DuneEngine - v0.1");
+            ImGui::Separator();
+            ImGui::Text("Equipo: ... (añade nombres + GitHubs)");
+            ImGui::Text("Librerías: SDL3, GLAD, GLM, DevIL, Assimp, ImGui");
+            ImGui::Text("Licencia: MIT");
+            if (ImGui::Button("Cerrar")) { gShowAbout = false; ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+
+
         if (deltaTime > 0.05f) deltaTime = 0.05f;
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            ImGui_ImplSDL3_ProcessEvent(&event);
             switch (event.type)
             {
             case SDL_EVENT_QUIT:
@@ -657,7 +1010,6 @@ int main(int argc, char *args[])
             gScene[gSelectedIndex].M = glm::translate(gScene[gSelectedIndex].M, translation);
         }
 
-
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -699,7 +1051,9 @@ int main(int argc, char *args[])
             gScene[i].model->Draw(modelShader);
         }
 
-        // INTERCAMBIAR buffers (mostrar en pantalla)
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         SDL_GL_SwapWindow(window);
 
     }
@@ -710,6 +1064,10 @@ int main(int argc, char *args[])
     SDL_GL_DestroyContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
 
     return 0;
 }

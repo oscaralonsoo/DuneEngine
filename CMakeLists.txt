@@ -22,9 +22,11 @@ add_executable(DuneEngine
     main.cpp
 )
 
-target_link_libraries(DuneEngine PRIVATE fmt::fmt SDL3::SDL3 glad::glad glm::glm imgui::imgui DevIL::IL assimp::assimp)
+target_link_libraries(DuneEngine PRIVATE
+    fmt::fmt SDL3::SDL3 glad::glad glm::glm imgui::imgui DevIL::IL assimp::assimp
+)
 
 add_custom_command(TARGET DuneEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_SOURCE_DIR}/resources
-            $<TARGET_FILE_DIR:DuneEngine>/resources)
+            ${CMAKE_SOURCE_DIR}/Assets
+            $<TARGET_FILE_DIR:DuneEngine>/Assets)
