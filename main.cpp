@@ -444,13 +444,23 @@ int main(int argc, char *args[])
                     SDL_Log("Zoom to selected (F): distance %.2f", distance);
                 }
                 else if (gHasSelection && gSelectedIndex >= 0) {
+                    // Escalar
                     if (event.key.key == SDLK_UP) {
                         gScene[gSelectedIndex].M =
-                            glm::scale(gScene[gSelectedIndex].M, glm::vec3(1.05f)); // aumentar 5%
+                            glm::scale(gScene[gSelectedIndex].M, glm::vec3(1.05f));
                     }
                     else if (event.key.key == SDLK_DOWN) {
                         gScene[gSelectedIndex].M =
-                            glm::scale(gScene[gSelectedIndex].M, glm::vec3(0.95f)); // reducir 5%
+                            glm::scale(gScene[gSelectedIndex].M, glm::vec3(0.95f));
+                    }
+                    // Rotar
+                    else if (event.key.key == SDLK_LEFT) {
+                        gScene[gSelectedIndex].M =
+                            glm::rotate(gScene[gSelectedIndex].M, glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // 5° izquierda
+                    }
+                    else if (event.key.key == SDLK_RIGHT) {
+                        gScene[gSelectedIndex].M =
+                            glm::rotate(gScene[gSelectedIndex].M, glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // 5° derecha
                     }
                 }
                 break;
@@ -591,6 +601,22 @@ int main(int argc, char *args[])
             if (ks[SDL_SCANCODE_S]) camera.ProcessKeyboard(BACKWARD, deltaTime);
             if (ks[SDL_SCANCODE_A]) camera.ProcessKeyboard(LEFT,     deltaTime);
             if (ks[SDL_SCANCODE_D]) camera.ProcessKeyboard(RIGHT,    deltaTime);
+        }
+
+        if (gHasSelection && gSelectedIndex >= 0 && !rightMouseHeld) {
+            float moveSpeed = 2.0f * deltaTime; // velocidad de movimiento
+            glm::vec3 translation(0.0f);
+
+            // Movimiento en el plano XY: W↑, S↓, A←, D→
+            if (ks[SDL_SCANCODE_W]) translation.y += moveSpeed;
+            if (ks[SDL_SCANCODE_S]) translation.y -= moveSpeed;
+            if (ks[SDL_SCANCODE_A]) translation.x -= moveSpeed;
+            if (ks[SDL_SCANCODE_D]) translation.x += moveSpeed;
+            if (ks[SDL_SCANCODE_Q]) translation.z -= moveSpeed; // hacia "dentro"
+            if (ks[SDL_SCANCODE_E]) translation.z += moveSpeed; // hacia "fuera"
+
+            // Aplica la traslación al objeto seleccionado
+            gScene[gSelectedIndex].M = glm::translate(gScene[gSelectedIndex].M, translation);
         }
 
 
