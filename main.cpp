@@ -385,19 +385,20 @@ int main(int argc, char *args[])
 
     house.SetOverrideTexture(texHouse);
 
-    SceneItem first;
-    first.model = std::make_unique<Model>("resources/objects/house/BakerHouse.fbx");
-    first.overrideTex = texHouse;
-    first.model->SetOverrideTexture(texHouse);
-    first.M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-    gScene.push_back(std::move(first));
-    gSelectedIndex = 0;
+    SceneItem houseItem;
+    houseItem.model = std::make_unique<Model>("resources/objects/house/BakerHouse.fbx");
+    houseItem.overrideTex = texHouse;
+    houseItem.model->SetOverrideTexture(texHouse);
+    houseItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(-3.0f, -1.0f, 0.0f)); // más a la izquierda
+    gScene.push_back(std::move(houseItem));
 
-    GLuint texture1 = LoadTextureDevIL("resources/textures/container.jpg");
+    SceneItem backpackItem;
+    backpackItem.model = std::make_unique<Model>("resources/objects/backpack/backpack.obj");
+    backpackItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)); // detrás, un poco separado
+    gScene.push_back(std::move(backpackItem));
+
+    GLuint texture1 = LoadTextureDevIL("resources/textures/basic.jpg");
     if (!texture1) SDL_Log("No se pudo cargar container.jpg");
-
-    GLuint texture2 = LoadTextureDevIL("resources/textures/awesomeface.png");
-    if (!texture2) SDL_Log("No se pudo cargar awesomeface.png");
 
     shader.use();
     shader.setInt("texture1", 0);
@@ -407,7 +408,7 @@ int main(int argc, char *args[])
     SceneItem cubeItem;
     cubeItem.overrideTex = texture1;
     cubeItem.model = std::move(cube);
-    cubeItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
+    cubeItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)); // más a la derecha
     gScene.push_back(std::move(cubeItem));
 
     bool running = true;
@@ -662,8 +663,6 @@ int main(int argc, char *args[])
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
         shader.use();
 
@@ -706,7 +705,6 @@ int main(int argc, char *args[])
     }
 
     glDeleteTextures(1, &texture1);
-    glDeleteTextures(1, &texture2);
 
     // Cleanup
     SDL_GL_DestroyContext(glContext);
