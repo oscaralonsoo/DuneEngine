@@ -80,7 +80,16 @@ Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/osc
 - **Selección de objetos** por *raycast* y prueba de colisión AABB.  
 - **Cámara** con modo libre FPS, zoom con rueda, órbita y enfoque al objeto.  
 - **Transformaciones** básicas de traslación, rotación y escala.  
-- **Shader system** con carga desde archivo y *uniform helpers*.  
+- **Shader system** con carga desde archivo y *uniform helpers*.
+- - **Interfaz de usuario (UI)** con **ImGui**, que incluye:
+  - Ventanas acoplables (DockSpace)  
+  - **Jerarquía** de escena  
+  - **Inspector** con transformaciones, información del mesh y textura  
+  - **Consola** con logs filtrables y scroll automático  
+  - **Panel de configuración** con información de GPU, FPS y escena  
+  - **Toolbar** para añadir primitivas (como cubos)  
+  - **Menú superior** (File / View / Help) con enlaces a la documentación del GitHub  
+- **Logs** de GPU, versión OpenGL y errores de carga.
 
 ---
 
