@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include "camera.h" 
+#include "model.h"
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 static float deltaTime = 0.0f;
@@ -177,6 +178,14 @@ int main(int argc, char *args[])
 
     Shader shader("7.4.camera.vs", "7.4.camera.fs");
 
+    Shader modelShader("1.model_loading.vs", "1.model_loading.fs");
+
+    GLuint texHouse = LoadTextureDevIL("resources/objects/house/Baker_house.png");
+
+    Model house("resources/objects/house/BakerHouse.fbx");
+
+    house.SetOverrideTexture(texHouse);
+
     GLuint VAO = 0, VBO = 0;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -314,9 +323,26 @@ int main(int argc, char *args[])
             float angle = 20.0f * i; // grados
             model = glm::rotate(model, glm::radians(angle) + t, glm::vec3(1.0f, 0.3f, 0.5f));
             glUniformMatrix4fv(uModel, 1, GL_FALSE, glm::value_ptr(model));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            //glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
+        modelShader.use();
+
+        GLint mLoc = glGetUniformLocation(modelShader.ID, "model");
+        GLint vLoc = glGetUniformLocation(modelShader.ID, "view");
+        GLint pLoc = glGetUniformLocation(modelShader.ID, "projection");
+
+        // usa las mismas matrices view/projection que ya calculaste arriba
+        glUniformMatrix4fv(vLoc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(pLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+        // model matrix (ajusta la escala si se ve muy grande)
+        glm::mat4 M = glm::mat4(1.0f);
+        M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));  // bajarlo un poco
+        M = glm::scale(M, glm::vec3(1.0f));                   // si se ve gigante, usa 0.2f
+        glUniformMatrix4fv(mLoc, 1, GL_FALSE, glm::value_ptr(M));
+
+        house.Draw(modelShader);
 
         // INTERCAMBIAR buffers (mostrar en pantalla)
         SDL_GL_SwapWindow(window);
