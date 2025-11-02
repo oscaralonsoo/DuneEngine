@@ -630,12 +630,15 @@ int main(int argc, char *args[])
         }
 
         const bool* ks = SDL_GetKeyboardState(NULL);
-        if (rightMouseHeld) { // << opcional
-            if (ks[SDL_SCANCODE_W]) camera.ProcessKeyboard(FORWARD,  deltaTime);
-            if (ks[SDL_SCANCODE_S]) camera.ProcessKeyboard(BACKWARD, deltaTime);
-            if (ks[SDL_SCANCODE_A]) camera.ProcessKeyboard(LEFT,     deltaTime);
-            if (ks[SDL_SCANCODE_D]) camera.ProcessKeyboard(RIGHT,    deltaTime);
+        if (rightMouseHeld) {
+            float speedMultiplier = ks[SDL_SCANCODE_LSHIFT] || ks[SDL_SCANCODE_RSHIFT] ? 2.0f : 1.0f;
+
+            if (ks[SDL_SCANCODE_W]) camera.ProcessKeyboard(FORWARD,  deltaTime * speedMultiplier);
+            if (ks[SDL_SCANCODE_S]) camera.ProcessKeyboard(BACKWARD, deltaTime * speedMultiplier);
+            if (ks[SDL_SCANCODE_A]) camera.ProcessKeyboard(LEFT,     deltaTime * speedMultiplier);
+            if (ks[SDL_SCANCODE_D]) camera.ProcessKeyboard(RIGHT,    deltaTime * speedMultiplier);
         }
+
 
         if (gHasSelection && gSelectedIndex >= 0 && !rightMouseHeld) {
             float moveSpeed = 2.0f * deltaTime; // velocidad de movimiento
