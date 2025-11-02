@@ -48,6 +48,7 @@ Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/osc
 | Acción | Tecla / Ratón |
 |--------|----------------|
 | Mover cámara | **W / A / S / D** (con botón derecho pulsado) |
+| Aumentar velocidad de movimiento | **Mantener SHIFT** |
 | Mirar alrededor | **Botón derecho + mover ratón** |
 | Zoom | **Rueda del ratón** (con botón derecho pulsado) |
 | Orbitar alrededor del objeto | **ALT + Botón derecho** |
