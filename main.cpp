@@ -443,6 +443,16 @@ int main(int argc, char *args[])
                     camera.Position = gOrbitTarget - camera.Front * distance;
                     SDL_Log("Zoom to selected (F): distance %.2f", distance);
                 }
+                else if (gHasSelection && gSelectedIndex >= 0) {
+                    if (event.key.key == SDLK_UP) {
+                        gScene[gSelectedIndex].M =
+                            glm::scale(gScene[gSelectedIndex].M, glm::vec3(1.05f)); // aumentar 5%
+                    }
+                    else if (event.key.key == SDLK_DOWN) {
+                        gScene[gSelectedIndex].M =
+                            glm::scale(gScene[gSelectedIndex].M, glm::vec3(0.95f)); // reducir 5%
+                    }
+                }
                 break;
 
             case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
