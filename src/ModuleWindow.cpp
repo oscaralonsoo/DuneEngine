@@ -50,6 +50,13 @@ bool ModuleWindow::Awake()
         return false;
     }
 
+    SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_TEXT, true);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_BEGIN, true);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_COMPLETE, true);
+
+    SDL_SetWindowRelativeMouseMode(window, false);
+
     // --- Load OpenGL Functions ---
     // Initialize GLAD to load OpenGL function pointers
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress)))
@@ -79,12 +86,12 @@ bool ModuleWindow::PreUpdate()
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
-            //app->running = false;
+            // app->running = false;
             break;
         case SDL_EVENT_KEY_DOWN:
             if (event.key.key == SDLK_ESCAPE)
             {
-                //app->running = false;
+                // app->running = false;
             }
             else if (event.key.key == SDLK_1)
             {
