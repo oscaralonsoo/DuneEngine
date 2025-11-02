@@ -51,7 +51,17 @@ public:
     }
 
     void SetOverrideTexture(unsigned int tex) { overrideTexture = tex; }
-    
+
+    // Crea un Model a partir de un único Mesh construido en memoria
+    Model(const std::vector<Vertex>& verts,
+        const std::vector<unsigned int>& idx,
+        const std::vector<Texture>& tex = {},
+        bool gamma = false)
+        : gammaCorrection(gamma)
+    {
+        meshes.emplace_back(verts, idx, tex);
+    }
+
 private:
 
     unsigned int overrideTexture = 0; 

@@ -81,6 +81,74 @@ static float kCubeVertices[] = {
     -0.5f, 0.5f,-0.5f, 0.0f,1.0f
 };
 
+static std::unique_ptr<Model> CreateCubeModel(float size = 1.0f, GLuint initialTex = 0)
+{
+    // kCubeVertices tiene 36 vértices (6 caras * 2 tri * 3 vértices) con (pos.xyz, uv)
+    // Normales por cara (back, front, left, right, bottom, top) en el mismo orden del array:
+    const glm::vec3 faceNormals[6] = {
+        { 0,  0, -1}, // back
+        { 0,  0,  1}, // front
+        {-1,  0,  0}, // left
+        { 1,  0,  0}, // right
+        { 0, -1,  0}, // bottom
+        { 0,  1,  0}  // top
+    };
+
+    std::vector<Vertex> verts;
+    verts.reserve(36);
+
+    for (int face = 0; face < 6; ++face) {
+        glm::vec3 n = faceNormals[face];
+        for (int i = 0; i < 6; ++i) { // 6 vértices por cara
+            int base = (face * 6 + i) * 5;
+            Vertex v{};
+            // posición
+            v.Position = glm::vec3(
+                kCubeVertices[base + 0] * size,
+                kCubeVertices[base + 1] * size,
+                kCubeVertices[base + 2] * size
+            );
+            // normal (plana por cara)
+            v.Normal = n;
+            // uv
+            v.TexCoords = glm::vec2(
+                kCubeVertices[base + 3],
+                kCubeVertices[base + 4]
+            );
+            // tangente/bitangente “dummy” (opcional)
+            v.Tangent   = glm::vec3(1,0,0);
+            v.Bitangent = glm::vec3(0,1,0);
+            // huesos a cero
+            std::fill(std::begin(v.m_BoneIDs), std::end(v.m_BoneIDs), 0);
+            std::fill(std::begin(v.m_Weights), std::end(v.m_Weights), 0.0f);
+
+            verts.push_back(v);
+        }
+    }
+
+    // Índices 0..35 (coincide con el orden del array)
+    std::vector<unsigned int> idx(36);
+    for (unsigned int i = 0; i < 36; ++i) idx[i] = i;
+
+    // Textura opcional inicial (como texture_diffuse1)
+    std::vector<Texture> tex;
+    if (initialTex != 0) {
+        Texture t{};
+        t.id   = initialTex;
+        t.type = "texture_diffuse";
+        t.path = "__cube_init__";
+        tex.push_back(t);
+    }
+
+    // Usa el nuevo ctor de Model (desde memoria)
+    auto m = std::make_unique<Model>(verts, idx, tex, /*gamma=*/false);
+
+    // Además, para que funcione el override por drag&drop igual que la casa:
+    if (initialTex != 0) m->SetOverrideTexture(initialTex);
+
+    return m;
+}
+
 // Convierte (mouseX, mouseY) en un rayo en espacio mundial
 static void BuildRayFromScreen(int mouseX, int mouseY, int width, int height,
                                const glm::mat4& view, const glm::mat4& proj,
@@ -302,26 +370,6 @@ int main(int argc, char *args[])
     gScene.push_back(std::move(first));
     gSelectedIndex = 0;
 
-    GLuint VAO = 0, VBO = 0;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(kCubeVertices), kCubeVertices, GL_STATIC_DRAW);
-
-    // location 0 -> vec3 position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // location 1 -> vec2 uv
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     GLuint texture1 = LoadTextureDevIL("resources/textures/container.jpg");
     if (!texture1) SDL_Log("No se pudo cargar container.jpg");
 
@@ -332,18 +380,12 @@ int main(int argc, char *args[])
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
 
-    glm::vec3 cubePositions[] = {
-        { 0.0f,  0.0f,  0.0f},
-        { 2.0f,  5.0f, -15.0f},
-        {-1.5f, -2.2f, -2.5f},
-        {-3.8f, -2.0f, -12.3f},
-        { 2.4f, -0.4f, -3.5f},
-        {-1.7f,  3.0f, -7.5f},
-        { 1.3f, -2.0f, -2.5f},
-        { 1.5f,  2.0f, -2.5f},
-        { 1.5f,  0.2f, -1.5f},
-        {-1.3f,  1.0f, -1.5f}
-    };
+    auto cube = CreateCubeModel(1.0f, texture1);
+    SceneItem cubeItem;
+    cubeItem.overrideTex = texture1;
+    cubeItem.model = std::move(cube);
+    cubeItem.M = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
+    gScene.push_back(std::move(cubeItem));
 
     bool running = true;
 
@@ -386,6 +428,20 @@ int main(int argc, char *args[])
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                 } else if (event.key.key == SDLK_LALT || event.key.key == SDLK_RALT) {
                     altHeld = true;
+                }
+                else if (event.key.scancode == SDL_SCANCODE_F && gHasSelection && gSelectedIndex >= 0)
+                {
+                    AABB box = ComputeModelAABB(*gScene[gSelectedIndex].model, gScene[gSelectedIndex].M);
+                    gOrbitTarget = 0.5f * (box.min + box.max);
+
+                    float radius = glm::length(box.max - box.min) * 0.5f;
+                    radius = glm::max(radius, 0.1f);
+
+                    float distance = radius / tan(glm::radians(camera.Zoom * 0.5f));
+                    gOrbitDistance = distance;
+
+                    camera.Position = gOrbitTarget - camera.Front * distance;
+                    SDL_Log("Zoom to selected (F): distance %.2f", distance);
                 }
                 break;
 
@@ -557,17 +613,6 @@ int main(int argc, char *args[])
         glUniformMatrix4fv(uView, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(uProj, 1, GL_FALSE, glm::value_ptr(projection));
 
-
-        glBindVertexArray(VAO);
-        for (unsigned int i = 0; i < 10; ++i) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i; // grados
-            model = glm::rotate(model, glm::radians(angle) + t, glm::vec3(1.0f, 0.3f, 0.5f));
-            glUniformMatrix4fv(uModel, 1, GL_FALSE, glm::value_ptr(model));
-            //glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
         modelShader.use();
         GLint mLoc = glGetUniformLocation(modelShader.ID, "model");
         GLint vLoc = glGetUniformLocation(modelShader.ID, "view");
@@ -586,9 +631,6 @@ int main(int argc, char *args[])
         SDL_GL_SwapWindow(window);
 
     }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
 
     glDeleteTextures(1, &texture1);
     glDeleteTextures(1, &texture2);
