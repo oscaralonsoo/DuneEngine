@@ -49,8 +49,22 @@ public:
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
+    
+    void SetOverrideTexture(unsigned int tex)
+    {
+        overrideTexture = tex;
 
-    void SetOverrideTexture(unsigned int tex) { overrideTexture = tex; }
+        // Fuerza la textura en todas las meshes ya construidas
+        for (auto& m : meshes) {
+            m.textures.clear();
+            Texture t{};
+            t.id   = tex;
+            t.type = "texture_diffuse";
+            t.path = "__override__";
+            m.textures.push_back(t);
+        }
+    }
+
 
     // Crea un Model a partir de un único Mesh construido en memoria
     Model(const std::vector<Vertex>& verts,

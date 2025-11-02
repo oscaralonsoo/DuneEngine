@@ -277,6 +277,29 @@ static int AddModelFromFile(const char* path)
     return (int)gScene.size()-1;
 }
 
+static int PickItemAt(SDL_Window* window, int mx, int my)
+{
+    int w, h; SDL_GetWindowSizeInPixels(window, &w, &h);
+
+    glm::mat4 view = camera.GetViewMatrix();
+    float aspect   = (h > 0) ? (float)w/(float)h : 4.0f/3.0f;
+    glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), aspect, 0.1f, 100.0f);
+
+    glm::vec3 ro, rd;
+    BuildRayFromScreen(mx, my, w, h, view, proj, ro, rd);
+
+    float bestT = FLT_MAX;
+    int bestIdx = -1;
+    for (int i = 0; i < (int)gScene.size(); ++i) {
+        AABB box = ComputeModelAABB(*gScene[i].model, gScene[i].M);
+        float tHit;
+        if (RayIntersectsAABB(ro, rd, box, &tHit) && tHit < bestT) {
+            bestT = tHit; bestIdx = i;
+        }
+    }
+    return bestIdx;
+}
+
 int main(int argc, char *args[])
 {
     // --- Initialize SDL ---
@@ -561,36 +584,47 @@ int main(int argc, char *args[])
                 }
                 break;
             case SDL_EVENT_DROP_FILE:
-                {
-                    const char* dropped = event.drop.data;
-                    if (!dropped) break;
-                    std::string path = dropped;
-                    SDL_Log("Dropped: %s", path.c_str());
+                const char* dropped = event.drop.data;
+                if (!dropped) break;
+                std::string path = dropped;
+                SDL_Log("Dropped: %s", path.c_str());
 
-                    if (IsModelPath(path)) {
-                        int idx = AddModelFromFile(path.c_str());
-                        if (idx >= 0) {
-                            gSelectedIndex = idx;
-                            // centra orbita en la AABB del nuevo modelo
-                            AABB box = ComputeModelAABB(*gScene[idx].model, gScene[idx].M); // tu función ya existe :contentReference[oaicite:4]{index=4}
-                            gHasSelection = true;
-                            gOrbitTarget  = 0.5f * (box.min + box.max);
-                            gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
-                        }
-                    } else if (IsImagePath(path)) {
-                        GLuint tex = LoadTextureDevIL(path.c_str(), /*mips=*/true);
-                        if (tex) {
-                            if (gSelectedIndex >= 0) {
-                                gScene[gSelectedIndex].overrideTex = tex;
-                                gScene[gSelectedIndex].model->SetOverrideTexture(tex); // soportado por tu Model :contentReference[oaicite:5]{index=5}
-                            } else {
-                                SDL_Log("Textura soltada sin selección; crea/selecciona un modelo para aplicarla.");
-                            }
-                        }
-                    } else {
-                        SDL_Log("Tipo de archivo no soportado para drop.");
+                if (IsModelPath(path)) {
+                    int idx = AddModelFromFile(path.c_str());
+                    if (idx >= 0) {
+                        gSelectedIndex = idx;
+                        AABB box = ComputeModelAABB(*gScene[idx].model, gScene[idx].M);
+                        gHasSelection = true;
+                        gOrbitTarget  = 0.5f * (box.min + box.max);
+                        gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
                     }
-                } break;
+                } else if (IsImagePath(path)) {
+                    // 1) Cargamos textura
+                    GLuint tex = LoadTextureDevIL(path.c_str(), /*mips=*/true);
+                    if (tex) {
+                        // 2) Averiguamos el objeto bajo el cursor de drop
+                        //    SDL3 expone event.drop.x / event.drop.y en coords de ventana.
+                        int dropX = event.drop.x;
+                        int dropY = event.drop.y;
+
+                        int idx = PickItemAt(window, dropX, dropY);
+
+                        // 3) Fallback al seleccionado si no había ninguno bajo el cursor
+                        if (idx < 0 && gSelectedIndex >= 0) idx = gSelectedIndex;
+
+                        if (idx >= 0) {
+                            gScene[idx].model->SetOverrideTexture(tex); // ahora sí fuerza el uso
+                            gSelectedIndex = idx;
+                            gHasSelection  = true;
+                            SDL_Log("Textura aplicada al item %d", idx);
+                        } else {
+                            SDL_Log("Textura soltada sin ningún objeto debajo.");
+                        }
+                    }
+                } else {
+                    SDL_Log("Tipo de archivo no soportado para drop.");
+                }
+                break;
 
             }
         }
@@ -612,8 +646,8 @@ int main(int argc, char *args[])
             if (ks[SDL_SCANCODE_S]) translation.y -= moveSpeed;
             if (ks[SDL_SCANCODE_A]) translation.x -= moveSpeed;
             if (ks[SDL_SCANCODE_D]) translation.x += moveSpeed;
-            if (ks[SDL_SCANCODE_Q]) translation.z -= moveSpeed; // hacia "dentro"
-            if (ks[SDL_SCANCODE_E]) translation.z += moveSpeed; // hacia "fuera"
+            if (ks[SDL_SCANCODE_Q]) translation.z -= moveSpeed; 
+            if (ks[SDL_SCANCODE_E]) translation.z += moveSpeed; 
 
             // Aplica la traslación al objeto seleccionado
             gScene[gSelectedIndex].M = glm::translate(gScene[gSelectedIndex].M, translation);
