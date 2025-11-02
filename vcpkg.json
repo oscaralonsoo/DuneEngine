@@ -1,5 +1,6 @@
 {
   "dependencies": [
+    "devil",
     "fmt",
     "glad",
     "glm",
@@ -7,11 +8,11 @@
       "name": "imgui",
       "features": [
         "docking-experimental",
-        "sdl3-binding",
-        "opengl3-binding"
+        "opengl3-binding",
+        "sdl3-binding"
       ]
     },
     "sdl3",
-    "devil"
+    "assimp"
   ]
 }

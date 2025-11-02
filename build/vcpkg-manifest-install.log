@@ -1,38 +1,60 @@
 Detecting compiler hash for triplet x64-windows...
 Compiler found: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/bin/Hostx64/x64/cl.exe
 The following packages are already installed:
+    assimp:x64-windows@6.0.2#1 -- git+https://github.com/microsoft/vcpkg@c5281ba1740ef8aeff54f666fbe1c60c0deac076
+    devil[core,jasper,lcms,libjpeg,libpng,openexr,tiff]:x64-windows@1.8.0#13 -- git+https://github.com/microsoft/vcpkg@91214d2b1967b13ee227dc84903a2178aae9714d
+  * draco:x64-windows@1.5.7 -- git+https://github.com/microsoft/vcpkg@06799add74da6e9e4634e4c7f27b82b1149a8bb6
   * egl-registry:x64-windows@2024-01-25 -- git+https://github.com/microsoft/vcpkg@d883db43133dd223c4ffdbef4193943f6784d43a
     fmt:x64-windows@12.0.0 -- git+https://github.com/microsoft/vcpkg@c5dcb90bc1da6e7ba3d6e62e62a0b7df3192f51c
     glad[core,loader]:x64-windows@0.1.36 -- git+https://github.com/microsoft/vcpkg@fa93b14c1581057e1d14650f5f15c9b0757dd548
     glm:x64-windows@1.0.1#3 -- git+https://github.com/microsoft/vcpkg@f8b09027afe97c717e95bd81d1d4f37c057d1c78
+  * imath:x64-windows@3.2.2 -- git+https://github.com/microsoft/vcpkg@b167f9479ce8752a2839c39ee8f52c11af4c0266
+    imgui[core,docking-experimental,opengl3-binding,sdl3-binding]:x64-windows@1.91.9 -- git+https://github.com/microsoft/vcpkg@cecad336497c19491c07fead1897ac139a173ed2
+  * jasper:x64-windows@4.2.8 -- git+https://github.com/microsoft/vcpkg@63419e881eced5c0d8d125ab9f888561a1415ec5
+  * jhasse-poly2tri:x64-windows@2023-12-27#2 -- git+https://github.com/microsoft/vcpkg@d94a24dde4173f85d1aaeb16b3eecc71b100b5be
+  * kubazip:x64-windows@0.3.5 -- git+https://github.com/microsoft/vcpkg@f6a191f1346675cf2a6683141e8a24f3052a1d27
+  * lcms:x64-windows@2.17 -- git+https://github.com/microsoft/vcpkg@e2e326389c873aa7ade1f31337e5df8627147147
+  * libdeflate[compression,core,decompression,gzip,zlib]:x64-windows@1.24 -- git+https://github.com/microsoft/vcpkg@57bfea438c023e4d0ca593f215a5f81eaa390151
+  * libjpeg-turbo:x64-windows@3.1.2 -- git+https://github.com/microsoft/vcpkg@26b02f049c1cbfc9d996c7b56cfd1f4598f6f158
+  * liblzma:x64-windows@5.8.1 -- git+https://github.com/microsoft/vcpkg@55eb3803f1d0388aebca8fd293963721bbf0092c
+  * libpng:x64-windows@1.6.50 -- git+https://github.com/microsoft/vcpkg@54b6eefbef1cb0f477c6eb54e2236badd140feea
+  * minizip:x64-windows@1.3.1#1 -- git+https://github.com/microsoft/vcpkg@bb8016593efa5220d1b877c27cd8612862c13d81
+  * openexr:x64-windows@3.3.5 -- git+https://github.com/microsoft/vcpkg@c00d8c63d6ef1e7144fbb90c7e629043c4b95a91
   * opengl-registry:x64-windows@2024-02-10#1 -- git+https://github.com/microsoft/vcpkg@22f7aa58ee78c9f0db904b6251e9265f2be26f9d
+  * polyclipping:x64-windows@6.4.2#13 -- git+https://github.com/microsoft/vcpkg@2388298c7ad673550c7492454666dd3a34ada895
+  * pugixml:x64-windows@1.15#1 -- git+https://github.com/microsoft/vcpkg@e210d4650721b32c1e83bf0da6a0cf4c145bbbd9
+  * rapidjson:x64-windows@2025-02-26 -- git+https://github.com/microsoft/vcpkg@4297a243aa0e3ed6c3a4c307579914593da5751d
     sdl3:x64-windows@3.2.24 -- git+https://github.com/microsoft/vcpkg@adcd29385eeee94cb1f5c936eaa6c37d58c48986
+  * stb:x64-windows@2024-07-29#1 -- git+https://github.com/microsoft/vcpkg@c362152d1d02973e7b1ce777960f8a6876656560
+  * tiff[core,jpeg,lzma,zip]:x64-windows@4.7.1 -- git+https://github.com/microsoft/vcpkg@9391305288677bb3959bf22a08218a61ffec0be0
+  * utfcpp:x64-windows@4.0.6 -- git+https://github.com/microsoft/vcpkg@f73420a80f760312a45c40fce2b350009991c674
   * vcpkg-cmake:x64-windows@2024-04-23 -- git+https://github.com/microsoft/vcpkg@e74aa1e8f93278a8e71372f1fa08c3df420eb840
   * vcpkg-cmake-config:x64-windows@2024-05-23 -- git+https://github.com/microsoft/vcpkg@97a63e4bc1a17422ffe4eff71da53b4b561a7841
-The following packages will be rebuilt:
-    imgui[core,docking-experimental]:x64-windows@1.91.9 -- git+https://github.com/microsoft/vcpkg@cecad336497c19491c07fead1897ac139a173ed2
-Restored 0 package(s) from C:\Users\alons\AppData\Local\vcpkg\archives in 53.8 us. Use --debug to see more details.
-Removing 1/2 imgui:x64-windows
-Elapsed time to handle imgui:x64-windows: 5.56 ms
-Installing 2/2 imgui[core,docking-experimental]:x64-windows@1.91.9...
-Building imgui[core,docking-experimental]:x64-windows@1.91.9...
-C:\Users\alons\AppData\Local\vcpkg\registries\git-trees\cecad336497c19491c07fead1897ac139a173ed2: info: installing from git registry git+https://github.com/microsoft/vcpkg@cecad336497c19491c07fead1897ac139a173ed2
--- Note: imgui only supports static library linkage. Building static library.
-Downloading https://github.com/ocornut/imgui/archive/v1.91.9-docking.tar.gz -> ocornut-imgui-v1.91.9-docking.tar.gz
-Successfully downloaded ocornut-imgui-v1.91.9-docking.tar.gz
--- Extracting source C:/Users/alons/Documents/vcpkg/downloads/ocornut-imgui-v1.91.9-docking.tar.gz
--- Using source at C:/Users/alons/Documents/vcpkg/buildtrees/imgui/src/.9-docking-449e592d6e.clean
--- Configuring x64-windows
--- Building x64-windows-dbg
--- Building x64-windows-rel
--- Installing: C:/Users/alons/Documents/vcpkg/packages/imgui_x64-windows/share/imgui/copyright
--- Performing post-build validation
-Starting submission of imgui[core,docking-experimental]:x64-windows@1.91.9 to 1 binary cache(s) in the background
-Elapsed time to handle imgui:x64-windows: 5.5 s
-imgui:x64-windows package ABI: 84025f7ed0ff98b868727cfe623eb968a412c55c9eb2083d16dd7aa000694484
-Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
-Packages installed in this vcpkg installation declare the following licenses:
-MIT
+  * vcpkg-cmake-get-vars:x64-windows@2025-05-29 -- git+https://github.com/microsoft/vcpkg@d6510f888dd526c7828f6b973349e7f30be51254
+  * vcpkg-tool-meson:x64-windows@1.9.0#2 -- git+https://github.com/microsoft/vcpkg@e367b6c164136bca2cb53f0b8308932f0ccd33b9
+  * zlib:x64-windows@1.3.1 -- git+https://github.com/microsoft/vcpkg@3f05e04b9aededb96786a911a16193cdb711f0c9
+assimp provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(assimp CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE assimp::assimp)
+
+assimp provides pkg-config modules:
+
+  # Import various well-known 3D model formats in an uniform manner.
+  assimp
+
+devil provides pkg-config modules:
+
+  # Developer's Image Library - DevIL part (just image load/save)
+  DevIL
+
+  # Developer's Image Library - ILU part (image library utilities)
+  ILU
+
+  # Developer's Image Library - ILUT part (connection to higher level libraries)
+  ILUT
+
 The package fmt provides CMake targets:
 
     find_package(fmt CONFIG REQUIRED)
@@ -57,17 +79,15 @@ The package glm provides CMake targets:
     find_package(glm CONFIG REQUIRED)
     target_link_libraries(main PRIVATE glm::glm-header-only)
 
+sdl3 provides CMake targets:
+
+  find_package(SDL3 CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE SDL3::SDL3)
+
 imgui provides CMake targets:
 
   # this is heuristically generated, and may not be correct
   find_package(imgui CONFIG REQUIRED)
   target_link_libraries(main PRIVATE imgui::imgui)
 
-sdl3 provides CMake targets:
-
-  find_package(SDL3 CONFIG REQUIRED)
-  target_link_libraries(main PRIVATE SDL3::SDL3)
-
-Waiting for 1 remaining binary cache submissions...
-Completed submission of imgui[core,docking-experimental]:x64-windows@1.91.9 to 1 binary cache(s) in 860 ms (1/1)
-All requested installations completed successfully in: 5.5 s
+All requested installations completed successfully in: 1.09 ms
