@@ -8,12 +8,13 @@ find_package(glad CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(DevIL REQUIRED)
+find_package(assimp REQUIRED)
 
 add_executable(DuneEngine 
     main.cpp
 )
 
-target_link_libraries(DuneEngine PRIVATE fmt::fmt SDL3::SDL3 glad::glad glm::glm imgui::imgui DevIL::IL)
+target_link_libraries(DuneEngine PRIVATE fmt::fmt SDL3::SDL3 glad::glad glm::glm imgui::imgui DevIL::IL assimp::assimp)
 
 add_custom_command(TARGET DuneEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
