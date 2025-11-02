@@ -12,9 +12,18 @@
 #include "camera.h" 
 #include "model.h"
 
+struct AABB { glm::vec3 min, max; };
+
+static glm::vec3 gOrbitTarget = glm::vec3(0.0f);
+static bool      gHasSelection = false;
+static bool      gOrbiting = false;        // ALT + RMB
+static float     gOrbitDistance = 5.0f;    // se ajusta al seleccionar
+
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 static float deltaTime = 0.0f;
 static float lastFrame = 0.0f;
+bool rightMouseHeld = false;
+bool altHeld = false;
 
 static float kCubeVertices[] = {
     // back face
@@ -61,6 +70,39 @@ static float kCubeVertices[] = {
     -0.5f, 0.5f,-0.5f, 0.0f,1.0f
 };
 
+// Convierte (mouseX, mouseY) en un rayo en espacio mundial
+static void BuildRayFromScreen(int mouseX, int mouseY, int width, int height,
+                               const glm::mat4& view, const glm::mat4& proj,
+                               glm::vec3& outOrigin, glm::vec3& outDir)
+{
+    // NDC en OpenGL: z en [-1, 1]
+    float x = (2.0f * mouseX) / (float)width - 1.0f;
+    float y = 1.0f - (2.0f * mouseY) / (float)height;
+
+    glm::mat4 invVP = glm::inverse(proj * view);
+
+    glm::vec4 pNear = invVP * glm::vec4(x, y, -1.0f, 1.0f);
+    glm::vec4 pFar  = invVP * glm::vec4(x, y,  1.0f, 1.0f);
+    pNear /= pNear.w;
+    pFar  /= pFar.w;
+
+    outOrigin = glm::vec3(pNear);
+    outDir    = glm::normalize(glm::vec3(pFar - pNear));
+}
+
+// Intersección rayo–AABB (slab method). Devuelve true si hay intersección
+static bool RayIntersectsAABB(const glm::vec3& ro, const glm::vec3& rd, const AABB& box, float* tHit = nullptr)
+{
+    glm::vec3 t1 = (box.min - ro) / rd;
+    glm::vec3 t2 = (box.max - ro) / rd;
+    glm::vec3 tmin = glm::min(t1, t2);
+    glm::vec3 tmax = glm::max(t1, t2);
+    float tEnter = glm::max(glm::max(tmin.x, tmin.y), tmin.z);
+    float tExit  = glm::min(glm::min(tmax.x, tmax.y), tmax.z);
+    if (tExit >= glm::max(tEnter, 0.0f)) { if (tHit) *tHit = tEnter; return true; }
+    return false;
+}
+
 static GLuint LoadTextureDevIL(const char* path, bool genMipmaps = true) {
     // 1) Leer el archivo en memoria
     std::ifstream f(path, std::ios::binary);
@@ -105,6 +147,21 @@ static GLuint LoadTextureDevIL(const char* path, bool genMipmaps = true) {
     return tex;
 }
 
+static AABB ComputeModelAABB(const Model& m, const glm::mat4& modelMatrix)
+{
+    AABB box;
+    box.min = glm::vec3( FLT_MAX);
+    box.max = glm::vec3(-FLT_MAX);
+
+    for (const auto& mesh : m.meshes) {
+        for (const auto& v : mesh.vertices) {
+            glm::vec4 wp = modelMatrix * glm::vec4(v.Position, 1.0f);
+            box.min = glm::min(box.min, glm::vec3(wp));
+            box.max = glm::max(box.max, glm::vec3(wp));
+        }
+    }
+    return box;
+}
 
 int main(int argc, char *args[])
 {
@@ -144,7 +201,7 @@ int main(int argc, char *args[])
         return -1;
     }
 
-    SDL_SetWindowRelativeMouseMode(window, true);
+    SDL_SetWindowRelativeMouseMode(window, false);
 
     // --- Load OpenGL Functions ---
     // Initialize GLAD to load OpenGL function pointers
@@ -247,44 +304,140 @@ int main(int argc, char *args[])
             case SDL_EVENT_QUIT:
                 running = false;
                 break;
+
             case SDL_EVENT_KEY_DOWN:
-                if (event.key.key == SDLK_ESCAPE)
-                {
+                if (event.key.key == SDLK_ESCAPE) {
                     running = false;
+                    // por si sales mientras está capturado:
+                    rightMouseHeld= false;
+                    SDL_SetWindowRelativeMouseMode(window, false);
+                } else if (event.key.key == SDLK_1) {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                } else if (event.key.key == SDLK_2) {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                 }
-                else if (event.key.key == SDLK_1)
-                {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-                }
-                else if (event.key.key == SDLK_2)
-                {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Fill mode
+                if (event.key.key == SDLK_ESCAPE) {
+                    running = false;
+                    rightMouseHeld = false;
+                    gOrbiting = false;
+                    SDL_SetWindowRelativeMouseMode(window, false);
+                } else if (event.key.key == SDLK_1) {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                } else if (event.key.key == SDLK_2) {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                } else if (event.key.key == SDLK_LALT || event.key.key == SDLK_RALT) {
+                    altHeld = true;
                 }
                 break;
+
             case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+            {
                 int w, h;
                 SDL_GetWindowSizeInPixels(window, &w, &h);
                 glViewport(0, 0, w, h);
+            } break;
+
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    // Construye matrices actuales
+                    int w, h; SDL_GetWindowSizeInPixels(window, &w, &h);
+                    glm::mat4 view = camera.GetViewMatrix();
+                    float aspect = (h > 0) ? (float)w/(float)h : 4.0f/3.0f;
+                    glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), aspect, 0.1f, 100.0f);
+
+                    // La misma model matrix con la que dibujas la casa
+                    glm::mat4 M = glm::mat4(1.0f);
+                    M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
+                    M = glm::scale(M, glm::vec3(1.0f));
+
+                    // AABB en mundo del modelo
+                    AABB houseBox = ComputeModelAABB(house, M);
+
+                    // Rayo desde cursor
+                    glm::vec3 ro, rd;
+                    BuildRayFromScreen(event.button.x, event.button.y, w, h, view, proj, ro, rd);
+
+                    float tHit;
+                    if (RayIntersectsAABB(ro, rd, houseBox, &tHit)) {
+                        gHasSelection = true;
+                        gOrbitTarget = 0.5f * (houseBox.min + houseBox.max); // centro de la AABB
+                        gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
+                        SDL_Log("Seleccionada la casa (dist=%.2f)", gOrbitDistance);
+                    } else {
+                        gHasSelection = false;
+                    }
+                }
+                else if (event.button.button == SDL_BUTTON_RIGHT) {
+                    if (altHeld && gHasSelection) {
+                        gOrbiting = true;
+                        SDL_SetWindowRelativeMouseMode(window, true);   // captura para arrastrar sin límites
+                    } else {
+                        rightMouseHeld = true;                          // tu modo look FPS existente
+                        SDL_SetWindowRelativeMouseMode(window, true);
+                    }
+                }
                 break;
-                case SDL_EVENT_MOUSE_MOTION: {
+
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+                if (event.button.button == SDL_BUTTON_RIGHT) {
+                    gOrbiting = false;
+                    rightMouseHeld = false;
+                    SDL_SetWindowRelativeMouseMode(window, false);
+                }
+                break;
+
+            case SDL_EVENT_MOUSE_MOTION:
+                if (gOrbiting && gHasSelection) {
                     float xoffset = (float)event.motion.xrel;
                     float yoffset = (float)event.motion.yrel;
-                    camera.ProcessMouseMovement(xoffset, -yoffset); // invertir Y como en el tutorial
-                } break;
 
-                case SDL_EVENT_MOUSE_WHEEL: {
-                    camera.ProcessMouseScroll((float)event.wheel.y); // rueda ↑ acerca, ↓ aleja
-                } break;
+                    // Actualiza yaw/pitch
+                    camera.ProcessMouseMovement(xoffset, -yoffset);
 
+                    // Recoloca la cámara para orbitar alrededor del target
+                    // (Front ya viene de yaw/pitch en Camera)
+                    camera.Position = gOrbitTarget - camera.Front * gOrbitDistance;
+                }
+                else if (rightMouseHeld) {
+                    float xoffset = (float)event.motion.xrel;
+                    float yoffset = (float)event.motion.yrel;
+                    camera.ProcessMouseMovement(xoffset, -yoffset);
+                }
+                break;
+
+            case SDL_EVENT_MOUSE_WHEEL:
+                if (gOrbiting && gHasSelection) {
+                    // Dolly in/out cambiando la distancia orbital
+                    float factor = 1.0f - 0.1f * (float)event.wheel.y; // 10% por notch
+                    gOrbitDistance = glm::clamp(gOrbitDistance * factor, 0.5f, 200.0f);
+                    camera.Position = gOrbitTarget - camera.Front * gOrbitDistance;
+                } else if (rightMouseHeld) {
+                    camera.ProcessMouseScroll((float)event.wheel.y);
+                }
+                break;
+
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                rightMouseHeld = false;
+                gOrbiting = false;
+                SDL_SetWindowRelativeMouseMode(window, false);
+                break;
+
+            case SDL_EVENT_KEY_UP:
+                if (event.key.key == SDLK_LALT || event.key.key == SDLK_RALT) {
+                    altHeld = false;
+                }
+                break;
             }
         }
 
         const bool* ks = SDL_GetKeyboardState(NULL);
-        float speed = 2.5f * deltaTime; // delta ya lo calculas
-        if (ks[SDL_SCANCODE_W]) camera.ProcessKeyboard(FORWARD,  deltaTime);
-        if (ks[SDL_SCANCODE_S]) camera.ProcessKeyboard(BACKWARD, deltaTime);
-        if (ks[SDL_SCANCODE_A]) camera.ProcessKeyboard(LEFT,     deltaTime);
-        if (ks[SDL_SCANCODE_D]) camera.ProcessKeyboard(RIGHT,    deltaTime);
+        if (rightMouseHeld) { // << opcional
+            if (ks[SDL_SCANCODE_W]) camera.ProcessKeyboard(FORWARD,  deltaTime);
+            if (ks[SDL_SCANCODE_S]) camera.ProcessKeyboard(BACKWARD, deltaTime);
+            if (ks[SDL_SCANCODE_A]) camera.ProcessKeyboard(LEFT,     deltaTime);
+            if (ks[SDL_SCANCODE_D]) camera.ProcessKeyboard(RIGHT,    deltaTime);
+        }
+
 
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
