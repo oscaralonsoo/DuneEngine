@@ -59,7 +59,17 @@ build CMakeFiles\DuneEngine.dir\main.cpp.obj: CXX_COMPILER__DuneEngine_unscanned
   TARGET_COMPILE_PDB = CMakeFiles\DuneEngine.dir\
   TARGET_PDB = DuneEngine.pdb
 
-build CMakeFiles\DuneEngine.dir\src\Application.cpp.obj: CXX_COMPILER__DuneEngine_unscanned_Debug C$:\Users\alons\Documents\GitHub\DuneEngine\src\Application.cpp || cmake_object_order_depends_target_DuneEngine
+build CMakeFiles\DuneEngine.dir\src\Engine.cpp.obj: CXX_COMPILER__DuneEngine_unscanned_Debug C$:\Users\alons\Documents\GitHub\DuneEngine\src\Engine.cpp || cmake_object_order_depends_target_DuneEngine
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED
+  FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 /utf-8
+  INCLUDES = -IC:\Users\alons\Documents\GitHub\DuneEngine\src -external:IC:\Users\alons\Documents\GitHub\DuneEngine\build\vcpkg_installed\x64-windows\include -external:IC:\Users\alons\Documents\GitHub\DuneEngine\build\vcpkg_installed\x64-windows\include\IL -external:W0
+  OBJECT_DIR = CMakeFiles\DuneEngine.dir
+  OBJECT_FILE_DIR = CMakeFiles\DuneEngine.dir\src
+  TARGET_COMPILE_PDB = CMakeFiles\DuneEngine.dir\
+  TARGET_PDB = DuneEngine.pdb
+
+build CMakeFiles\DuneEngine.dir\src\ModuleRender.cpp.obj: CXX_COMPILER__DuneEngine_unscanned_Debug C$:\Users\alons\Documents\GitHub\DuneEngine\src\ModuleRender.cpp || cmake_object_order_depends_target_DuneEngine
   CONFIG = Debug
   DEFINES = -DFMT_SHARED
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 /utf-8
@@ -87,7 +97,7 @@ build CMakeFiles\DuneEngine.dir\src\ModuleWindow.cpp.obj: CXX_COMPILER__DuneEngi
 #############################################
 # Link the executable DuneEngine.exe
 
-build DuneEngine.exe: CXX_EXECUTABLE_LINKER__DuneEngine_Debug CMakeFiles\DuneEngine.dir\main.cpp.obj CMakeFiles\DuneEngine.dir\src\Application.cpp.obj CMakeFiles\DuneEngine.dir\src\ModuleWindow.cpp.obj | vcpkg_installed\x64-windows\debug\lib\fmtd.lib vcpkg_installed\x64-windows\debug\lib\glad.lib vcpkg_installed\x64-windows\debug\lib\glm.lib vcpkg_installed\x64-windows\debug\lib\imguid.lib vcpkg_installed\x64-windows\debug\lib\DevIL.lib vcpkg_installed\x64-windows\debug\lib\assimp-vc143-mtd.lib vcpkg_installed\x64-windows\debug\lib\SDL3.lib
+build DuneEngine.exe: CXX_EXECUTABLE_LINKER__DuneEngine_Debug CMakeFiles\DuneEngine.dir\main.cpp.obj CMakeFiles\DuneEngine.dir\src\Engine.cpp.obj CMakeFiles\DuneEngine.dir\src\ModuleRender.cpp.obj CMakeFiles\DuneEngine.dir\src\ModuleWindow.cpp.obj | vcpkg_installed\x64-windows\debug\lib\fmtd.lib vcpkg_installed\x64-windows\debug\lib\glad.lib vcpkg_installed\x64-windows\debug\lib\glm.lib vcpkg_installed\x64-windows\debug\lib\imguid.lib vcpkg_installed\x64-windows\debug\lib\DevIL.lib vcpkg_installed\x64-windows\debug\lib\assimp-vc143-mtd.lib vcpkg_installed\x64-windows\debug\lib\SDL3.lib
   CONFIG = Debug
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1
   LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console

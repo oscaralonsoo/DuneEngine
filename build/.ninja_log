@@ -1,16 +1,17 @@
 # ninja log v7
-3	629	7837413004764170	CMakeFiles/DuneEngine.dir/main.cpp.obj	e01d28492ff98652
-564	1433	7837442424116496	DuneEngine.exe	c3a11c93a03a78e1
-4	4588	7837459056649019	build.ninja	7dc0c8e4af2b633f
-4	4588	7837459056623975	C:/Users/alons/Documents/GitHub/DuneEngine/build/cmake_install.cmake	7dc0c8e4af2b633f
+3	552	7838053493147260	CMakeFiles/DuneEngine.dir/main.cpp.obj	e01d28492ff98652
+506	1340	7838069397750282	DuneEngine.exe	2a4aadb8e337b4d4
+4	4588	7838070186520636	build.ninja	7dc0c8e4af2b633f
+4	4588	7838070186485556	C:/Users/alons/Documents/GitHub/DuneEngine/build/cmake_install.cmake	7dc0c8e4af2b633f
 18	523	7837351833216535	CMakeFiles/DuneEngine.dir/src/Module.cpp.obj	b8b4afabb3fd7d1f
 60	596	7837335772031319	CMakeFiles/DuneEngine.dir/src/ModuleImGui.cpp.obj	8ddfb2c37fd44bfd
 25	220	7837336815402470	CMakeFiles/DuneEngine.dir/src/ModuleCamera.cpp.obj	aa36bbb23a7ed882
-8	563	7837442418563605	CMakeFiles/DuneEngine.dir/src/ModuleWindow.cpp.obj	7b512ceceba36e9
+20	382	7838069392891939	CMakeFiles/DuneEngine.dir/src/ModuleWindow.cpp.obj	7b512ceceba36e9
 18	180	7837359670560732	CMakeFiles/DuneEngine.dir/src/ModuleInput.cpp.obj	aebab1238aac8639
-11	389	7837377110045805	CMakeFiles/DuneEngine.dir/src/ModuleRender.cpp.obj	87780036ccc2c2b7
+12	505	7838069392816742	CMakeFiles/DuneEngine.dir/src/ModuleRender.cpp.obj	87780036ccc2c2b7
 33	340	7837336815478137	CMakeFiles/DuneEngine.dir/src/ModuleEditor.cpp.obj	44008cc08a6b3f1b
-3	491	7837437925440804	CMakeFiles/DuneEngine.dir/src/Application.cpp.obj	74c22983ea9c5ae1
+9	458	7837942948568379	CMakeFiles/DuneEngine.dir/src/Application.cpp.obj	74c22983ea9c5ae1
 18	169	7837377110122893	CMakeFiles/DuneEngine.dir/src/stb_image.cpp.obj	88ff4f0bcb5b3702
-3	944	7837459136856254	CMakeFiles/DuneEngine.dir/src/ModuleWindow.cpp.obj	7b512ceceba36e9
-945	1833	7837459146266344	DuneEngine.exe	d78feef0da902421
+3	481	7838069392729264	CMakeFiles/DuneEngine.dir/src/Engine.cpp.obj	c73617785e93ac4c
+3	514	7838070898049251	CMakeFiles/DuneEngine.dir/src/ModuleRender.cpp.obj	87780036ccc2c2b7
+515	1345	7838070903167040	DuneEngine.exe	2a4aadb8e337b4d4

@@ -1,31 +1,24 @@
 #pragma once
-#include "Module.h"
-#include "Globals.h"
-#include "shader_s.h"
-#include <SDL3/SDL.h>
-#include <glm/glm.hpp>
 
-class Application;
+#include "Module.h"
+#include "ModuleWindow.h"
+#include <SDL3/SDL.h>
 
 class ModuleWindow : public Module
 {
 public:
-    ModuleWindow(Application* app);
-    ~ModuleWindow() override;
+    ModuleWindow();
+    ~ModuleWindow();
 
-    bool Awake() override;
-    bool Start() override;
-    bool PreUpdate() override;
-    bool Update() override;
-    bool PostUpdate() override;
-    bool CleanUp() override;
+    bool Awake();
+    bool Start();
+    bool PreUpdate();
+    bool Update();
+    bool PostUpdate();
+    bool CleanUp();
 
+    SDL_Window* GetWindow() const { return window; };
 private:
-    Application* app = nullptr;
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
-    Shader* shader = nullptr;
-    GLuint VAO = 0, VBO = 0;
-    GLuint texture1 = 0, texture2 = 0;
-    glm::mat4 model, view, projection;
 };

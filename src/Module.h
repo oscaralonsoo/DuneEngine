@@ -1,24 +1,29 @@
 #pragma once
-#include <string>
 
-class Application;
+#include <string>
 
 class Module
 {
 public:
-    Module(Application* app, const std::string& name) : app(app), name(name) {}
-    virtual ~Module() = default;
 
-    virtual bool Awake() { return true; }
-    virtual bool Start() { return true; }
-    virtual bool PreUpdate() { return true; }
-    virtual bool Update() { return true; }
-    virtual bool PostUpdate() { return true; }
-    virtual bool CleanUp() { return true; }
+	Module() : active(false)
+	{}
 
-    std::string GetName() const { return name; }
+	void Init()
+	{
+		active = true;
+	}
 
-protected:
-    Application* app = nullptr;
-    std::string name;
+	virtual bool Awake() {return true;}
+	virtual bool Start() {return true;}
+	virtual bool PreUpdate() {return true;}
+	virtual bool Update() {return true;}
+	virtual bool PostUpdate() {return true;}
+	virtual bool CleanUp() {return true;}
+
+public:
+
+	std::string name;
+	bool active;
+
 };
