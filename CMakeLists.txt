@@ -34,8 +34,8 @@ add_executable(DuneEngine
 # --- Copiar recursos después de construir ---
 add_custom_command(TARGET DuneEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_SOURCE_DIR}/resources
-            $<TARGET_FILE_DIR:DuneEngine>/resources)
+            ${CMAKE_SOURCE_DIR}/Assets
+            $<TARGET_FILE_DIR:DuneEngine>/Assets)
 
 # --- Incluir carpeta src/ ---
 target_include_directories(DuneEngine PRIVATE ${CMAKE_SOURCE_DIR}/src)
