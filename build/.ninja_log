@@ -1,8 +1,8 @@
 # ninja log v7
 7	599	7838084580754475	CMakeFiles/DuneEngine.dir/main.cpp.obj	523985eeac26783e
 844	1760	7838084589123555	DuneEngine.exe	e5ce1a5e88090c8e
-5	3705	7838085573996014	build.ninja	7dc0c8e4af2b633f
-5	3705	7838085573965972	C:/Users/alons/Documents/GitHub/DuneEngine/build/cmake_install.cmake	7dc0c8e4af2b633f
+5	3705	7838108447358990	build.ninja	7dc0c8e4af2b633f
+5	3705	7838108447329005	C:/Users/alons/Documents/GitHub/DuneEngine/build/cmake_install.cmake	7dc0c8e4af2b633f
 18	523	7837351833216535	CMakeFiles/DuneEngine.dir/src/Module.cpp.obj	b8b4afabb3fd7d1f
 60	596	7837335772031319	CMakeFiles/DuneEngine.dir/src/ModuleImGui.cpp.obj	8ddfb2c37fd44bfd
 25	220	7837336815402470	CMakeFiles/DuneEngine.dir/src/ModuleCamera.cpp.obj	aa36bbb23a7ed882
@@ -13,3 +13,9 @@
 9	458	7837942948568379	CMakeFiles/DuneEngine.dir/src/Application.cpp.obj	74c22983ea9c5ae1
 18	169	7837377110122893	CMakeFiles/DuneEngine.dir/src/stb_image.cpp.obj	88ff4f0bcb5b3702
 13	819	7838084580824652	CMakeFiles/DuneEngine.dir/src/Engine.cpp.obj	a322f9c0d685a91b
+25	356	7838108485742157	CMakeFiles/DuneEngine.dir/src/ModuleInput.cpp.obj	fafe37692d16dbdc
+44	730	7838108485929589	CMakeFiles/DuneEngine.dir/src/ModuleWindow.cpp.obj	f505acd129e1dd01
+34	864	7838108485829297	CMakeFiles/DuneEngine.dir/src/ModuleRender.cpp.obj	ed61c59bb2b0d57
+12	874	7838108485616891	CMakeFiles/DuneEngine.dir/src/Engine.cpp.obj	a322f9c0d685a91b
+3	1341	7838108485526659	CMakeFiles/DuneEngine.dir/main.cpp.obj	523985eeac26783e
+1342	2435	7838108498910104	DuneEngine.exe	f993cd7441e5a610
