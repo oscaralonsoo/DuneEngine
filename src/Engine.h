@@ -5,6 +5,7 @@
 
 class ModuleWindow;
 class ModuleRender;
+class ModuleTextures;
 
 class Engine
 {
@@ -20,6 +21,8 @@ public:
     bool Update();
 
     bool CleanUp();
+
+	int Run();
 
 private:
     Engine();
@@ -47,4 +50,5 @@ public:
 
     std::shared_ptr<ModuleWindow> window;
     std::shared_ptr<ModuleRender> render;
+    std::shared_ptr<ModuleTextures> textures;
 };

@@ -20,9 +20,6 @@ public:
 	// Destructor
 	virtual ~ModuleRender();
 
-	// Called before ModuleRender is available
-	bool Awake();
-
 	// Called before the first frame
 	bool Start();
 
