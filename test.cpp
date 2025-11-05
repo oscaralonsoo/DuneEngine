@@ -20,6 +20,7 @@
 #include <deque>
 #include <chrono>
 #include <SDL3/SDL_version.h>
+#include "ResourceUtils.h"
 
 static bool gShowConsole     = true;
 static bool gShowConfig      = true;
@@ -302,27 +303,6 @@ static AABB ComputeModelAABB(const Model& m, const glm::mat4& modelMatrix)
     return box;
 }
 
-static bool HasExt(const std::string& p, const char* ext) {
-    auto i = p.find_last_of('.');
-    if (i == std::string::npos) return false;
-    std::string e = p.substr(i+1);
-    for (auto& c : e) c = (char)tolower((unsigned char)c);
-    std::string want = ext;
-    for (auto& c : want) c = (char)tolower((unsigned char)c);
-    return e == want;
-}
-
-static bool IsModelPath(const std::string& p) {
-    return HasExt(p,"fbx") || HasExt(p,"obj") || HasExt(p,"dae") ||
-           HasExt(p,"gltf")|| HasExt(p,"glb") || HasExt(p,"3ds") ||
-           HasExt(p,"ply")  || HasExt(p,"blend");
-}
-
-static bool IsImagePath(const std::string& p) {
-    return HasExt(p,"png") || HasExt(p,"jpg") || HasExt(p,"jpeg") ||
-           HasExt(p,"tga") || HasExt(p,"bmp") || HasExt(p,"psd")  ||
-           HasExt(p,"gif") || HasExt(p,"hdr") || HasExt(p,"pic");
-}
 
 // Carga un modelo y lo deja delante de la cámara
 static int AddModelFromFile(const char* path)
@@ -943,7 +923,7 @@ int main(int argc, char *args[])
                 std::string path = dropped;
                 SDL_Log("Dropped: %s", path.c_str());
 
-                if (IsModelPath(path)) {
+                if (ResourceUtils::GetTypeFromExtension(path) == ResourceType::Model) {
                     int idx = AddModelFromFile(path.c_str());
                     if (idx >= 0) {
                         gSelectedIndex = idx;
@@ -952,7 +932,7 @@ int main(int argc, char *args[])
                         gOrbitTarget  = 0.5f * (box.min + box.max);
                         gOrbitDistance = glm::length(camera.Position - gOrbitTarget);
                     }
-                } else if (IsImagePath(path)) {
+                } else if (ResourceUtils::GetTypeFromExtension(path) == ResourceType::Texture) {
                     // 1) Cargamos textura
                     GLuint tex = LoadTextureDevIL(path.c_str(), /*mips=*/true);
                     if (tex) {
