@@ -1,5 +1,6 @@
 #include "ModuleRender.h"
 #include "ModuleWindow.h"
+#include "ModuleCamera.h"
 #include "ModuleTextures.h"
 #include "Engine.h"
 
@@ -109,7 +110,7 @@ bool ModuleRender::Update()
                         glm::vec3(0.5f, 1.0f, 0.0f));
 
     // VIEW: alejar cámara en -Z
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::mat4 view = Engine::GetInstance().camera.get()->camera.GetViewMatrix();
     
     // PROJECTION: perspectiva
     int width, height;

@@ -1,6 +1,6 @@
 #include "ModuleWindow.h"
 #include "Engine.h"
-
+#include "Globals.h"
 #include <glad/glad.h>
 #include "shader_s.h"
 #include <fstream>
@@ -18,9 +18,11 @@ ModuleWindow::~ModuleWindow()
 
 bool ModuleWindow::Awake()
 {
+    LOG_INFO("Init SDL window & surface");
+
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
-        SDL_Log("SDL could not initialize! SDL error: %s\n", SDL_GetError());
+        LOG_ERROR("SDL could not initialize! SDL error: %s\n", SDL_GetError());
         return false;
     }
 
@@ -34,8 +36,9 @@ bool ModuleWindow::Awake()
     // --- Create Window ---
     // Create SDL window with OpenGL support
     window = SDL_CreateWindow("DuneEngine", 800, 600, SDL_WINDOW_OPENGL);
-    if (!window)
+    if (window == NULL)
     {
+        LOG_ERROR("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         SDL_Quit();
         return false;
     }
@@ -80,35 +83,6 @@ bool ModuleWindow::Start()
 
 bool ModuleWindow::PreUpdate()
 {
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-        switch (event.type)
-        {
-        case SDL_EVENT_QUIT:
-            // app->running = false;
-            break;
-        case SDL_EVENT_KEY_DOWN:
-            if (event.key.key == SDLK_ESCAPE)
-            {
-                // app->running = false;
-            }
-            else if (event.key.key == SDLK_1)
-            {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-            }
-            else if (event.key.key == SDLK_2)
-            {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Fill mode
-            }
-            break;
-        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-            int w, h;
-            SDL_GetWindowSizeInPixels(window, &w, &h);
-            glViewport(0, 0, w, h);
-            break;
-        }
-    }
     return true;
 }
 
@@ -128,4 +102,20 @@ bool ModuleWindow::CleanUp()
     SDL_DestroyWindow(window);
     SDL_Quit();
     return true;
+}
+
+void ModuleWindow::SetTitle(const char* new_title)
+{
+	SDL_SetWindowTitle(window, new_title);
+}
+
+void ModuleWindow::SetWindowSize(int& width, int& height) const
+{
+	width = this->width;
+	height = this->height;
+}
+
+int ModuleWindow::GetScale() const
+{
+	return scale;
 }

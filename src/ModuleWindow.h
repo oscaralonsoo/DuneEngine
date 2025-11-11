@@ -17,8 +17,18 @@ public:
     bool PostUpdate();
     bool CleanUp();
 
+    void SetTitle(const char* title);
+	void SetWindowSize(int& width, int& height) const;
+
+	int GetScale() const;
     SDL_Window* GetWindow() const { return window; };
+    
 private:
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
+
+	std::string title;
+	int width = 1280;
+	int height = 720;
+	int scale = 1;
 };
