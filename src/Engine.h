@@ -4,7 +4,9 @@
 #include "Module.h"
 
 class ModuleWindow;
+class ModuleInput;
 class ModuleRender;
+class ModuleCamera;
 class ModuleTextures;
 
 class Engine
@@ -49,6 +51,8 @@ public:
 	};
 
     std::shared_ptr<ModuleWindow> window;
+    std::shared_ptr<ModuleInput> input;
     std::shared_ptr<ModuleRender> render;
+    std::shared_ptr<ModuleCamera> camera;
     std::shared_ptr<ModuleTextures> textures;
 };

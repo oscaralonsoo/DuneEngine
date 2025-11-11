@@ -1,7 +1,9 @@
 #include "Engine.h"
 #include "Module.h"
 #include "ModuleWindow.h"
+#include "ModuleInput.h"
 #include "ModuleRender.h"
+#include "ModuleCamera.h"
 #include "ModuleTextures.h"
 #include "Globals.h"
 #include <iostream>
@@ -9,33 +11,38 @@
 Engine::Engine()
 {
     window = std::make_shared<ModuleWindow>();
+    input = std::make_shared<ModuleInput>();
     render = std::make_shared<ModuleRender>();
+    camera = std::make_shared<ModuleCamera>();
     textures = std::make_shared<ModuleTextures>();
 
     AddModule(std::static_pointer_cast<Module>(window));
+    AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(render));
+    AddModule(std::static_pointer_cast<Module>(camera));
     AddModule(std::static_pointer_cast<Module>(textures));
-
 }
 
-Engine& Engine::GetInstance() {
+Engine &Engine::GetInstance()
+{
     static Engine instance;
     return instance;
 }
 
-void Engine::AddModule(std::shared_ptr<Module> module){
+void Engine::AddModule(std::shared_ptr<Module> module)
+{
     module->Init();
     modules.push_back(module);
 }
 
-
 bool Engine::Awake()
 {
     bool result = true;
-    for (const auto& module : modules) {
-        result =  module.get()->Awake();
-        if (!result) break;
-		
+    for (const auto &module : modules)
+    {
+        result = module.get()->Awake();
+        if (!result)
+            break;
     }
 
     return result;
@@ -44,9 +51,11 @@ bool Engine::Awake()
 bool Engine::Start()
 {
     bool result = true;
-    for (const auto& module : modules) {
+    for (const auto &module : modules)
+    {
         result = module.get()->Start();
-        if (!result) {
+        if (!result)
+        {
             break;
         }
     }
@@ -59,8 +68,8 @@ bool Engine::Update()
 
     bool ret = true;
 
-    // if (input->GetWindowEvent(WE_QUIT) == true)
-    //     ret = false;
+    if (input->GetWindowEvent(WE_QUIT) == true)
+        ret = false;
 
     if (ret == true)
         ret = PreUpdate();
@@ -77,9 +86,11 @@ bool Engine::Update()
 bool Engine::PreUpdate()
 {
     bool result = true;
-    for (const auto& module : modules) {
+    for (const auto &module : modules)
+    {
         result = module.get()->PreUpdate();
-        if (!result) {
+        if (!result)
+        {
             break;
         }
     }
@@ -90,9 +101,11 @@ bool Engine::PreUpdate()
 bool Engine::DoUpdate()
 {
     bool result = true;
-    for (const auto& module : modules) {
+    for (const auto &module : modules)
+    {
         result = module.get()->Update();
-        if (!result) {
+        if (!result)
+        {
             break;
         }
     }
@@ -103,9 +116,11 @@ bool Engine::DoUpdate()
 bool Engine::PostUpdate()
 {
     bool result = true;
-    for (const auto& module : modules) {
+    for (const auto &module : modules)
+    {
         result = module.get()->PostUpdate();
-        if (!result) {
+        if (!result)
+        {
             break;
         }
     }
@@ -113,13 +128,14 @@ bool Engine::PostUpdate()
     return result;
 }
 
-
 bool Engine::CleanUp()
 {
     bool result = true;
-    for (auto it = modules.rbegin(); it != modules.rend(); ++it) {
+    for (auto it = modules.rbegin(); it != modules.rend(); ++it)
+    {
         result = (*it).get()->CleanUp();
-        if (!result) {
+        if (!result)
+        {
             break;
         }
     }
