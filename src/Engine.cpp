@@ -2,9 +2,11 @@
 #include "Module.h"
 #include "ModuleWindow.h"
 #include "ModuleInput.h"
+#include "ModuleEditor.h"
 #include "ModuleRender.h"
 #include "ModuleCamera.h"
 #include "ModuleTextures.h"
+#include "ModuleImGui.h"
 #include "Globals.h"
 #include <iostream>
 
@@ -15,12 +17,16 @@ Engine::Engine()
     render = std::make_shared<ModuleRender>();
     camera = std::make_shared<ModuleCamera>();
     textures = std::make_shared<ModuleTextures>();
+    imgui = std::make_shared<ModuleImGui>();
+    editor = std::make_shared<ModuleEditor>();
 
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(render));
     AddModule(std::static_pointer_cast<Module>(camera));
     AddModule(std::static_pointer_cast<Module>(textures));
+    AddModule(std::static_pointer_cast<Module>(imgui));
+    AddModule(std::static_pointer_cast<Module>(editor));
 }
 
 Engine &Engine::GetInstance()

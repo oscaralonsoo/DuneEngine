@@ -58,7 +58,7 @@ ModuleRender::~ModuleRender()
 
 bool ModuleRender::Start()
 {
-    shader = new Shader("C:/Users/alons/Documents/GitHub/DuneEngine/Assets/shaders/Shader.vs", "C:/Users/alons/Documents/GitHub/DuneEngine/Assets/shaders/Shader.fs");
+    shader = new Shader("C:/Users/javig/Documents/GitHub/DuneEngine/Assets/shaders/Shader.vs", "C:/Users/javig/Documents/GitHub/DuneEngine/Assets/shaders/Shader.fs");
 
 
     // --- Setup cube VAO/VBO ---
@@ -104,49 +104,33 @@ bool ModuleRender::Update()
 
     shader->use();
 
-    // MODEL: rotación continua (eje 0.5,1,0 como en 6.2)
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f,
                         glm::vec3(0.5f, 1.0f, 0.0f));
 
-    // VIEW: alejar cámara en -Z
     glm::mat4 view = Engine::GetInstance().camera.get()->camera.GetViewMatrix();
-    
-    // PROJECTION: perspectiva
+
     int width, height;
     SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &width, &height);
     float aspect = (height > 0) ? (float)width / (float)height : 4.0f / 3.0f;
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-    // Subir uniforms al shader
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shader->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-	return true;
+    return true;
 }
 
 bool ModuleRender::PostUpdate()
 {
-    // Clear the color and depth buffers
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Bind textures
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    // Use shader program
-    shader->use();
-
-    // Draw cube
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    SDL_GL_SwapWindow(Engine::GetInstance().window.get()->GetWindow());
-	return true;
+    return true;
 }
 
 // Called before quitting

@@ -22,6 +22,7 @@ public:
 
 	int GetScale() const;
     SDL_Window* GetWindow() const { return window; };
+    SDL_GLContext GetGLContext() const { return glContext; }
     
 private:
     SDL_Window* window = nullptr;
