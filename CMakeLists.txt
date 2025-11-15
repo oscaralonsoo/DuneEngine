@@ -18,15 +18,36 @@ find_package(imgui CONFIG REQUIRED)
 find_package(DevIL REQUIRED)
 find_package(assimp REQUIRED)
 
-add_executable(DuneEngine 
+
+# --- Archivos fuente ---
+file(GLOB_RECURSE SRC_FILES
+    src/*.cpp
+    src/*.h
+)
+
+# --- Ejecutable ---
+add_executable(DuneEngine
     main.cpp
+    ${SRC_FILES}
 )
 
-target_link_libraries(DuneEngine PRIVATE
-    fmt::fmt SDL3::SDL3 glad::glad glm::glm imgui::imgui DevIL::IL assimp::assimp
-)
-
+# --- Copiar recursos después de construir ---
 add_custom_command(TARGET DuneEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_SOURCE_DIR}/Assets
             $<TARGET_FILE_DIR:DuneEngine>/Assets)
+
+# --- Incluir carpeta src/ ---
+target_include_directories(DuneEngine PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# --- Enlazar librerías ---
+target_link_libraries(DuneEngine
+    PRIVATE
+        fmt::fmt
+        SDL3::SDL3
+        glad::glad
+        glm::glm
+        imgui::imgui
+        DevIL::IL
+        assimp::assimp
+)

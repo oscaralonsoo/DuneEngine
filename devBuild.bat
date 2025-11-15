@@ -1,5 +1,6 @@
 @echo off
 echo ===== Iniciando build =====
+cmake --preset=default
 cmake --build build
 if errorlevel 1 (
     echo [ERROR] Fallo al compilar el proyecto.

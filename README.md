@@ -111,6 +111,12 @@ Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/osc
 - [**Assimp**](https://github.com/assimp/assimp) — Carga de modelos  
 - [**DevIL**](https://github.com/DentonW/DevIL) — Carga de imágenes  
 - [**ImGui**](https://github.com/ocornut/imgui) — Interfaz gráfica para herramientas y depuración
+
 ---
+
+## 🧱 Estado actual del proyecto
+
+Actualmente, **la arquitectura y modularización del proyecto están en proceso de completarse**.  
+Una vez finalizada esta etapa, **se realizará la migración del código** para adaptarlo a la nueva estructura, facilitando su mantenimiento, escalabilidad y futuras ampliaciones del motor.
 
 
