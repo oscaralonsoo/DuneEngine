@@ -12,10 +12,6 @@ ModuleWindow::ModuleWindow() : Module()
     name = "window";
 }
 
-ModuleWindow::~ModuleWindow()
-{
-}
-
 bool ModuleWindow::Awake()
 {
     LOG_INFO("Init SDL window & surface");

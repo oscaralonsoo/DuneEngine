@@ -3,7 +3,6 @@
 #include <vector>
 
 ModuleTextures::ModuleTextures() { name = "textures"; }
-ModuleTextures::~ModuleTextures() {}
 
 bool ModuleTextures::Awake()
 {

@@ -8,7 +8,7 @@ class ModuleWindow : public Module
 {
 public:
     ModuleWindow();
-    ~ModuleWindow();
+    ~ModuleWindow() = default;;
 
     bool Awake();
     bool Start();

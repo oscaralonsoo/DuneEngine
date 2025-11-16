@@ -10,7 +10,7 @@ class ModuleTextures : public Module
 {
 public:
     ModuleTextures();
-    ~ModuleTextures();
+    ~ModuleTextures() = default;;
 
     bool Awake() override;
     bool CleanUp() override;
