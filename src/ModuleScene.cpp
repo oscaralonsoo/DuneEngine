@@ -21,3 +21,11 @@ bool ModuleScene::CleanUp()
 {
     return true;
 }
+
+GameObject* ModuleScene::CreateGameObject(const std::string& name)
+{
+    GameObject* go = new GameObject();
+    go->SetName(name);
+    mGameObjects.push_back(go);
+    return go;
+}

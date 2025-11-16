@@ -4,6 +4,8 @@
 #include "Component.h"
 #include <memory>
 
+class Component;
+
 class GameObject
 {
 public:

@@ -3,6 +3,9 @@
 #include "Module.h"
 #include "GameObject.h"
 
+class GameObject;
+class Component;
+
 class ModuleScene : public Module
 {
 public:
