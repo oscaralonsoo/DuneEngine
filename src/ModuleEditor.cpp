@@ -1,5 +1,6 @@
 #include "ModuleEditor.h"
 #include "PanelStats.h"
+#include "HierarchyPanel.h"
 #include <imgui.h>
 
 ModuleEditor::ModuleEditor()
@@ -9,18 +10,12 @@ ModuleEditor::ModuleEditor()
 
 bool ModuleEditor::Start()
 {
-    AddPanel<PanelStats>();
+    AddPanel<HierarchyPanel>();
     return true;
-}
-
-void ModuleEditor::DrawDockspace()
-{
-    //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 }
 
 bool ModuleEditor::Update()
 {
-    DrawDockspace();
 
     for (auto& panel : panels)
         panel->OnImGuiRender();

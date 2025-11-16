@@ -18,6 +18,8 @@ public:
 
     GameObject* CreateGameObject(const std::string& name);
 
+    const std::vector<GameObject *> GetGameObjects();
+
 private:
     GameObject *root = nullptr;
     std::vector<GameObject *> mGameObjects;
