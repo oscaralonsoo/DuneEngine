@@ -30,6 +30,4 @@ public:
 
 private:
     std::vector<std::unique_ptr<EditorPanel>> panels;
-
-    void DrawDockspace();
 };

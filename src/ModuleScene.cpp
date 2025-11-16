@@ -8,6 +8,8 @@ ModuleScene::ModuleScene()
 bool ModuleScene::Start()
 {
     root = new GameObject();
+    root->SetName("Root");
+    mGameObjects.push_back(root);
 
     return true;
 }
@@ -28,4 +30,9 @@ GameObject* ModuleScene::CreateGameObject(const std::string& name)
     go->SetName(name);
     mGameObjects.push_back(go);
     return go;
+}
+
+const std::vector<GameObject *> ModuleScene::GetGameObjects()
+{
+    return mGameObjects;
 }
