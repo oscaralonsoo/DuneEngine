@@ -10,6 +10,7 @@ class ModuleCamera;
 class ModuleTextures;
 class ModuleImGui;
 class ModuleEditor;
+class ModuleScene;
 
 class Engine
 {
@@ -59,4 +60,5 @@ public:
     std::shared_ptr<ModuleTextures> textures;
 	std::shared_ptr<ModuleImGui> imgui;
 	std::shared_ptr<ModuleEditor> editor;
+	std::shared_ptr<ModuleScene> scene;
 };
