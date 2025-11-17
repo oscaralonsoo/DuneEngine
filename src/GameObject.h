@@ -15,7 +15,18 @@ public:
     Component &CreateComponent(ComponentType type);
 
     const std::string GetName() const { return mName; }
-    void SetName(const std::string& name);
+    void SetName(const std::string &name);
+
+    template <typename T>
+    T* GetComponent()
+    {
+        for (auto& comp : mComponents)
+        {
+            if (auto ptr = dynamic_cast<T*>(comp.get()))
+                return ptr;
+        }
+        return nullptr;
+    }
 
 private:
     bool mActive = true;

@@ -3,23 +3,8 @@
 #include <unordered_map>
 #include <filesystem>
 #include <algorithm>
-
-enum class ResourceType
-{
-    Unknown = 0,
-    Texture,
-    Model,
-    Shader,
-    Material,
-    Mesh,
-    Prefab
-};
-
-enum class ResourceFormat
-{
-    Binary,
-    Text
-};
+#include "Resource.h"
+#include "ResourceFormat.h"
 
 class ResourceUtils
 {
@@ -101,7 +86,7 @@ public:
         switch (type)
         {
         case ResourceType::Shader:
-            return ResourceFormat::Text;
+            return ResourceFormat::JSON;
 
         case ResourceType::Texture:
         case ResourceType::Model:
