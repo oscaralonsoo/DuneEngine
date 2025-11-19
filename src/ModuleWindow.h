@@ -8,7 +8,8 @@ class ModuleWindow : public Module
 {
 public:
     ModuleWindow();
-    ~ModuleWindow() = default;;
+    ~ModuleWindow() = default;
+    ;
 
     bool Awake();
     bool Start();
@@ -17,19 +18,22 @@ public:
     bool PostUpdate();
     bool CleanUp();
 
-    void SetTitle(const char* title);
-	void SetWindowSize(int& width, int& height) const;
+    void SetTitle(const char *title);
+    void SetWindowSize(int &width, int &height) const;
 
-	int GetScale() const;
-    SDL_Window* GetWindow() const { return window; };
+    int GetWidth() const { return width; }
+    int GetHeight() const { return height; }
+
+    int GetScale() const;
+    SDL_Window *GetWindow() const { return window; };
     SDL_GLContext GetGLContext() const { return glContext; }
-    
+
 private:
-    SDL_Window* window = nullptr;
+    SDL_Window *window = nullptr;
     SDL_GLContext glContext = nullptr;
 
-	std::string title;
-	int width = 1280;
-	int height = 720;
-	int scale = 1;
+    std::string title;
+    int width = 1280;
+    int height = 720;
+    int scale = 1;
 };

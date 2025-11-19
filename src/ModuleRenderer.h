@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <SDL3/SDL.h>
+#include "Shader.h"
+#include <glad/glad.h>
 
 struct CameraData
 {
@@ -32,4 +34,7 @@ public:
 
 private:
 	CameraData cameraData;
+    Shader* shader = nullptr;
+    GLuint texture1 = 0, texture2 = 0;
+    glm::mat4 model, view, projection;
 };

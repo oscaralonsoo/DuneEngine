@@ -2,7 +2,7 @@
 #include "Engine.h"
 #include "Globals.h"
 #include <glad/glad.h>
-#include "shader_s.h"
+#include "Shader.h"
 #include <fstream>
 #include <vector>
 #include <string>
