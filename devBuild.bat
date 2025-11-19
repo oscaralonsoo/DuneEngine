@@ -2,13 +2,22 @@
 setlocal
 
 rem ===== Intentar configurar VS 2022 x64 Native Tools =====
-set VS2022_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
+rem Usar comillas para evitar problemas con espacios y paréntesis
+set "VS2022_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
 
 if exist "%VS2022_PATH%" (
     echo ===== Configurando entorno VS 2022 x64 =====
     call "%VS2022_PATH%" x64
 ) else (
-    echo [WARNING] No se encontro VS 2022, se usara cmd normal.
+    echo [WARNING] No se encontro VS 2022 en la ruta por defecto.
+    rem Intentar buscar en Program Files (x64) por si es 64-bit
+    set "VS2022_PATH=%ProgramFiles%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
+    if exist "%VS2022_PATH%" (
+        echo ===== Configurando entorno VS 2022 x64 =====
+        call "%VS2022_PATH%" x64
+    ) else (
+        echo [ERROR] No se encontro VS 2022, se usara cmd normal.
+    )
 )
 
 echo.
