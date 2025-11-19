@@ -1,6 +1,8 @@
 #include "ModuleInput.h"
 #include "Engine.h"
 #include "ModuleWindow.h"
+#include "ModuleScene.h"
+#include "GameObject.h"
 #include "Globals.h"
 #include <string.h>
 
@@ -84,6 +86,17 @@ bool ModuleInput::PreUpdate()
 
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
             mouseButtons[event.button.button - 1] = KEY_DOWN;
+
+            if (event.button.button == SDL_BUTTON_LEFT)
+            {
+                ModuleScene *scene = Engine::GetInstance().scene.get();
+                GameObject *picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+
+                if (picked)
+                {
+                    LOG_INFO("Picked object: %s", picked->GetName().c_str());
+                }
+            }
             break;
 
         case SDL_EVENT_MOUSE_BUTTON_UP:

@@ -152,8 +152,8 @@ std::shared_ptr<Mesh> PrimitiveMesh::CreateCube(const glm::vec3 &size, int subdi
     const std::shared_ptr<Mesh> &cubeMesh = std::make_shared<Mesh>(vertices, indices);
     cubeMesh->SetName("Cube");
 
-    // AABB cubeAABB(glm::vec3(-size.x * 0.5f, -size.y * 0.5f, -size.z * 0.5f), glm::vec3(size.x * 0.5f, size.y * 0.5f, size.z * 0.5f));
-    // cubeMesh->SetAABB(cubeAABB);
+    AABB cubeAABB(glm::vec3(-size.x * 0.5f, -size.y * 0.5f, -size.z * 0.5f), glm::vec3(size.x * 0.5f, size.y * 0.5f, size.z * 0.5f));
+    cubeMesh->SetAABB(cubeAABB);
 
     return cubeMesh;
 }
@@ -227,8 +227,8 @@ std::shared_ptr<Mesh> PrimitiveMesh::CreateSphere(float radius, float height, in
     const std::shared_ptr<Mesh> &sphereMesh = std::make_shared<Mesh>(data, indices);
     sphereMesh->SetName("Sphere");
 
-    // AABB sphereAABB(glm::vec3(-radius, -radius, -radius), glm::vec3(radius, radius, radius));
-    // sphereMesh->SetAABB(sphereAABB);
+    AABB sphereAABB(glm::vec3(-radius, -radius, -radius), glm::vec3(radius, radius, radius));
+    sphereMesh->SetAABB(sphereAABB);
 
     return sphereMesh;
 }

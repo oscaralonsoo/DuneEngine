@@ -12,8 +12,7 @@ Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &ind
         {ShaderDataType::Vec3, "aPosition"},
         {ShaderDataType::Vec3, "aNormals"},
         {ShaderDataType::Vec2, "aTexCoords"},
-        {ShaderDataType::Vec3, "aTangent"}
-    };
+        {ShaderDataType::Vec3, "aTangent"}};
 
     mVertexBuffer->SetLayout(layout);
 
@@ -35,6 +34,16 @@ const std::shared_ptr<VertexBuffer> &Mesh::GetVertexBuffer() const
 const std::shared_ptr<IndexBuffer> &Mesh::GetIndexBuffer() const
 {
     return mIndexBuffer;
+}
+
+void Mesh::SetAABB(const AABB &aabb)
+{
+    mAABB = aabb;
+}
+
+const AABB &Mesh::GetAABB() const
+{
+    return mAABB;
 }
 
 const std::vector<uint32_t> &Mesh::GetIndices() const

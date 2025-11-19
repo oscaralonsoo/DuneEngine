@@ -17,13 +17,13 @@ bool ModuleScene::Start()
     mGameObjects.push_back(root);
     root->CreateComponent(ComponentType::Mesh);
 
+    raycaster = new Raycaster();
+
     return true;
 }
 
 bool ModuleScene::Update()
 {
-
-
     return true;
 }
 
