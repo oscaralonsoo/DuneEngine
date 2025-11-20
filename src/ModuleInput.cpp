@@ -96,6 +96,12 @@ bool ModuleInput::PreUpdate()
                 if (picked)
                 {
                     LOG_INFO("Picked object: %s", picked->GetName().c_str());
+                    scene->SetSelected(picked);
+                }
+                else
+                {
+                    // Clear selection if click on empty space
+                    scene->SetSelected(nullptr);
                 }
             }
             break;

@@ -1,10 +1,12 @@
 #include "GameObject.h"
 #include "MeshComponent.h"
 #include "PrimitiveMesh.h"
+#include "TransformComponent.h"
 
 GameObject::GameObject()
 {
     mName = "GameObject";
+    CreateComponent(ComponentType::Transform);
 }
 
 Component &GameObject::CreateComponent(ComponentType type)
@@ -14,7 +16,7 @@ Component &GameObject::CreateComponent(ComponentType type)
     switch (type)
     {
     case ComponentType::Transform:
-        // component = std::make_unique<TransformComponent>(this);
+        component = std::make_unique<TransformComponent>(this);
         break;
     case ComponentType::Mesh:
         component = std::make_unique<MeshComponent>(this, PrimitiveMesh::CreateCube());

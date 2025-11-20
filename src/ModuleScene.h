@@ -21,9 +21,12 @@ public:
     const std::vector<GameObject *> GetGameObjects();
 
     Raycaster* GetRaycaster() const { return raycaster; }
+    // Selection API
+    void SetSelected(GameObject* go) { selected = go; }
+    GameObject* GetSelected() const { return selected; }
 private:
     GameObject *root = nullptr;
     std::vector<GameObject *> mGameObjects;
-
     Raycaster *raycaster;
+    GameObject* selected = nullptr;
 };

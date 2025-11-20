@@ -15,15 +15,10 @@ void HierarchyPanel::OnImGuiRender()
     ImVec2 workPos  = viewport->WorkPos;
     ImVec2 workSize = viewport->WorkSize;
 
-    constexpr float PanelFraction = 0.18f;   // fracción del ancho de la ventana
-    constexpr float MinCenterWidth = 180.0f; // ancho mínimo reservado para la zona central
-    constexpr float MinPanelWidth = 80.0f;   // ancho mínimo del panel
-
-    // Calcular y limitar el ancho del panel para evitar solapamientos
-    float desiredWidth = workSize.x * PanelFraction;
-    float otherPanelEstimate = workSize.x * PanelFraction; // estimación simétrica
-    float maxAllowed = workSize.x - otherPanelEstimate - MinCenterWidth;
-    float panelWidth = std::clamp(desiredWidth, MinPanelWidth, maxAllowed);
+    float desiredWidth = workSize.x * HierarchyPanel::kDefaultFraction;
+    float otherPanelEstimate = workSize.x * HierarchyPanel::kDefaultFraction;
+    float maxAllowed = workSize.x - otherPanelEstimate - HierarchyPanel::kMinCenterWidth;
+    float panelWidth = std::clamp(desiredWidth, HierarchyPanel::kMinPanelWidth, maxAllowed);
 
     ImGui::SetNextWindowPos(workPos, ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_Always);
