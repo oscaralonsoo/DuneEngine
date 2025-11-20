@@ -1,8 +1,8 @@
 #include "HierarchyPanel.h"
 #include "Engine.h"
-#include "ModuleWindow.h"
 #include "ModuleScene.h"
 #include <imgui.h>
+#include <algorithm>
 
 bool HierarchyPanel::Start()
 {
@@ -15,29 +15,30 @@ void HierarchyPanel::OnImGuiRender()
     ImVec2 workPos  = viewport->WorkPos;
     ImVec2 workSize = viewport->WorkSize;
 
-    // Porcentaje de ancho que ocupa la jerarquía (como Unity)
-    float panelWidth  = workSize.x * 0.18f;  // 25% de la pantalla
-    float panelHeight = workSize.y;          // toda la altura
+    constexpr float PanelFraction = 0.18f;   // fracción del ancho de la ventana
+    constexpr float MinCenterWidth = 180.0f; // ancho mínimo reservado para la zona central
+    constexpr float MinPanelWidth = 80.0f;   // ancho mínimo del panel
 
-    // Posición: esquina superior izquierda del área de trabajo
-    ImVec2 pos = workPos;
+    // Calcular y limitar el ancho del panel para evitar solapamientos
+    float desiredWidth = workSize.x * PanelFraction;
+    float otherPanelEstimate = workSize.x * PanelFraction; // estimación simétrica
+    float maxAllowed = workSize.x - otherPanelEstimate - MinCenterWidth;
+    float panelWidth = std::clamp(desiredWidth, MinPanelWidth, maxAllowed);
 
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(workPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_Always);
     ImGui::SetNextWindowViewport(viewport->ID);
 
-    ImGuiWindowFlags flags =
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoDocking;
-        // NO pasamos bandera de NoTitleBar → se ve el título
+    // Flags: panel fijo, sin docking ni resize
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove   |
+                             ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoDocking;
 
-    // nullptr → título SÍ, pero SIN cruz de cierre
+                             
     ImGui::Begin("Hierarchy", nullptr, flags);
-    auto& scene = Engine::GetInstance().scene;
 
-    if (scene)
+    if (auto scene = Engine::GetInstance().scene)
     {
         for (GameObject* go : scene->GetGameObjects())
         {
@@ -50,5 +51,4 @@ void HierarchyPanel::OnImGuiRender()
 
 void HierarchyPanel::CleanUp()
 {
-    
 }

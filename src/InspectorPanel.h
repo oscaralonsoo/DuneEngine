@@ -2,11 +2,10 @@
 
 #include "ModuleEditor.h"
 
-class InspectorPanel : public Panel
+class InspectorPanel : public EditorPanel
 {
     public:
         InspectorPanel()
-            : Panel("Inspector")
         {}
 
         bool Start() override;
