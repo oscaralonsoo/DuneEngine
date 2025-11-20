@@ -31,7 +31,7 @@ bool ModuleWindow::Awake()
 
     // --- Create Window ---
     // Create SDL window with OpenGL support
-    window = SDL_CreateWindow("DuneEngine", 800, 600, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("DuneEngine", 1920, 1080, SDL_WINDOW_OPENGL);
     if (window == NULL)
     {
         LOG_ERROR("Window could not be created! SDL_Error: %s\n", SDL_GetError());

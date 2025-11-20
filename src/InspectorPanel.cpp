@@ -1,15 +1,15 @@
-#include "HierarchyPanel.h"
+#include "InspectorPanel.h"
 #include "Engine.h"
 #include "ModuleWindow.h"
 #include "ModuleScene.h"
 #include <imgui.h>
 
-bool HierarchyPanel::Start()
+bool InspectorPanel::Start()
 {
     return true;
 }
 
-void HierarchyPanel::OnImGuiRender()
+void InspectorPanel::OnImGuiRender()
 {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImVec2 workPos  = viewport->WorkPos;
@@ -20,7 +20,7 @@ void HierarchyPanel::OnImGuiRender()
     float panelHeight = workSize.y;          // toda la altura
 
     // Posición: esquina superior izquierda del área de trabajo
-    ImVec2 pos = workPos;
+    ImVec2 pos = ImVec2(workPos.x + workSize.x - panelWidth, workPos.y);
 
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_Always);
@@ -48,7 +48,7 @@ void HierarchyPanel::OnImGuiRender()
     ImGui::End();
 }
 
-void HierarchyPanel::CleanUp()
+void InspectorPanel::CleanUp()
 {
     
 }

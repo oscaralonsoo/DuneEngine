@@ -59,11 +59,6 @@ bool ModuleImGui::PreUpdate()
 
 bool ModuleImGui::Update()
 {
-    if (showDemoWindow)
-    {
-        bool open = true;
-        ImGui::ShowDemoWindow(&open);
-    }
     return true;
 }
 
