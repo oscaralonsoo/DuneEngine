@@ -4,10 +4,10 @@
 #include "ModuleScene.h"
 #include "ModuleTextures.h"
 #include "Renderer.h"
-#include "ModuleCamera.h"
 #include "ModuleWindow.h"
 #include "MeshComponent.h"
 #include "TransformComponent.h"
+
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -22,6 +22,11 @@ bool ModuleRenderer::Start()
     shader->SetInt("texture2", 1);
     texture1 = Engine::GetInstance().textures.get()->LoadTexture("Assets/textures/basic.jpg");
     texture2 = Engine::GetInstance().textures.get()->LoadTexture("Assets/textures/basic.jpg");
+    renderCamera = new EditorCamera(
+        45.0f,
+        16.0f / 9.0f,
+        0.1f,
+        1000.0f);
     RendererAPI::Init();
     return true;
 }
@@ -33,10 +38,20 @@ bool ModuleRenderer::PreUpdate()
 
 bool ModuleRenderer::Update()
 {
-    CameraData cameraData;
+    renderCamera->Update();
+    int w, h;
+    SDL_GetWindowSizeInPixels(
+        Engine::GetInstance().window->GetWindow(),
+        &w, &h);
+
+    renderCamera->SetViewportSize(w, h);
+
+    shader->Bind();
     // cameraData.view = glm::inverse(target->GetCameraTransform());
     // cameraData.projection = target->GetCamera().GetProjection();
     // cameraData.position = target->GetCameraTransform()[3];
+    shader->SetMat4("view", renderCamera->GetViewMatrix());
+    shader->SetMat4("projection", renderCamera->GetProjectionMatrix());
 
     // FIXME: Modulate in functions or switch
     for (GameObject *go : Engine::GetInstance().scene.get()->GetGameObjects())
@@ -44,6 +59,9 @@ bool ModuleRenderer::Update()
         MeshComponent *meshComp = go->GetComponent<MeshComponent>();
         if (!meshComp || !meshComp->GetMesh())
             continue;
+
+        glm::mat4 model = glm::mat4(1.0f);
+        shader->SetMat4("model", model);
 
         TransformComponent *transformComp = go->GetComponent<TransformComponent>();
 
@@ -55,23 +73,6 @@ bool ModuleRenderer::Update()
     }
 
     Renderer::ForwardPass(/*target*/);
-    // ----------------------
-    shader->Bind();
-
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f,
-                        glm::vec3(0.5f, 1.0f, 0.0f));
-
-    glm::mat4 view = Engine::GetInstance().camera.get()->camera.GetViewMatrix();
-
-    int width, height;
-    SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &width, &height);
-    float aspect = (height > 0) ? (float)width / (float)height : 4.0f / 3.0f;
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-
-    shader->SetMat4("model", model);
-    shader->SetMat4("view", view);
-    shader->SetMat4("projection", projection);
 
     return true;
 }
@@ -83,5 +84,8 @@ bool ModuleRenderer::PostUpdate()
 
 bool ModuleRenderer::CleanUp()
 {
+    delete renderCamera;
+    delete shader;
+
     return true;
 }

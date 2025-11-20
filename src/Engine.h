@@ -6,7 +6,6 @@
 class ModuleWindow;
 class ModuleInput;
 class ModuleRenderer;
-class ModuleCamera;
 class ModuleTextures;
 class ModuleImGui;
 class ModuleEditor;
@@ -56,7 +55,6 @@ public:
     std::shared_ptr<ModuleWindow> window;
     std::shared_ptr<ModuleInput> input;
     std::shared_ptr<ModuleRenderer> renderer;
-    std::shared_ptr<ModuleCamera> camera;
     std::shared_ptr<ModuleTextures> textures;
 	std::shared_ptr<ModuleImGui> imgui;
 	std::shared_ptr<ModuleEditor> editor;
