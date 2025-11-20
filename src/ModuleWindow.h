@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Module.h"
-#include "ModuleWindow.h"
 #include <utility>
 #include <SDL3/SDL.h>
 
@@ -20,7 +19,6 @@ public:
     bool CleanUp();
 
     void SetTitle(const char *title);
-    // Get the stored window size (width, height)
     std::pair<int,int> GetWindowSize() const;
     void SetSize(int width, int height);
 
