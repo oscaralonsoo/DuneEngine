@@ -2,7 +2,7 @@
 #include "Engine.h"
 #include "Globals.h"
 #include "ModuleWindow.h"
-#include "ModuleCamera.h"
+#include "ModuleRenderer.h"
 
 Raycaster::Raycaster()
 {
@@ -10,7 +10,7 @@ Raycaster::Raycaster()
 
 Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const // FIXME: Reference to camera class wip
 {
-    Camera camera = Engine::GetInstance().camera.get()->camera;
+    EditorCamera* camera = Engine::GetInstance().renderer.get()->renderCamera;
     
     int width, height;
     SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &width, &height);
@@ -25,10 +25,10 @@ Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const // FIXME: Refe
 
     glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
     ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
-    glm::mat4 view = camera.GetViewMatrix();
+    glm::mat4 view = camera->GetViewMatrix();
     glm::vec3 rayDir = glm::normalize(glm::vec3(glm::inverse(view) * ray_eye));
 
-    return Ray{camera.Position, rayDir};
+    return Ray{camera->GetPosition(), rayDir};
 }
 
 GameObject *Raycaster::PickObject(float mouseX, float mouseY, const std::vector<GameObject *> &objects) const
