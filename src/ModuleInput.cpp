@@ -4,6 +4,7 @@
 #include "ModuleScene.h"
 #include "GameObject.h"
 #include "Globals.h"
+#include "RendererAPI.h"
 #include <string.h>
 
 #define MAX_KEYS 300
@@ -110,6 +111,17 @@ bool ModuleInput::PreUpdate()
             mouseMotionY = event.motion.yrel / scale;
             mouseX = event.motion.x / scale;
             mouseY = event.motion.y / scale;
+        }
+        break;
+
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+        {
+            int w, h;
+            SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &w, &h);
+
+            Engine::GetInstance().window.get()->SetSize(w, h); // Update size in ModuleWindow
+        
+            RendererAPI::SetViewport(0, 0, w, h); // Update del viewport
         }
         break;
 

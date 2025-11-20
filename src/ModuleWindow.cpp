@@ -3,6 +3,7 @@
 #include "Globals.h"
 #include <glad/glad.h>
 #include "Shader.h"
+#include "RendererAPI.h"
 #include <fstream>
 #include <vector>
 #include <string>
@@ -30,8 +31,8 @@ bool ModuleWindow::Awake()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     // --- Create Window ---
-    // Create SDL window with OpenGL support
-    window = SDL_CreateWindow("DuneEngine", 800, 600, SDL_WINDOW_OPENGL);
+    // Create SDL window with resizing
+    window = SDL_CreateWindow("DuneEngine", 800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == NULL)
     {
         LOG_ERROR("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -69,6 +70,9 @@ bool ModuleWindow::Awake()
 
     glEnable(GL_DEPTH_TEST);
 
+    SDL_GetWindowSizeInPixels(window, &width, &height);
+    RendererAPI::SetViewport(0, 0, width, height);
+
     return true;
 }
 
@@ -105,10 +109,15 @@ void ModuleWindow::SetTitle(const char* new_title)
 	SDL_SetWindowTitle(window, new_title);
 }
 
-void ModuleWindow::SetWindowSize(int& width, int& height) const
+std::pair<int,int> ModuleWindow::GetWindowSize() const
 {
-	width = this->width;
-	height = this->height;
+    return { width, height };
+}
+
+void ModuleWindow::SetSize(int width, int height)
+{
+    this->width = width;
+    this->height = height;
 }
 
 int ModuleWindow::GetScale() const

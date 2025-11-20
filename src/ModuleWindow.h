@@ -2,6 +2,7 @@
 
 #include "Module.h"
 #include "ModuleWindow.h"
+#include <utility>
 #include <SDL3/SDL.h>
 
 class ModuleWindow : public Module
@@ -19,7 +20,9 @@ public:
     bool CleanUp();
 
     void SetTitle(const char *title);
-    void SetWindowSize(int &width, int &height) const;
+    // Get the stored window size (width, height)
+    std::pair<int,int> GetWindowSize() const;
+    void SetSize(int width, int height);
 
     int GetWidth() const { return width; }
     int GetHeight() const { return height; }

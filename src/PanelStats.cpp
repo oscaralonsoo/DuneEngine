@@ -20,9 +20,7 @@ void PanelStats::OnImGuiRender()
     float fps = ImGui::GetIO().Framerate;
     ImGui::Text("FPS: %.1f", fps);
 
-    int width = 0;
-    int height = 0;
-    Engine::GetInstance().window->SetWindowSize(width, height);
+    auto [width, height] = Engine::GetInstance().window->GetWindowSize();
     ImGui::Text("Window: %d x %d", width, height);
 
     ImGui::End();
