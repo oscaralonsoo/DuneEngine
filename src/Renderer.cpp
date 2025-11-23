@@ -43,10 +43,11 @@ void Renderer::ForwardPass()
 
         RendererAPI::SetCullFace(CullFace::Back);
         RendererAPI::SetDepthMask(true);
-        RendererAPI::SetPolygonMode(PolygonMode::Line);
+        RendererAPI::SetPolygonMode(PolygonMode::Fill);
 
         RendererAPI::DrawIndexed(mesh->GetVertexArray());
     }
+    sOpaqueRenderQueue.clear();
 }
 
 void Renderer::Submit(const RenderObject &renderObject)

@@ -3,6 +3,7 @@
 #include "Module.h"
 #include "Mesh.h"
 #include "EditorCamera.h"
+#include "Texture.h"
 
 #include <vector>
 #include <IL/il.h>
@@ -38,6 +39,6 @@ public:
 
 private:
 	Shader *shader = nullptr;
-	GLuint texture1 = 0, texture2 = 0;
+	std::shared_ptr<Texture> texture;
 	glm::mat4 model, view, projection;
 };

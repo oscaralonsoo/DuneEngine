@@ -1,13 +1,12 @@
 #include "ModuleRenderer.h"
 #include "RendererAPI.h"
 #include "Engine.h"
+#include "Texture.h"
 #include "ModuleScene.h"
-#include "ModuleTextures.h"
 #include "Renderer.h"
 #include "ModuleWindow.h"
 #include "MeshComponent.h"
 #include "TransformComponent.h"
-
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -16,17 +15,23 @@ ModuleRenderer::ModuleRenderer() : Module()
 
 bool ModuleRenderer::Start()
 {
-    shader = new Shader("C:/Users/alons/Documents/GitHub/DuneEngine/Assets/shaders/Shader.glsl");
+    shader = new Shader("Assets/shaders/Shader.glsl");
+
+    // Inicializar la textura con shared_ptr
+    texture = std::make_shared<Texture>("Assets/textures/basic.jpg");
+
+    // Setear uniform de textura en la unidad 0
     shader->Bind();
-    shader->SetInt("texture1", 0);
-    shader->SetInt("texture2", 1);
-    texture1 = Engine::GetInstance().textures.get()->LoadTexture("Assets/textures/basic.jpg");
-    texture2 = Engine::GetInstance().textures.get()->LoadTexture("Assets/textures/basic.jpg");
+    shader->SetInt("texture", 0);
+    shader->Unbind();
+
+    // Crear cámara de render
     renderCamera = new EditorCamera(
         45.0f,
         16.0f / 9.0f,
         0.1f,
         1000.0f);
+
     RendererAPI::Init();
     return true;
 }
@@ -39,6 +44,7 @@ bool ModuleRenderer::PreUpdate()
 bool ModuleRenderer::Update()
 {
     renderCamera->Update();
+
     int w, h;
     SDL_GetWindowSizeInPixels(
         Engine::GetInstance().window->GetWindow(),
@@ -50,7 +56,7 @@ bool ModuleRenderer::Update()
     shader->SetMat4("view", renderCamera->GetViewMatrix());
     shader->SetMat4("projection", renderCamera->GetProjectionMatrix());
 
-    // FIXME: Modulate in functions or switch
+    // Renderizar objetos de la escena
     for (GameObject *go : Engine::GetInstance().scene.get()->GetGameObjects())
     {
         MeshComponent *meshComp = go->GetComponent<MeshComponent>();
@@ -58,19 +64,19 @@ bool ModuleRenderer::Update()
             continue;
 
         glm::mat4 model = glm::mat4(1.0f);
+        TransformComponent *transformComp = go->GetComponent<TransformComponent>();
+        // if (transformComp)
+        //     model = transformComp->GetTransformMatrix();
+
         shader->SetMat4("model", model);
 
-        TransformComponent *transformComp = go->GetComponent<TransformComponent>();
-
         RenderObject renderObject;
-        // rcmd.transform = transformComp->GetTransformMatrix();
         renderObject.mesh = meshComp->GetMesh();
 
         Renderer::Submit(renderObject);
     }
 
-    Renderer::ForwardPass(/*target*/);
-
+    Renderer::ForwardPass();
     return true;
 }
 
