@@ -3,8 +3,12 @@
 #include "ModuleWindow.h"
 #include "ModuleScene.h"
 #include "GameObject.h"
+#include "Engine.h"
+#include "ModuleScene.h"
+#include "Model.h"
 #include "Globals.h"
 #include "RendererAPI.h"
+#include "ResourceUtils.h"
 #include <string.h>
 
 #define MAX_KEYS 300
@@ -126,15 +130,37 @@ bool ModuleInput::PreUpdate()
             SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &w, &h);
 
             Engine::GetInstance().window.get()->SetSize(w, h); // Update size in ModuleWindow
-        
+
             RendererAPI::SetViewport(0, 0, w, h); // Update del viewport
         }
         break;
 
         case SDL_EVENT_DROP_FILE:
-            // FileDropEvent fe(event.drop.data);
-            // Engine::GetInstance().dispatcher.Dispatch(fe); // nuevo
-            break;
+        {
+            // ─────────── FIXME ───────────
+            // TODO: Mover a EventSystem
+            // ────────────────────────────
+            const std::string &file = event.drop.data ? event.drop.data : "";
+
+            if (ResourceUtils::GetTypeFromExtension(file) == ResourceType::Model)
+            {
+                GameObject *go = Engine::GetInstance().scene.get()->CreateGameObject();
+                go->SetName(ResourceUtils::ToString(ResourceType::Model));
+
+                std::shared_ptr<Model> model = std::make_shared<Model>(file);
+
+                for (size_t i = 0; i < model->GetMeshes().size(); ++i)
+                {
+                    auto &mesh = model->GetMeshes()[i];
+
+                    go->CreateComponent(ComponentType::Mesh);
+                    MeshComponent *meshComp = go->GetComponent<MeshComponent>();
+
+                    meshComp->SetMesh(mesh);
+                }
+            }
+        }
+        break;
         }
     }
 
@@ -153,13 +179,11 @@ bool ModuleInput::GetWindowEvent(EventWindow ev) const
     return windowEvents[ev];
 }
 
-// Devuelve la posición del mouse como SDL_Point
 SDL_Point ModuleInput::GetMousePosition() const
 {
     return {mouseX, mouseY};
 }
 
-// Devuelve el movimiento del mouse como SDL_Point
 SDL_Point ModuleInput::GetMouseMotion() const
 {
     return {mouseMotionX, mouseMotionY};

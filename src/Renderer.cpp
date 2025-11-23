@@ -43,7 +43,7 @@ void Renderer::ForwardPass()
 
         RendererAPI::SetCullFace(CullFace::Back);
         RendererAPI::SetDepthMask(true);
-        RendererAPI::SetPolygonMode(PolygonMode::Fill);
+        RendererAPI::SetPolygonMode(PolygonMode::Line);
 
         RendererAPI::DrawIndexed(mesh->GetVertexArray());
     }

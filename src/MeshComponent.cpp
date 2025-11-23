@@ -12,12 +12,12 @@ bool MeshComponent::Update()
     return true;
 }
 
-void MeshComponent::SetMesh(const std::shared_ptr<Mesh>& mesh)
+void MeshComponent::SetMesh(const std::shared_ptr<Mesh> &mesh)
 {
     mMesh = mesh;
 }
 
-const std::shared_ptr<Mesh>& MeshComponent::GetMesh() const
+const std::shared_ptr<Mesh> &MeshComponent::GetMesh() const
 {
     return mMesh;
 }

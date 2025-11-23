@@ -11,12 +11,12 @@
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
-    name = "render";
+    name = "renderer";
 }
 
 bool ModuleRenderer::Start()
 {
-    shader = new Shader("C:/Users/Tonil/Documents/GitHub/DuneEngine/Assets/shaders/Shader.glsl");
+    shader = new Shader("C:/Users/alons/Documents/GitHub/DuneEngine/Assets/shaders/Shader.glsl");
     shader->Bind();
     shader->SetInt("texture1", 0);
     shader->SetInt("texture2", 1);
@@ -47,9 +47,6 @@ bool ModuleRenderer::Update()
     renderCamera->SetViewportSize(w, h);
 
     shader->Bind();
-    // cameraData.view = glm::inverse(target->GetCameraTransform());
-    // cameraData.projection = target->GetCamera().GetProjection();
-    // cameraData.position = target->GetCameraTransform()[3];
     shader->SetMat4("view", renderCamera->GetViewMatrix());
     shader->SetMat4("projection", renderCamera->GetProjectionMatrix());
 

@@ -8,7 +8,7 @@ Raycaster::Raycaster()
 {
 }
 
-Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const // FIXME: Reference to camera class wip
+Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
 {
     EditorCamera* camera = Engine::GetInstance().renderer.get()->renderCamera;
     

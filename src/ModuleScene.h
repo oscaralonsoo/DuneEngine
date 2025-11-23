@@ -17,7 +17,7 @@ public:
     bool Update() override;
     bool CleanUp() override;
 
-    GameObject* CreateGameObject(const std::string& name);
+    GameObject* CreateGameObject();
     const std::vector<GameObject *> GetGameObjects();
 
     Raycaster* GetRaycaster() const { return raycaster; }

@@ -19,7 +19,7 @@ Component &GameObject::CreateComponent(ComponentType type)
         component = std::make_unique<TransformComponent>(this);
         break;
     case ComponentType::Mesh:
-        component = std::make_unique<MeshComponent>(this, PrimitiveMesh::CreateCube());
+        component = std::make_unique<MeshComponent>(this);
         break;
     case ComponentType::Material:
         // component = std::make_unique<MaterialComponent>(this);

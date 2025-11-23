@@ -12,7 +12,8 @@ Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &ind
         {ShaderDataType::Vec3, "aPosition"},
         {ShaderDataType::Vec3, "aNormals"},
         {ShaderDataType::Vec2, "aTexCoords"},
-        {ShaderDataType::Vec3, "aTangent"}};
+        {ShaderDataType::Vec3, "aTangent"},
+        {ShaderDataType::Vec3, "aBitangent"}};
 
     mVertexBuffer->SetLayout(layout);
 
