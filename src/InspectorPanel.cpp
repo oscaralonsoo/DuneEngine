@@ -40,7 +40,7 @@ void InspectorPanel::OnImGuiRender()
     auto scene = Engine::GetInstance().scene;
     if (scene)
     {
-        GameObject* selected = scene->GetSelected();
+        std::shared_ptr<GameObject> selected = scene->GetSelected();
         if (selected)
         {
             ImGui::Text("Name: %s", selected->GetName().c_str());

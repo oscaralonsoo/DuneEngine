@@ -124,8 +124,9 @@ Texture::~Texture()
         glDeleteTextures(1, &mID);
 }
 
-void Texture::Bind() const
+void Texture::Bind(unsigned int slot) const
 {
+    glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, mID);
 }
 
@@ -142,7 +143,7 @@ void Texture::Resize(GLuint width, GLuint height)
 
 void Texture::Clear(const glm::vec4 &color)
 {
-    Bind();
+    Bind(0);
     glClearTexImage(mID, 0, ToGLFormat(mProperties.format), GL_FLOAT, &color);
 }
 
@@ -186,7 +187,7 @@ GLuint Texture::InitializeTexture(const void *pixels, GLuint width, GLuint heigh
     glGenTextures(1, &tex);
 
     mID = tex;
-    Bind();
+    Bind(0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ToGLWrap(mProperties.wrapping));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ToGLWrap(mProperties.wrapping));

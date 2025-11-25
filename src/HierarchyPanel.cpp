@@ -35,7 +35,7 @@ void HierarchyPanel::OnImGuiRender()
 
     if (auto scene = Engine::GetInstance().scene)
     {
-        for (GameObject* go : scene->GetGameObjects())
+        for (std::shared_ptr<GameObject> go : scene->GetGameObjects())
         {
             ImGui::Text("%s", go->GetName().c_str());
         }

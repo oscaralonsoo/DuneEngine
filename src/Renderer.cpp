@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "RendererAPI.h"
+#include "Globals.h"
 
 std::vector<RenderObject> Renderer::sOpaqueRenderQueue;
 
@@ -14,27 +15,12 @@ void Renderer::ForwardPass()
 
     for (const auto &renderObject : sOpaqueRenderQueue)
     {
-        // Material *material = command.material.get();
+        Material *material = renderObject.material.get();
+        material->Use();
 
-        // if (material == nullptr or material->GetShader() == nullptr)
-        // {
-        //     material = s_RendererData.DefaultMaterial.get();
-        // }
+        const std::shared_ptr<Shader> &shader = material->GetShader();
 
-        // material->Use();
-
-        // const Ref<Shader> &shader = material->GetShader();
-
-        // shader->Bind();
-
-        // // Set the irradiance map, is 6 because the first 6 slots are used by the material
-        // shader->setInt("irradianceMap", 6);
-        // shader->setInt("prefilterMap", 7);
-        // shader->setInt("brdfLUT", 8);
-        // shader->setMat4("model", command.transform);
-        // shader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(command.transform))));
-
-        // shader->setBool("showNormals", s_RenderSettings.showNormals);
+        shader->Bind();
 
         Mesh *mesh = renderObject.mesh.get();
 

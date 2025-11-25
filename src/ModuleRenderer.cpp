@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "ModuleWindow.h"
 #include "MeshComponent.h"
+#include "MaterialComponent.h"
 #include "TransformComponent.h"
 
 ModuleRenderer::ModuleRenderer() : Module()
@@ -15,15 +16,8 @@ ModuleRenderer::ModuleRenderer() : Module()
 
 bool ModuleRenderer::Start()
 {
-    shader = new Shader("Assets/shaders/Shader.glsl");
-
     // Inicializar la textura con shared_ptr
     texture = std::make_shared<Texture>("Assets/textures/basic.jpg");
-
-    // Setear uniform de textura en la unidad 0
-    shader->Bind();
-    shader->SetInt("texture", 0);
-    shader->Unbind();
 
     // Crear cámara de render
     renderCamera = new EditorCamera(
@@ -52,26 +46,28 @@ bool ModuleRenderer::Update()
 
     renderCamera->SetViewportSize(w, h);
 
-    shader->Bind();
-    shader->SetMat4("view", renderCamera->GetViewMatrix());
-    shader->SetMat4("projection", renderCamera->GetProjectionMatrix());
-
     // Renderizar objetos de la escena
-    for (GameObject *go : Engine::GetInstance().scene.get()->GetGameObjects())
+    for (std::shared_ptr<GameObject> go : Engine::GetInstance().scene.get()->GetGameObjects())
     {
+
+        MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
+        if (!materialComp || !materialComp->GetMaterial())
+            continue;
+
+        shader = materialComp->GetMaterial()->GetShader();
+        shader->Bind();
+        shader->SetMat4("view", renderCamera->GetViewMatrix());
+        shader->SetMat4("projection", renderCamera->GetProjectionMatrix());
         MeshComponent *meshComp = go->GetComponent<MeshComponent>();
         if (!meshComp || !meshComp->GetMesh())
             continue;
 
-        glm::mat4 model = glm::mat4(1.0f);
         TransformComponent *transformComp = go->GetComponent<TransformComponent>();
-        // if (transformComp)
-        //     model = transformComp->GetTransformMatrix();
-
-        shader->SetMat4("model", model);
+        shader->SetMat4("model", transformComp->GetWorldTransform());
 
         RenderObject renderObject;
         renderObject.mesh = meshComp->GetMesh();
+        renderObject.material = materialComp->GetMaterial();
 
         Renderer::Submit(renderObject);
     }
@@ -88,7 +84,6 @@ bool ModuleRenderer::PostUpdate()
 bool ModuleRenderer::CleanUp()
 {
     delete renderCamera;
-    delete shader;
 
     return true;
 }

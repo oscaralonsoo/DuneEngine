@@ -1,10 +1,12 @@
 #pragma once
 #include "Mesh.h"
+#include "Material.h"
 
 struct RenderObject
 {
     glm::mat4 transform = glm::mat4(1.0f);
     std::shared_ptr<Mesh> mesh;
+    std::shared_ptr<Material> material;
 };
 
 class Renderer
@@ -14,9 +16,9 @@ public:
 
     static void ForwardPass(/*const std::shared_ptr<RenderTarget>& target*/);
 
-    static void Submit(const RenderObject& renderObject);
+    static void Submit(const RenderObject &renderObject);
 
-    private:
+private:
     static std::vector<RenderObject> sOpaqueRenderQueue;
     static std::vector<RenderObject> sTransparentRenderQueue;
 };

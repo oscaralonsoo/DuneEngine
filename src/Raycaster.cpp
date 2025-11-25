@@ -31,14 +31,14 @@ Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
     return Ray{camera->GetPosition(), rayDir};
 }
 
-GameObject *Raycaster::PickObject(float mouseX, float mouseY, const std::vector<GameObject *> &objects) const
+std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const
 {
     Ray ray = ScreenPointToRay(mouseX, mouseY);
 
-    GameObject *closest = nullptr;
+    std::shared_ptr<GameObject> closest = nullptr;
     float closestT = std::numeric_limits<float>::max();
 
-    for (auto *obj : objects)
+    for (std::shared_ptr<GameObject> obj : objects)
     {
         MeshComponent *meshComp = obj->GetComponent<MeshComponent>();
         if (!meshComp)

@@ -6,12 +6,6 @@ MeshComponent::MeshComponent(GameObject *owner, const std::shared_ptr<Mesh> &mes
 {
 }
 
-bool MeshComponent::Update()
-{
-    LOG_INFO("Updating MeshComponent");
-    return true;
-}
-
 void MeshComponent::SetMesh(const std::shared_ptr<Mesh> &mesh)
 {
     mMesh = mesh;

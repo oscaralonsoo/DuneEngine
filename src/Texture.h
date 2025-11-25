@@ -30,7 +30,7 @@ public:
     Texture(const std::filesystem::path& path, bool srgb = true);
     ~Texture();
 
-    void Bind() const;
+    void Bind(unsigned int slot) const;
     void Resize(GLuint width, GLuint height);
     void Clear(const glm::vec4& color);
 

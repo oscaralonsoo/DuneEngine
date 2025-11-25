@@ -2,6 +2,7 @@
 #include "MeshComponent.h"
 #include "PrimitiveMesh.h"
 #include "TransformComponent.h"
+#include "MaterialComponent.h"
 
 GameObject::GameObject()
 {
@@ -22,7 +23,7 @@ Component &GameObject::CreateComponent(ComponentType type)
         component = std::make_unique<MeshComponent>(this);
         break;
     case ComponentType::Material:
-        // component = std::make_unique<MaterialComponent>(this);
+        component = std::make_unique<MaterialComponent>(this);
         break;
     default:
         component = std::make_unique<Component>(type, this);

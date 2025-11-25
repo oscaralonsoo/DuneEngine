@@ -8,6 +8,7 @@
 #include "Model.h"
 #include "Globals.h"
 #include "RendererAPI.h"
+#include "MaterialComponent.h"
 #include "ResourceUtils.h"
 #include <string.h>
 
@@ -95,16 +96,15 @@ bool ModuleInput::PreUpdate()
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
-                GameObject *picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+
+                std::shared_ptr<GameObject> picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
 
                 if (picked)
                 {
-                    LOG_INFO("Picked object: %s", picked->GetName().c_str());
                     scene->SetSelected(picked);
                 }
                 else
                 {
-                    // Clear selection if click on empty space
                     scene->SetSelected(nullptr);
                 }
             }
@@ -144,7 +144,7 @@ bool ModuleInput::PreUpdate()
 
             if (ResourceUtils::GetTypeFromExtension(file) == ResourceType::Model)
             {
-                GameObject *go = Engine::GetInstance().scene.get()->CreateGameObject();
+                std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
                 go->SetName(ResourceUtils::ToString(ResourceType::Model));
 
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
@@ -155,8 +155,11 @@ bool ModuleInput::PreUpdate()
 
                     go->CreateComponent(ComponentType::Mesh);
                     MeshComponent *meshComp = go->GetComponent<MeshComponent>();
-
                     meshComp->SetMesh(mesh);
+
+                    go->CreateComponent(ComponentType::Material);
+                    MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
+                    materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
                 }
             }
         }
