@@ -11,6 +11,7 @@
 #include "MaterialComponent.h"
 #include "ResourceUtils.h"
 #include <string.h>
+#include <filesystem>
 
 #define MAX_KEYS 300
 
@@ -145,7 +146,7 @@ bool ModuleInput::PreUpdate()
             if (ResourceUtils::GetTypeFromExtension(file) == ResourceType::Model)
             {
                 std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-                go->SetName(ResourceUtils::ToString(ResourceType::Model));
+                go->SetName(std::filesystem::path(file).filename().stem().string());
 
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
 
