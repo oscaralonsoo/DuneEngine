@@ -31,6 +31,7 @@ public:
 
 private:
     static bool RayIntersectsAABB(const Ray &ray, const AABB &box, float *tMinOut = nullptr);
+    static AABB TransformAABB(const AABB &aabb, const glm::mat4 &transform);
 
 private:
     Camera *camera;

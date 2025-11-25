@@ -6,6 +6,8 @@ std::shared_ptr<Shader> Material::sStandardShader = nullptr;
 
 Material::Material(ResourceType type) : Resource(type)
 {
+    mName = "New Material";
+
     if (!sMissingTexture)
         sMissingTexture = std::make_shared<Texture>("Assets/textures/missingTexture.jpg");
 
@@ -29,6 +31,8 @@ Material::Material(ResourceType type) : Resource(type)
 
 Material::Material(const std::string &name, PBRMaterialTextures &materialTextures)
 {
+    mName = name;
+
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");
 
