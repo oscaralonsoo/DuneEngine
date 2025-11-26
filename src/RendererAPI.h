@@ -26,6 +26,13 @@ enum class PolygonMode
     Point = 2
 };
 
+enum DepthFunc
+{
+    LESS = 0,
+    LEQUAL = 1
+
+};
+
 class RendererAPI
 {
 public:
@@ -36,6 +43,8 @@ public:
     static void Clear(uint32_t clearFlags = (uint32_t)ClearFlags::Color | (uint32_t)ClearFlags::Depth);
     static void SetColorMask(bool red, bool green, bool blue, bool alpha);
     static void SetDepthMask(bool enabled);
+    static void ClearDepth();
+    static void SetDepthFunc(DepthFunc func);
     static void SetFaceCulling(bool enabled);
     static void SetCullFace(CullFace face);
     static void SetPolygonMode(PolygonMode mode);

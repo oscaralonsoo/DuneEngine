@@ -108,13 +108,11 @@ GLenum ToGLFormat(ImageFormat format)
     return GL_RGBA;
 }
 
-Texture::Texture(const std::filesystem::path &path, bool srgb)
+Texture::Texture(const std::filesystem::path &path, bool srgb, bool invertY) : Resource(ResourceType::Texture)
 {
-    ilInit();
-    ilEnable(IL_ORIGIN_SET);
-    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
-    
     mProperties.srgb = srgb;
+    mInvertY = invertY;
+
     mID = LoadFromFile(path);
 }
 
@@ -162,6 +160,9 @@ GLuint Texture::LoadFromFile(const std::filesystem::path &path)
     ilGenImages(1, &img);
     ilBindImage(img);
 
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(mInvertY ? IL_ORIGIN_UPPER_LEFT : IL_ORIGIN_LOWER_LEFT);
+
     if (!ilLoadL(IL_TYPE_UNKNOWN, buf.data(), static_cast<ILuint>(buf.size())))
     {
         ILenum err = ilGetError();
@@ -171,11 +172,16 @@ GLuint Texture::LoadFromFile(const std::filesystem::path &path)
 
     ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 
+    /*
+    FIXME: REFACTORIZAR EL TAMAÑO DE BYTES POR PIXEL SEGÚN FORMATO
+    */
+
     mProperties.width = ilGetInteger(IL_IMAGE_WIDTH);
     mProperties.height = ilGetInteger(IL_IMAGE_HEIGHT);
-    const void *pixels = ilGetData();
+    mData = new unsigned char[mProperties.width * mProperties.height * 4];
+    memcpy(mData, ilGetData(), mProperties.width * mProperties.height * 4);
 
-    GLuint tex = InitializeTexture(pixels, mProperties.width, mProperties.height);
+    GLuint tex = InitializeTexture(mData, mProperties.width, mProperties.height);
 
     ilDeleteImages(1, &img);
     return tex;
@@ -206,4 +212,14 @@ GLuint Texture::InitializeTexture(const void *pixels, GLuint width, GLuint heigh
     }
 
     return tex;
+}
+
+GLenum Texture::GetImageFormat() const
+{
+    return ToGLFormat(mProperties.format);
+}
+
+GLenum Texture::GetImageInternalFormat() const
+{
+    return ToGLInternalFormat(mProperties.format, mProperties.srgb);
 }

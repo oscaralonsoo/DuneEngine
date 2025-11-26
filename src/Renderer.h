@@ -1,6 +1,8 @@
 #pragma once
 #include "Mesh.h"
 #include "Material.h"
+#include "Texture.h"
+#include "Cubemap.h"
 
 struct RenderObject
 {
@@ -15,10 +17,17 @@ public:
     static void Init();
 
     static void ForwardPass(/*const std::shared_ptr<RenderTarget>& target*/);
-
+    static void TransparentPass(/*const std::shared_ptr<RenderTarget>& target*/);
+    static void SkyboxPass(/*const std::shared_ptr<RenderTarget>& target*/);
     static void Submit(const RenderObject &renderObject);
+    static void ResetRenderState();
 
 private:
     static std::vector<RenderObject> sOpaqueRenderQueue;
     static std::vector<RenderObject> sTransparentRenderQueue;
+
+    static  std::shared_ptr<Mesh> sSkyboxCube;
+    static std::shared_ptr<Shader> sSkyboxShader;
+    static std::shared_ptr<Cubemap> sCubemap;
+
 };

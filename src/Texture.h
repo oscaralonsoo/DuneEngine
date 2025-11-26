@@ -6,9 +6,39 @@
 #include <filesystem>
 #include <vector>
 
-enum class ImageFormat { R8, RG8, RGB8, SRGB8, RGBA8, SRGBA8, R16F, RG16F, RGB16F, RGBA16F, R32F, RGB32F, RGBA32F, DEPTH24STENCIL8 };
-enum class TextureWrap { Repeat, MirroredRepeat, ClampToEdge, ClampToBorder };
-enum class TextureFilter { Nearest, Linear, NearestMipmapNearest, LinearMipmapNearest, NearestMipmapLinear, LinearMipmapLinear };
+enum class ImageFormat
+{
+    R8,
+    RG8,
+    RGB8,
+    SRGB8,
+    RGBA8,
+    SRGBA8,
+    R16F,
+    RG16F,
+    RGB16F,
+    RGBA16F,
+    R32F,
+    RGB32F,
+    RGBA32F,
+    DEPTH24STENCIL8
+};
+enum class TextureWrap
+{
+    Repeat,
+    MirroredRepeat,
+    ClampToEdge,
+    ClampToBorder
+};
+enum class TextureFilter
+{
+    Nearest,
+    Linear,
+    NearestMipmapNearest,
+    LinearMipmapNearest,
+    NearestMipmapLinear,
+    LinearMipmapLinear
+};
 
 struct TextureProperties
 {
@@ -27,23 +57,30 @@ class Texture : public Resource
 {
 public:
     Texture() = default;
-    Texture(const std::filesystem::path& path, bool srgb = true);
+    Texture(const std::filesystem::path& path, bool srgb = true, bool invertY = false);
     ~Texture();
 
     void Bind(unsigned int slot) const;
     void Resize(GLuint width, GLuint height);
-    void Clear(const glm::vec4& color);
+    void Clear(const glm::vec4 &color);
 
     GLuint GetWidth() const { return mProperties.width; }
     GLuint GetHeight() const { return mProperties.height; }
     GLuint GetID() const { return mID; }
-    ImageFormat GetImageFormat() const { return mProperties.format; }
+    GLenum GetImageFormat() const;
+    GLenum GetImageInternalFormat() const;
+
+    unsigned char *GetData() const { return mData; }
 
 private:
-    GLuint LoadFromFile(const std::filesystem::path& path);
-    GLuint InitializeTexture(const void* pixels, GLuint width, GLuint height);
+    GLuint LoadFromFile(const std::filesystem::path &path);
+    GLuint InitializeTexture(const void *pixels, GLuint width, GLuint height);
 
 private:
     TextureProperties mProperties;
     GLuint mID = 0;
+
+    unsigned char *mData;
+
+    bool mInvertY = false;
 };

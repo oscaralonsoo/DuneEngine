@@ -15,22 +15,21 @@ struct MaterialRenderSettings
 
     float alphaCutoff = 0.5f;
 
-    // Blend mode
-    // enum BlendMode
-    // {
-    //     Mix = 0,
-    //     Add,
-    //     Subtract,
-    //     Multiply
-    // } blendMode = BlendMode::Mix;
+    enum BlendMode
+    {
+        Mix = 0,
+        Add,
+        Subtract,
+        Multiply
+    } blendMode = BlendMode::Mix;
 
     // Culling
-    // enum CullMode
-    // {
-    //     Front = 0,
-    //     Back,
-    //     None
-    // } cullMode = CullMode::Back;
+    enum CullMode
+    {
+        Front = 0,
+        Back,
+        None
+    } cullMode = CullMode::Back;
 
     bool depthTest = true;
     bool wireframe = false;

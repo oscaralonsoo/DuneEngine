@@ -7,7 +7,7 @@ std::shared_ptr<Shader> Material::sStandardShader = nullptr;
 Material::Material(ResourceType type) : Resource(type)
 {
     if (!sMissingTexture)
-        sMissingTexture = std::make_shared<Texture>("Assets/textures/missingTexture.jpg");
+        sMissingTexture = std::make_shared<Texture>("Assets/textures/Baker_house.png");
 
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");

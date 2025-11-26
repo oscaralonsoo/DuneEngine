@@ -10,6 +10,7 @@ enum class ResourceType
     Shader,
     Material,
     Mesh,
+    Cubemap,
     Prefab
 };
 
