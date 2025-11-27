@@ -10,6 +10,8 @@
 #include "RendererAPI.h"
 #include "MaterialComponent.h"
 #include "ResourceUtils.h"
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
 #include <string.h>
 #include <filesystem>
 
@@ -72,6 +74,8 @@ bool ModuleInput::PreUpdate()
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
@@ -94,7 +98,7 @@ bool ModuleInput::PreUpdate()
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
             mouseButtons[event.button.button - 1] = KEY_DOWN;
 
-            if (event.button.button == SDL_BUTTON_LEFT)
+            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse)
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 

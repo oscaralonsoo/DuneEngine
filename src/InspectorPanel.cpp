@@ -30,10 +30,9 @@ void InspectorPanel::OnImGuiRender()
     ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_Always);
     ImGui::SetNextWindowViewport(viewport->ID);
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove   |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
+                            ImGuiWindowFlags_AlwaysUseWindowPadding |
+                            ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Inspector", nullptr, flags);
 
@@ -47,19 +46,38 @@ void InspectorPanel::OnImGuiRender()
             ImGui::Separator();
 
             // Read transform from TransformComponent
-            if (auto tc = selected->GetComponent<TransformComponent>())
+            if (auto transformComponent = selected->GetComponent<TransformComponent>())
             {
-                if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    const auto& p = tc->GetPosition();
-                    const auto& r = tc->GetRotation();
-                    const auto& s = tc->GetScale();
+            if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+                    {
+                        glm::vec3 position = transformComponent->GetPosition();
+                        glm::vec3 scale    = transformComponent->GetScale();
+                        glm::vec3 rotation = transformComponent->GetRotation();
 
-                    ImGui::Text("Position: %.2f, %.2f, %.2f", p.x, p.y, p.z);
-                    ImGui::Text("Rotation: %.2f, %.2f, %.2f", r.x, r.y, r.z);
-                    ImGui::Text("Scale:    %.2f, %.2f, %.2f", s.x, s.y, s.z);
+                        ImGui::PushItemWidth(panelWidth * 0.95f);
+                        if (ImGui::DragFloat3("##Position", &position.x, 0.1f))
+                        transformComponent->SetPosition(position);
+                        
+                        ImGui::Text("Rotation");
+                        if (ImGui::DragFloat3("##Rotation", &rotation.x, 0.1f))
+                        transformComponent->SetRotation(rotation);
+                        
+                        ImGui::Text("Scale");
+                        if (ImGui::DragFloat3("##Scale", &scale.x, 0.01f))
+                        {
+                            scale = glm::max(scale, glm::vec3(0.001f));
+                            transformComponent->SetScale(scale);
+                        }
+                        
+                        if (ImGui::Button("Reset Transform"))
+                        transformComponent->SetPosition({0,0,0}),
+                        transformComponent->SetRotation({0,0,0}),
+                        transformComponent->SetScale({1,1,1});
+                        
+                        ImGui::PopItemWidth();
+                    }
+                    ImGui::Text("Position");
                 }
-            }
             else
             {
                 ImGui::TextDisabled("(no transform component)");
@@ -68,13 +86,13 @@ void InspectorPanel::OnImGuiRender()
             ImGui::Separator();
 
             // Display other components
-            if (auto mc = selected->GetComponent<MeshComponent>())
+            if (auto meshComponent = selected->GetComponent<MeshComponent>())
             {
                 if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (mc->GetMesh())
+                    if (meshComponent->GetMesh())
                     {
-                        ImGui::Text("Name: %s", mc->GetMesh()->GetName().c_str());
+                        ImGui::Text("Name: %s", meshComponent->GetMesh()->GetName().c_str());
                     }
                     else
                     {
@@ -83,13 +101,13 @@ void InspectorPanel::OnImGuiRender()
                 }
             }
 
-            if (auto matc = selected->GetComponent<MaterialComponent>())
+            if (auto matComponent = selected->GetComponent<MaterialComponent>())
             {
                 if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (matc->GetMaterial())
+                    if (matComponent->GetMaterial())
                     {
-                        ImGui::Text("Name: %s", matc->GetMaterial()->GetName().c_str());
+                        ImGui::Text("Name: %s", matComponent->GetMaterial()->GetName().c_str());
                     }
                     else
                     {
