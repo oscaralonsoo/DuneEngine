@@ -67,9 +67,7 @@ bool ModuleWindow::Awake()
         SDL_Quit();
         return false;
     }
-
-    glEnable(GL_DEPTH_TEST);
-
+    
     SDL_GetWindowSizeInPixels(window, &width, &height);
     RendererAPI::SetViewport(0, 0, width, height);
 

@@ -22,20 +22,6 @@ bool ModuleScene::Start()
     root->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
     root->CreateComponent(ComponentType::Material);
     root->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-    // root->CreateComponent(ComponentType::Transform);
-    // root->GetComponent<TransformComponent>()->SetWorldTransform(
-    //     glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)));
-
-    // test = std::make_shared<GameObject>();
-    // test->SetName("Test");
-    // mGameObjects.push_back(test);
-    // test->CreateComponent(ComponentType::Mesh);
-    // test->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateSphere());
-    // test->CreateComponent(ComponentType::Material);
-    // test->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-    // test->CreateComponent(ComponentType::Transform);
-    // test->GetComponent<TransformComponent>()->SetWorldTransform(
-    //     glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -8.0f)));
 
     raycaster = new Raycaster();
 

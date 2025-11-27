@@ -1,7 +1,6 @@
 #include "ModuleRenderer.h"
 #include "RendererAPI.h"
 #include "Engine.h"
-#include "Texture.h"
 #include "ModuleScene.h"
 #include "Renderer.h"
 #include "ModuleWindow.h"
@@ -16,9 +15,6 @@ ModuleRenderer::ModuleRenderer() : Module()
 
 bool ModuleRenderer::Start()
 {
-    // Inicializar la textura con shared_ptr
-    texture = std::make_shared<Texture>("Assets/textures/basic.jpg");
-
     // Crear cámara de render
     renderCamera = new EditorCamera(
         45.0f,
@@ -27,6 +23,7 @@ bool ModuleRenderer::Start()
         1000.0f);
 
     RendererAPI::Init();
+    Renderer::Init();
     return true;
 }
 
@@ -71,8 +68,12 @@ bool ModuleRenderer::Update()
 
         Renderer::Submit(renderObject);
     }
-
+    RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0});
+    RendererAPI::Clear();
+    
+    Renderer::SkyboxPass();
     Renderer::ForwardPass();
+    Renderer::TransparentPass();
     return true;
 }
 

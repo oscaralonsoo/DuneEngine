@@ -108,6 +108,28 @@ void RendererAPI::SetDepthMask(bool enabled)
     glDepthMask(enabled);
 }
 
+void RendererAPI::ClearDepth()
+{
+    glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void RendererAPI::SetDepthFunc(DepthFunc func)
+{
+    switch (func)
+    {
+        case DepthFunc::LESS:
+            glDepthFunc(GL_LESS);
+            break;
+        case DepthFunc::LEQUAL:
+            glDepthFunc(GL_LEQUAL);
+            break;
+        default:
+            glDepthFunc(GL_LESS);
+            break;
+    }
+}
+
+
 void RendererAPI::DrawIndexed(const std::shared_ptr<VertexArray> &vertexArray, uint32_t indexCount)
 {
     vertexArray->Bind();
