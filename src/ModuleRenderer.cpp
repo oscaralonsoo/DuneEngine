@@ -51,18 +51,14 @@ bool ModuleRenderer::Update()
         if (!materialComp || !materialComp->GetMaterial())
             continue;
 
-        shader = materialComp->GetMaterial()->GetShader();
-        shader->Bind();
-        shader->SetMat4("view", renderCamera->GetViewMatrix());
-        shader->SetMat4("projection", renderCamera->GetProjectionMatrix());
         MeshComponent *meshComp = go->GetComponent<MeshComponent>();
         if (!meshComp || !meshComp->GetMesh())
             continue;
 
         TransformComponent *transformComp = go->GetComponent<TransformComponent>();
-        shader->SetMat4("model", transformComp->GetWorldTransform());
 
         RenderObject renderObject;
+        renderObject.transform = transformComp->GetWorldTransform();
         renderObject.mesh = meshComp->GetMesh();
         renderObject.material = materialComp->GetMaterial();
 

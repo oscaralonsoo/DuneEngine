@@ -43,6 +43,10 @@ void Renderer::ForwardPass()
         const std::shared_ptr<Shader> &shader = material->GetShader();
 
         shader->Bind();
+        auto camera = Engine::GetInstance().renderer->renderCamera;
+        shader->SetMat4("view", camera->GetViewMatrix());
+        shader->SetMat4("projection", camera->GetProjectionMatrix());
+        shader->SetMat4("model", renderObject.transform);
 
         Mesh *mesh = renderObject.mesh.get();
 
@@ -82,6 +86,10 @@ void Renderer::TransparentPass()
         const std::shared_ptr<Shader> &shader = material->GetShader();
 
         shader->Bind();
+        auto camera = Engine::GetInstance().renderer->renderCamera;
+        shader->SetMat4("view", camera->GetViewMatrix());
+        shader->SetMat4("projection", camera->GetProjectionMatrix());
+        shader->SetMat4("model", renderObject.transform);
 
         Mesh *mesh = renderObject.mesh.get();
 

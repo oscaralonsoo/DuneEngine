@@ -14,17 +14,14 @@ Material::Material(ResourceType type) : Resource(type)
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");
 
-    mTextures.albedo = sMissingTexture;
-    mTextureFlags.hasAlbedo = true;
+    mProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // white color default
 
     mShader = sStandardShader;
 
     if (mShader)
     {
         mShader->Bind();
-        if (mTextures.albedo)
-            mTextures.albedo->Bind(0);
-        mShader->SetInt("material.albedoMap", 0);
+        mShader->SetInt("material_albedoMap", 0);
         mShader->Unbind();
     }
 }
@@ -49,6 +46,8 @@ Material::Material(const std::string &name, PBRMaterialTextures &materialTexture
     mTextureFlags.hasRoughness = (mTextures.roughness != nullptr);
     mTextureFlags.hasAO = (mTextures.ao != nullptr);
     mTextureFlags.hasEmissive = (mTextures.emissive != nullptr);
+
+    mProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // white color default
 
     if (mTextureFlags.hasMetallic)
         mProperties.metallic = 1.0f;
@@ -93,33 +92,35 @@ void Material::Use()
 
     int slot = 0;
     if (mTextureFlags.hasAlbedo)
-        mTextures.albedo->Bind(slot++);
+    {
+        mTextures.albedo->Bind(slot);
+        mShader->SetInt("material_albedoMap", slot++);
+    }
     if (mTextureFlags.hasNormal)
-        mTextures.normal->Bind(slot++);
+    {
+        mTextures.normal->Bind(slot);
+        mShader->SetInt("material_normalMap", slot++);
+    }
     if (mTextureFlags.hasMetallic)
         mTextures.metallic->Bind(slot++);
     if (mTextureFlags.hasRoughness)
         mTextures.roughness->Bind(slot++);
     if (mTextureFlags.hasAO)
-        mTextures.ao->Bind(slot++);
+    {
+        mTextures.ao->Bind(slot);
+        mShader->SetInt("material_aoMap", slot++);
+    }
     if (mTextureFlags.hasEmissive)
-        mTextures.emissive->Bind(slot++);
+    {
+        mTextures.emissive->Bind(slot);
+        mShader->SetInt("material_emissiveMap", slot++);
+    }
 
-    mShader->SetVec4("material.color", mProperties.color);
-    mShader->SetFloat("material.metallic", mProperties.metallic);
-    mShader->SetFloat("material.roughness", mProperties.roughness);
-    mShader->SetFloat("material.ao", mProperties.ao);
-    mShader->SetVec3("material.emissive", mProperties.emissive);
-
-    mShader->SetInt("material.hasAlbedo", mTextureFlags.hasAlbedo);
-    mShader->SetInt("material.hasNormal", mTextureFlags.hasNormal);
-    mShader->SetInt("material.hasMetallic", mTextureFlags.hasMetallic);
-    mShader->SetInt("material.hasRoughness", mTextureFlags.hasRoughness);
-    mShader->SetInt("material.hasAO", mTextureFlags.hasAO);
-    mShader->SetInt("material.hasEmissive", mTextureFlags.hasEmissive);
-
-    mShader->SetInt("material.transparencyMode", mRenderSettings.transparencyMode);
-    mShader->SetFloat("material.alphaCutoff", mRenderSettings.alphaCutoff);
+    mShader->SetVec4("material_color", mProperties.color);
+    mShader->SetInt("material_hasAlbedo", mTextureFlags.hasAlbedo);
+    mShader->SetInt("material_hasNormal", mTextureFlags.hasNormal);
+    mShader->SetInt("material_hasEmissive", mTextureFlags.hasEmissive);
+    mShader->SetInt("material_hasAO", mTextureFlags.hasAO);
 
     mShader->Unbind();
 }
