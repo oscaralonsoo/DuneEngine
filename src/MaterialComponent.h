@@ -12,6 +12,8 @@ public:
     void SetMaterial(const std::shared_ptr<Material> &material);
     const std::shared_ptr<Material> &GetMaterial() const;
 
+    void OnInspectorRender(float panelWidth);
+
 private:
     std::shared_ptr<Material> mMaterial;
 };
