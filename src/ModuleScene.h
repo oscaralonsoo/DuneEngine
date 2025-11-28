@@ -21,7 +21,8 @@ public:
     const std::vector<std::shared_ptr<GameObject>> GetGameObjects();
 
     Raycaster* GetRaycaster() const { return raycaster; }
-    void SetSelected(std::shared_ptr<GameObject> go) { selected = go; }
+    void SetSelected(std::shared_ptr<GameObject> go);
+    void ResetSelecteds();
     std::shared_ptr<GameObject> GetSelected() const { return selected; }
 private:
     std::shared_ptr<GameObject> root;

@@ -28,8 +28,8 @@ enum class PolygonMode
 
 enum DepthFunc
 {
-    LESS = 0,
-    LEQUAL = 1
+    Less = 0,
+    Lequal = 1
 
 };
 

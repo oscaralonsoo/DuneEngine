@@ -97,15 +97,12 @@ bool ModuleInput::PreUpdate()
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
-                std::shared_ptr<GameObject> picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
-
-                if (picked)
+                std::shared_ptr<GameObject> selected = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+                if (selected)
                 {
-                    scene->SetSelected(picked);
-                }
-                else
-                {
-                    scene->SetSelected(nullptr);
+                    scene->SetSelected(selected);
+                } else {
+                    scene->ResetSelecteds();
                 }
             }
             break;
@@ -137,20 +134,19 @@ bool ModuleInput::PreUpdate()
 
         case SDL_EVENT_DROP_FILE:
         {
-            // ─────────── FIXME ───────────
-            // TODO: Mover a EventSystem
-            // ────────────────────────────
             const std::string &file = event.drop.data ? event.drop.data : "";
 
-            if (ResourceUtils::GetTypeFromExtension(file) == ResourceType::Model)
-            {
-                std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-                go->SetName(ResourceUtils::ToString(ResourceType::Model));
+            ResourceType type = ResourceUtils::GetTypeFromExtension(file);
 
+            if (type == ResourceType::Model)
+            {
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
 
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
                 {
+                    std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
+                    go->SetName(ResourceUtils::ToString(ResourceType::Model));
+
                     auto &mesh = model->GetMeshes()[i];
 
                     go->CreateComponent(ComponentType::Mesh);
@@ -161,6 +157,22 @@ bool ModuleInput::PreUpdate()
                     MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
                     materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
                 }
+            }
+            else if (type == ResourceType::Texture)
+            {
+                ModuleScene *scene = Engine::GetInstance().scene.get();
+                std::shared_ptr<GameObject> selected = scene->GetRaycaster()->PickObject(event.drop.x, event.drop.y, scene->GetGameObjects());
+                scene->SetSelected(selected);
+
+                if (!selected)
+                    break;
+
+                MaterialComponent *materialComp = selected->GetComponent<MaterialComponent>();
+                if (!materialComp)
+                    break;
+
+                std::shared_ptr<Texture> texture = std::make_shared<Texture>(file);
+                materialComp->GetMaterial()->SetTexture(TextureType::Albedo, texture);
             }
         }
         break;

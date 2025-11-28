@@ -49,3 +49,19 @@ const std::vector<std::shared_ptr<GameObject>> ModuleScene::GetGameObjects()
 {
     return mGameObjects;
 }
+
+void ModuleScene::SetSelected(std::shared_ptr<GameObject> go)
+{
+    selected = go;
+    go->SetSelected(!go->IsSelected());
+}
+
+void ModuleScene::ResetSelecteds()
+{
+    selected = nullptr;
+    
+    for (auto& go : mGameObjects)
+    {
+        go->SetSelected(false);
+    }
+}

@@ -17,6 +17,9 @@ public:
     const std::string GetName() const { return mName; }
     void SetName(const std::string &name);
 
+    void SetSelected(bool selected) { mSelected = selected; }
+    bool IsSelected() const { return mSelected; }
+
     template <typename T>
     T* GetComponent()
     {
@@ -32,4 +35,6 @@ private:
     bool mActive = true;
     std::string mName;
     std::vector<std::unique_ptr<Component>> mComponents;
+
+    bool mSelected = false;
 };

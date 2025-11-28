@@ -65,6 +65,8 @@ bool ModuleRenderer::Update()
         RenderObject renderObject;
         renderObject.mesh = meshComp->GetMesh();
         renderObject.material = materialComp->GetMaterial();
+        renderObject.transform = transformComp->GetWorldTransform();
+        renderObject.selected = go->IsSelected();
 
         Renderer::Submit(renderObject);
     }
@@ -74,6 +76,7 @@ bool ModuleRenderer::Update()
     Renderer::SkyboxPass();
     Renderer::ForwardPass();
     Renderer::TransparentPass();
+    Renderer::SelectedPass();
     return true;
 }
 

@@ -10,6 +10,9 @@ void RendererAPI::Init()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_STENCIL_TEST);
+    
     glEnable(GL_LINE_SMOOTH);
 
     glEnable(GL_CULL_FACE);
@@ -18,6 +21,7 @@ void RendererAPI::Init()
     glDepthFunc(GL_LEQUAL);
 
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
 }
 
 void RendererAPI::Clear(uint32_t clearFlags)
@@ -117,10 +121,10 @@ void RendererAPI::SetDepthFunc(DepthFunc func)
 {
     switch (func)
     {
-        case DepthFunc::LESS:
+        case DepthFunc::Less:
             glDepthFunc(GL_LESS);
             break;
-        case DepthFunc::LEQUAL:
+        case DepthFunc::Lequal:
             glDepthFunc(GL_LEQUAL);
             break;
         default:
