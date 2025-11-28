@@ -38,18 +38,6 @@ void InspectorPanel::OnImGuiRender()
 
     ImGui::Begin("Inspector", nullptr, flags);
 
-    // Handle external drag-drop source
-    const std::string& draggedFile = ModuleInput::GetDraggedFile();
-    if (!draggedFile.empty())
-    {
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceExtern))
-        {
-            ImGui::SetDragDropPayload("FILE_PATH", draggedFile.c_str(), draggedFile.size() + 1);
-            ImGui::Text("Dragging: %s", draggedFile.c_str());
-            ImGui::EndDragDropSource();
-        }
-    }
-
     auto scene = Engine::GetInstance().scene;
     if (scene)
     {

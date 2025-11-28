@@ -3,8 +3,6 @@
 #include "ModuleWindow.h"
 #include "ModuleScene.h"
 #include "GameObject.h"
-#include "Engine.h"
-#include "ModuleScene.h"
 #include "Model.h"
 #include "Globals.h"
 #include "RendererAPI.h"
@@ -24,6 +22,9 @@ ModuleInput::ModuleInput() : Module()
     keyboard = new KeyState[MAX_KEYS];
     memset(keyboard, KEY_IDLE, sizeof(KeyState) * MAX_KEYS);
     memset(mouseButtons, KEY_IDLE, sizeof(KeyState) * NUM_MOUSE_BUTTONS);
+    draggedFile = "";
+    fileDropped = false;
+    dropPosition = {0, 0};
 }
 
 ModuleInput::~ModuleInput()
@@ -53,8 +54,8 @@ bool ModuleInput::Start()
 
 bool ModuleInput::PreUpdate()
 {
+    // Update keyboard states
     const bool *keys = SDL_GetKeyboardState(NULL);
-
     for (int i = 0; i < MAX_KEYS; ++i)
     {
         if (keys[i])
@@ -63,6 +64,7 @@ bool ModuleInput::PreUpdate()
             keyboard[i] = (keyboard[i] == KEY_DOWN || keyboard[i] == KEY_REPEAT) ? KEY_UP : KEY_IDLE;
     }
 
+    // Update mouse button states
     for (int i = 0; i < NUM_MOUSE_BUTTONS; ++i)
     {
         if (mouseButtons[i] == KEY_DOWN)
@@ -71,6 +73,7 @@ bool ModuleInput::PreUpdate()
             mouseButtons[i] = KEY_IDLE;
     }
 
+    // Process SDL events
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -98,10 +101,10 @@ bool ModuleInput::PreUpdate()
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
             mouseButtons[event.button.button - 1] = KEY_DOWN;
 
+            // Handle object picking on left mouse button click
             if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse)
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
-
                 std::shared_ptr<GameObject> picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
 
                 if (picked)
@@ -135,40 +138,13 @@ bool ModuleInput::PreUpdate()
             SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &w, &h);
 
             Engine::GetInstance().window.get()->SetSize(w, h); // Update size in ModuleWindow
-
-            RendererAPI::SetViewport(0, 0, w, h); // Update del viewport
+            RendererAPI::SetViewport(0, 0, w, h); // Update viewport
         }
         break;
 
         case SDL_EVENT_DROP_FILE:
-        {
-            // ─────────── FIXME ───────────
-            // TODO: Mover a EventSystem
-            // ────────────────────────────
-            const std::string &file = event.drop.data ? event.drop.data : "";
-
-            if (ResourceUtils::GetTypeFromExtension(file) == ResourceType::Model)
-            {
-                std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-                go->SetName(std::filesystem::path(file).filename().stem().string());
-
-                std::shared_ptr<Model> model = std::make_shared<Model>(file);
-
-                for (size_t i = 0; i < model->GetMeshes().size(); ++i)
-                {
-                    auto &mesh = model->GetMeshes()[i];
-
-                    go->CreateComponent(ComponentType::Mesh);
-                    MeshComponent *meshComp = go->GetComponent<MeshComponent>();
-                    meshComp->SetMesh(mesh);
-
-                    go->CreateComponent(ComponentType::Material);
-                    MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
-                    materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-                }
-            }
-        }
-        break;
+            HandleFileDrop(event);
+            break;
         }
     }
 
@@ -195,4 +171,33 @@ SDL_Point ModuleInput::GetMousePosition() const
 SDL_Point ModuleInput::GetMouseMotion() const
 {
     return {mouseMotionX, mouseMotionY};
+}
+
+// Handles file drop events
+void ModuleInput::HandleFileDrop(const SDL_Event& event)
+{
+    draggedFile = event.drop.data ? event.drop.data : "";
+    fileDropped = true;
+    dropPosition = {mouseX, mouseY};
+
+    if (ResourceUtils::GetTypeFromExtension(draggedFile) == ResourceType::Model)
+    {
+        std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
+        go->SetName(std::filesystem::path(draggedFile).filename().stem().string());
+
+        std::shared_ptr<Model> model = std::make_shared<Model>(draggedFile);
+
+        for (size_t i = 0; i < model->GetMeshes().size(); ++i)
+        {
+            auto &mesh = model->GetMeshes()[i];
+
+            go->CreateComponent(ComponentType::Mesh);
+            MeshComponent *meshComp = go->GetComponent<MeshComponent>();
+            meshComp->SetMesh(mesh);
+
+            go->CreateComponent(ComponentType::Material);
+            MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
+            materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+        }
+    }
 }

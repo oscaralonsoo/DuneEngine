@@ -1,209 +1,151 @@
 #include "MaterialComponent.h"
+#include "Engine.h"
+#include "ModuleInput.h"
 #include <imgui.h>
+#define NOMINMAX
+#include <windows.h>
+#include <commdlg.h>
+#include <SDL3/SDL.h>
+#include <filesystem>
 
-MaterialComponent::MaterialComponent(GameObject *owner, const std::shared_ptr<Material> &material)
+MaterialComponent::MaterialComponent(GameObject* owner, const std::shared_ptr<Material>& material)
     : Component(ComponentType::Material, owner), mMaterial(material)
 {
 }
 
-void MaterialComponent::SetMaterial(const std::shared_ptr<Material> &material)
+void MaterialComponent::SetMaterial(const std::shared_ptr<Material>& material)
 {
     mMaterial = material;
 }
 
-const std::shared_ptr<Material> &MaterialComponent::GetMaterial() const
+const std::shared_ptr<Material>& MaterialComponent::GetMaterial() const
 {
     return mMaterial;
 }
 
-void MaterialComponent::OnInspectorRender(float panelWidth)
+// Opens a file dialog for selecting image files
+std::string OpenFile()
 {
-    if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
+    OPENFILENAMEA openFileName;
+    CHAR szFile[260] = { 0 };
+    CHAR szFilter[] = "Image Files\0*.png;*.jpg;*.jpeg;*.bmp;*.tga;*.dds\0All Files\0*.*\0";
+
+    ZeroMemory(&openFileName, sizeof(openFileName));
+    openFileName.lStructSize = sizeof(openFileName);
+    openFileName.hwndOwner = nullptr;
+    openFileName.lpstrFile = szFile;
+    openFileName.nMaxFile = sizeof(szFile);
+    openFileName.lpstrFilter = szFilter;
+    openFileName.nFilterIndex = 1;
+    openFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    if (GetOpenFileNameA(&openFileName) == TRUE)
+        return std::string(openFileName.lpstrFile);
+
+    return "";
+}
+
+// Renders a texture slot in the inspector
+void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+{
+    ImGui::Text("%s", name);
+
+    ImVec2 slotSize(32, 32);
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+
+    ImGui::InvisibleButton(("##slot_" + std::string(name)).c_str(), slotSize);
+    bool hovered = ImGui::IsItemHovered();
+    bool clicked = ImGui::IsItemClicked();
+
+    // Border color: blue on hover, white otherwise
+    ImU32 borderColor = hovered ? IM_COL32(100, 149, 237, 255) : IM_COL32(255, 255, 255, 255);
+
+    // Draw slot border
+    ImGui::GetWindowDrawList()->AddRect(
+        pos,
+        ImVec2(pos.x + slotSize.x, pos.y + slotSize.y),
+        borderColor
+    );
+
+    // Handle click to open file
+    if (clicked)
     {
-        if (mMaterial)
+        std::string path = OpenFile();
+        if (!path.empty())
+            texture = std::make_shared<Texture>(path.c_str());
+    }
+
+    // Render texture preview
+    if (texture)
+    {
+        GLuint id = texture->GetID();
+        ImGui::GetWindowDrawList()->AddImage(
+            (ImTextureID)(uintptr_t)id,
+            pos,
+            ImVec2(pos.x + slotSize.x, pos.y + slotSize.y)
+        );
+
+        ImGui::SameLine();
+        if (ImGui::Button(("X##" + std::string(name)).c_str()))
+            texture = nullptr;
+    }
+
+    // Handle drag and drop
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
         {
-            ImGui::Text("Name: %s", mMaterial->GetName().c_str());
-
-            // Color
-            auto& properties = mMaterial->GetProperties();
-            ImGui::ColorEdit4("Color", &properties.color.r, ImGuiColorEditFlags_None);
-
-            // Transparency
-            ImGui::SliderFloat("Alpha", &properties.color.a, 0.0f, 1.0f);
-
-            // Textures
-            if (ImGui::TreeNode("Textures"))
-            {
-                auto& textures = mMaterial->GetTextures();
-
-                // Albedo Texture
-                ImGui::Text("Albedo");
-                ImGui::SameLine();
-                if (textures.albedo)
-                {
-                    ImGui::Text("%s", textures.albedo->GetName().c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("X##albedo"))
-                    {
-                        textures.albedo = nullptr;
-                    }
-                }
-                else
-                {
-                    ImGui::Button("Drop##albedo", ImVec2(60, 20));
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
-                        {
-                            const char* path = (const char*)payload->Data;
-                            textures.albedo = std::make_shared<Texture>(path);
-                            textures.albedo->SetName(std::filesystem::path(path).filename().string());
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                }
-
-                // Normal Texture
-                ImGui::Text("Normal");
-                ImGui::SameLine();
-                if (textures.normal)
-                {
-                    ImGui::Text("%s", textures.normal->GetName().c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("X##normal"))
-                    {
-                        textures.normal = nullptr;
-                    }
-                }
-                else
-                {
-                    ImGui::Button("Drop##normal", ImVec2(60, 20));
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
-                        {
-                            const char* path = (const char*)payload->Data;
-                            textures.normal = std::make_shared<Texture>(path);
-                            textures.normal->SetName(std::filesystem::path(path).filename().string());
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                }
-
-                // Metallic Texture
-                ImGui::Text("Metallic");
-                ImGui::SameLine();
-                if (textures.metallic)
-                {
-                    ImGui::Text("%s", textures.metallic->GetName().c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("X##metallic"))
-                    {
-                        textures.metallic = nullptr;
-                    }
-                }
-                else
-                {
-                    ImGui::Button("Drop##metallic", ImVec2(60, 20));
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
-                        {
-                            const char* path = (const char*)payload->Data;
-                            textures.metallic = std::make_shared<Texture>(path);
-                            textures.metallic->SetName(std::filesystem::path(path).filename().string());
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                }
-
-                // Roughness Texture
-                ImGui::Text("Roughness");
-                ImGui::SameLine();
-                if (textures.roughness)
-                {
-                    ImGui::Text("%s", textures.roughness->GetName().c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("X##roughness"))
-                    {
-                        textures.roughness = nullptr;
-                    }
-                }
-                else
-                {
-                    ImGui::Button("Drop##roughness", ImVec2(60, 20));
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
-                        {
-                            const char* path = (const char*)payload->Data;
-                            textures.roughness = std::make_shared<Texture>(path);
-                            textures.roughness->SetName(std::filesystem::path(path).filename().string());
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                }
-
-                // AO Texture
-                ImGui::Text("AO");
-                ImGui::SameLine();
-                if (textures.ao)
-                {
-                    ImGui::Text("%s", textures.ao->GetName().c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("X##ao"))
-                    {
-                        textures.ao = nullptr;
-                    }
-                }
-                else
-                {
-                    ImGui::Button("Drop##ao", ImVec2(60, 20));
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
-                        {
-                            const char* path = (const char*)payload->Data;
-                            textures.ao = std::make_shared<Texture>(path);
-                            textures.ao->SetName(std::filesystem::path(path).filename().string());
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                }
-
-                // Emissive Texture
-                ImGui::Text("Emissive");
-                ImGui::SameLine();
-                if (textures.emissive)
-                {
-                    ImGui::Text("%s", textures.emissive->GetName().c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("X##emissive"))
-                    {
-                        textures.emissive = nullptr;
-                    }
-                }
-                else
-                {
-                    ImGui::Button("Drop##emissive", ImVec2(60, 20));
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
-                        {
-                            const char* path = (const char*)payload->Data;
-                            textures.emissive = std::make_shared<Texture>(path);
-                            textures.emissive->SetName(std::filesystem::path(path).filename().string());
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                }
-
-                ImGui::TreePop();
-            }
+            const char* path = (const char*)payload->Data;
+            if (path && path[0] != '\0')
+                texture = std::make_shared<Texture>(path);
         }
-        else
+        ImGui::EndDragDropTarget();
+    }
+
+    // Handle file drop
+    if (input->WasFileDropped() && hovered)
+    {
+        std::string path = input->GetDraggedFile();
+        if (!path.empty())
         {
-            ImGui::TextDisabled("No Material Assigned");
+            texture = std::make_shared<Texture>(path.c_str());
+            input->ClearDropState();
+            input->ClearDraggedFile();
         }
     }
+
+    ImGui::Spacing();
+}
+
+void MaterialComponent::OnInspectorRender(float panelWidth)
+{
+    if (!ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
+        return;
+
+    if (!mMaterial)
+    {
+        ImGui::TextDisabled("No Material Assigned");
+        return;
+    }
+
+    ImGui::Text("Name: %s", mMaterial->GetName().c_str());
+
+    auto& props = mMaterial->GetProperties();
+    ImGui::ColorEdit4("Color", &props.color.r);
+    ImGui::SliderFloat("Alpha", &props.color.a, 0.0f, 1.0f);
+
+    if (!ImGui::TreeNode("Textures"))
+        return;
+
+    auto& texture = mMaterial->GetTextures();
+    auto input = Engine::GetInstance().input.get();
+
+    DrawTextureSlot("Albedo", texture.albedo, input);
+    DrawTextureSlot("Normal", texture.normal, input);
+    DrawTextureSlot("Metallic", texture.metallic, input);
+    DrawTextureSlot("Roughness", texture.roughness, input);
+    DrawTextureSlot("AO", texture.ao, input);
+    DrawTextureSlot("Emissive", texture.emissive, input);
+
+    ImGui::TreePop();
 }
