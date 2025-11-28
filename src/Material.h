@@ -4,6 +4,16 @@
 #include "Texture.h"
 #include "Material.h"
 
+enum class TextureType
+{
+    Albedo,
+    Normal,
+    Metallic,
+    Roughness,
+    AO,
+    Emissive
+};
+
 struct MaterialRenderSettings
 {
     enum TransparencyMode
@@ -69,7 +79,7 @@ class Material : public Resource
 public:
     Material() = default;
     Material(ResourceType type);
-    Material(const std::string& name, PBRMaterialTextures& materialTextures);
+    Material(const std::string &name, PBRMaterialTextures &materialTextures);
 
     virtual ~Material() = default;
 
@@ -83,6 +93,7 @@ public:
     PBRMaterialTextures &GetTextures();
     PBRMaterialProperties &GetProperties();
     const PBRMaterialTextures &GetTextures() const;
+    void SetTexture(TextureType type, const std::shared_ptr<Texture> &texture);
     const PBRMaterialProperties &GetProperties() const;
 
 private:

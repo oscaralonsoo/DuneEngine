@@ -7,7 +7,7 @@ std::shared_ptr<Shader> Material::sStandardShader = nullptr;
 Material::Material(ResourceType type) : Resource(type)
 {
     if (!sMissingTexture)
-        sMissingTexture = std::make_shared<Texture>("Assets/textures/Baker_house.png");
+        sMissingTexture = std::make_shared<Texture>("Assets/textures/missingTexture.jpg");
 
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");
@@ -120,6 +120,38 @@ void Material::Use()
     mShader->Unbind();
 }
 
+void Material::SetTexture(TextureType type, const std::shared_ptr<Texture> &texture)
+{
+    switch (type)
+    {
+    case TextureType::Albedo:
+        mTextures.albedo = texture;
+        break;
+    case TextureType::Normal:
+        mTextures.normal = texture;
+        break;
+    case TextureType::Metallic:
+        mTextures.metallic = texture;
+        break;
+    case TextureType::Roughness:
+        mTextures.roughness = texture;
+        break;
+    case TextureType::AO:
+        mTextures.ao = texture;
+        break;
+    case TextureType::Emissive:
+        mTextures.emissive = texture;
+        break;
+    }
+
+    mTextureFlags.hasAlbedo = (mTextures.albedo != nullptr);
+    mTextureFlags.hasNormal = (mTextures.normal != nullptr);
+    mTextureFlags.hasMetallic = (mTextures.metallic != nullptr);
+    mTextureFlags.hasRoughness = (mTextures.roughness != nullptr);
+    mTextureFlags.hasAO = (mTextures.ao != nullptr);
+    mTextureFlags.hasEmissive = (mTextures.emissive != nullptr);
+}
+
 MaterialRenderSettings &Material::GetRenderSettings()
 {
     return mRenderSettings;
@@ -144,4 +176,3 @@ PBRMaterialProperties &Material::GetProperties()
 {
     return mProperties;
 }
-
