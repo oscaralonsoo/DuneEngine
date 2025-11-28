@@ -33,9 +33,14 @@ void HierarchyPanel::OnImGuiRender()
 
     if (auto scene = Engine::GetInstance().scene)
     {
+        std::shared_ptr<GameObject> selected = scene->GetSelected();
         for (std::shared_ptr<GameObject> go : scene->GetGameObjects())
         {
-            ImGui::Text("%s", go->GetName().c_str());
+            bool isSelected = (go == selected);
+            if (ImGui::Selectable(go->GetName().c_str(), isSelected))
+            {
+                scene->SetSelected(go);
+            }
         }
     }
 
