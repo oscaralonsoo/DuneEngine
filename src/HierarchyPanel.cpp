@@ -24,11 +24,9 @@ void HierarchyPanel::OnImGuiRender()
     ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_Always);
     ImGui::SetNextWindowViewport(viewport->ID);
 
-    // Flags: panel fijo, sin docking ni resize
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove   |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
+                            ImGuiWindowFlags_AlwaysUseWindowPadding |
+                            ImGuiWindowFlags_NoScrollbar;
 
                              
     ImGui::Begin("Hierarchy", nullptr, flags);

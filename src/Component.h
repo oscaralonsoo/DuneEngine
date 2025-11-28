@@ -21,6 +21,8 @@ public:
     virtual void Enable();
     virtual void Disable();
 
+    virtual void OnInspectorRender(float panelWidth) {}
+
 private:
     ComponentType mType;
     bool mActive = true;

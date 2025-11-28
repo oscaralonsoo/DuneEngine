@@ -31,6 +31,8 @@ public:
         return nullptr;
     }
 
+    const std::vector<std::unique_ptr<Component>>& GetComponents() const { return mComponents; }
+
 private:
     bool mActive = true;
     std::string mName;

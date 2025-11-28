@@ -60,7 +60,23 @@ public:
     SDL_Point GetMousePosition() const;
     SDL_Point GetMouseMotion() const;
 
+    // Get dragged file path
+    const std::string& GetDraggedFile() const { return draggedFile; }
+
+    // Clear dragged file
+    void ClearDraggedFile() { draggedFile = ""; }
+
+    // Check if a file was dropped
+    bool WasFileDropped() const { return fileDropped; }
+
+    // Get drop position
+    SDL_Point GetDropPosition() const { return dropPosition; }
+
+    // Clear drop state
+    void ClearDropState() { fileDropped = false; dropPosition = {0, 0}; }
+
 private:
+    void HandleFileDrop(const SDL_Event& event);
     bool windowEvents[WE_COUNT];
     KeyState *keyboard;
     KeyState mouseButtons[NUM_MOUSE_BUTTONS];
@@ -68,4 +84,7 @@ private:
     int mouseMotionY;
     int mouseX;
     int mouseY;
+    std::string draggedFile;
+    bool fileDropped;
+    SDL_Point dropPosition;
 };

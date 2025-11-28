@@ -3,6 +3,9 @@
 #include "ModuleWindow.h"
 #include "ModuleScene.h"
 #include "TransformComponent.h"
+#include "MaterialComponent.h"
+#include "MeshComponent.h"
+#include "ModuleInput.h"
 #include <imgui.h>
 #include <algorithm>
 
@@ -20,7 +23,6 @@ void InspectorPanel::OnImGuiRender()
     // Size & position
     float panelWidth  = workSize.x * InspectorPanel::kDefaultFraction;
     float panelHeight = workSize.y;
-
     float maxAllowed = workSize.x - (workSize.x * InspectorPanel::kDefaultFraction) - InspectorPanel::kMinCenterWidth;
     panelWidth = std::clamp(panelWidth, InspectorPanel::kMinPanelWidth, maxAllowed);
 
@@ -30,10 +32,9 @@ void InspectorPanel::OnImGuiRender()
     ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_Always);
     ImGui::SetNextWindowViewport(viewport->ID);
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove   |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
+                            ImGuiWindowFlags_AlwaysUseWindowPadding |
+                            ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Inspector", nullptr, flags);
 
@@ -46,20 +47,12 @@ void InspectorPanel::OnImGuiRender()
             ImGui::Text("Name: %s", selected->GetName().c_str());
             ImGui::Separator();
 
-            // Read transform from TransformComponent
-            if (auto tc = selected->GetComponent<TransformComponent>())
+            // Automatically detect and render all components
+            const auto& components = selected->GetComponents();
+            for (const auto& component : components)
             {
-                const auto& p = tc->GetPosition();
-                const auto& r = tc->GetRotation();
-                const auto& s = tc->GetScale();
-
-                ImGui::Text("Position: %.2f, %.2f, %.2f", p.x, p.y, p.z);
-                ImGui::Text("Rotation: %.2f, %.2f, %.2f", r.x, r.y, r.z);
-                ImGui::Text("Scale:    %.2f, %.2f, %.2f", s.x, s.y, s.z);
-            }
-            else
-            {
-                ImGui::TextDisabled("(no transform component)");
+                component->OnInspectorRender(panelWidth);
+                ImGui::Separator();
             }
         }
         else
@@ -73,5 +66,10 @@ void InspectorPanel::OnImGuiRender()
 
 void InspectorPanel::CleanUp()
 {
-    
+
 }
+
+
+
+
+ 

@@ -102,9 +102,11 @@ std::shared_ptr<Mesh> Model::ProcessMesh(aiMesh *mesh, const aiScene *scene)
         glm::vec3(mesh->mAABB.mMin.x, mesh->mAABB.mMin.y, mesh->mAABB.mMin.z),
         glm::vec3(mesh->mAABB.mMax.x, mesh->mAABB.mMax.y, mesh->mAABB.mMax.z));
 
-    // ─────────── FIXME ───────────
-    // TODO: Add process materials
-    // ────────────────────────────
+    auto meshPtr = std::make_shared<Mesh>(vertices, indices);
+    meshPtr->SetName(mesh->mName.C_Str());
+    meshPtr->SetAABB(aabb);
 
-    return std::make_shared<Mesh>(vertices, indices);
+    // TODO: Add process materials
+
+    return meshPtr;
 }

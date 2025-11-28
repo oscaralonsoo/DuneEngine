@@ -3,6 +3,7 @@
 #include "Globals.h"
 #include "ModuleWindow.h"
 #include "ModuleRenderer.h"
+#include "TransformComponent.h"
 
 Raycaster::Raycaster()
 {
@@ -44,10 +45,18 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
         if (!meshComp)
             continue;
 
-        const AABB &box = meshComp->GetMesh()->GetAABB();
+        const AABB &localBox = meshComp->GetMesh()->GetAABB();
+
+        // Transform AABB to world space
+        AABB worldBox = localBox;
+        if (auto tc = obj->GetComponent<TransformComponent>())
+        {
+            glm::mat4 worldTransform = tc->GetWorldTransform();
+            worldBox = TransformAABB(localBox, worldTransform);
+        }
 
         float tHit;
-        if (RayIntersectsAABB(ray, box, &tHit))
+        if (RayIntersectsAABB(ray, worldBox, &tHit))
         {
             if (tHit < closestT)
             {
@@ -76,4 +85,30 @@ bool Raycaster::RayIntersectsAABB(const Ray &ray, const AABB &box, float *tMinOu
         *tMinOut = tMin;
 
     return hit;
+}
+
+AABB Raycaster::TransformAABB(const AABB &aabb, const glm::mat4 &transform)
+{
+    glm::vec3 corners[8] = {
+        glm::vec3(aabb.min.x, aabb.min.y, aabb.min.z),
+        glm::vec3(aabb.min.x, aabb.min.y, aabb.max.z),
+        glm::vec3(aabb.min.x, aabb.max.y, aabb.min.z),
+        glm::vec3(aabb.min.x, aabb.max.y, aabb.max.z),
+        glm::vec3(aabb.max.x, aabb.min.y, aabb.min.z),
+        glm::vec3(aabb.max.x, aabb.min.y, aabb.max.z),
+        glm::vec3(aabb.max.x, aabb.max.y, aabb.min.z),
+        glm::vec3(aabb.max.x, aabb.max.y, aabb.max.z)
+    };
+
+    glm::vec3 newMin = glm::vec3(transform * glm::vec4(corners[0], 1.0f));
+    glm::vec3 newMax = newMin;
+
+    for (int i = 1; i < 8; ++i)
+    {
+        glm::vec3 transformed = glm::vec3(transform * glm::vec4(corners[i], 1.0f));
+        newMin = glm::min(newMin, transformed);
+        newMax = glm::max(newMax, transformed);
+    }
+
+    return AABB(newMin, newMax);
 }

@@ -34,93 +34,101 @@ void Renderer::Init()
 
 void Renderer::ForwardPass()
 {
-    // std::sort(sOpaqueRenderQueue.begin(), sOpaqueRenderQueue.end(), [](const RenderObject &a, const RenderObject &b)
-    //           { return std::tie(a.material, a.mesh) < std::tie(b.material, b.mesh); });
+    std::sort(sOpaqueRenderQueue.begin(), sOpaqueRenderQueue.end(), [](const RenderObject &a, const RenderObject &b)
+              { return std::tie(a.material, a.mesh) < std::tie(b.material, b.mesh); });
 
-    // for (const auto &renderObject : sOpaqueRenderQueue)
-    // {
-    //     Material *material = renderObject.material.get();
-    //     material->Use();
+    for (const auto &renderObject : sOpaqueRenderQueue)
+    {
+        Material *material = renderObject.material.get();
+        material->Use();
 
-    //     const std::shared_ptr<Shader> &shader = material->GetShader();
+        const std::shared_ptr<Shader> &shader = material->GetShader();
 
-    //     shader->Bind();
+        shader->Bind();
+        auto camera = Engine::GetInstance().renderer->renderCamera;
+        shader->SetMat4("view", camera->GetViewMatrix());
+        shader->SetMat4("projection", camera->GetProjectionMatrix());
+        shader->SetMat4("model", renderObject.transform);
 
-    //     Mesh *mesh = renderObject.mesh.get();
+        Mesh *mesh = renderObject.mesh.get();
 
-    //     if (!mesh)
-    //         continue;
+        if (!mesh)
+            continue;
 
-    //     RendererAPI::DrawIndexed(mesh->GetVertexArray());
-    // }
+        RendererAPI::DrawIndexed(mesh->GetVertexArray());
+    }
 
-    // ResetRenderState();
+    ResetRenderState();
 
-    // sOpaqueRenderQueue.clear();
+    sOpaqueRenderQueue.clear();
 }
 
 void Renderer::TransparentPass()
 {
-    // glm::vec3 cameraPos = Engine::GetInstance().renderer.get()->renderCamera->GetPosition();
+    glm::vec3 cameraPos = Engine::GetInstance().renderer.get()->renderCamera->GetPosition();
 
-    // std::sort(sTransparentRenderQueue.begin(), sTransparentRenderQueue.end(), [&cameraPos](const RenderObject &a, const RenderObject &b)
-    //           {
-    //     float distA = glm::length(cameraPos - glm::vec3(a.transform[3]));
-    //     float distB = glm::length(cameraPos - glm::vec3(b.transform[3]));
-    //     return distA > distB; });
+    std::sort(sTransparentRenderQueue.begin(), sTransparentRenderQueue.end(), [&cameraPos](const RenderObject &a, const RenderObject &b)
+              {
+        float distA = glm::length(cameraPos - glm::vec3(a.transform[3]));
+        float distB = glm::length(cameraPos - glm::vec3(b.transform[3]));
+        return distA > distB; });
 
-    // RendererAPI::SetDepthMask(false);
+    RendererAPI::SetDepthMask(false);
 
-    // for (const auto &renderObject : sTransparentRenderQueue)
-    // {
-    //     Material *material = renderObject.material.get();
-    //     if (material == nullptr)
-    //     {
-    //         // material = s_RendererData.DefaultMaterial.get();
-    //     }
+    for (const auto &renderObject : sTransparentRenderQueue)
+    {
+        Material *material = renderObject.material.get();
+        if (material == nullptr)
+        {
+            // material = s_RendererData.DefaultMaterial.get();
+        }
 
-    //     material->Use();
+        material->Use();
 
-    //     const std::shared_ptr<Shader> &shader = material->GetShader();
+        const std::shared_ptr<Shader> &shader = material->GetShader();
 
-    //     shader->Bind();
+        shader->Bind();
+        auto camera = Engine::GetInstance().renderer->renderCamera;
+        shader->SetMat4("view", camera->GetViewMatrix());
+        shader->SetMat4("projection", camera->GetProjectionMatrix());
+        shader->SetMat4("model", renderObject.transform);
 
-    //     Mesh *mesh = renderObject.mesh.get();
+        Mesh *mesh = renderObject.mesh.get();
 
-    //     if (mesh == nullptr)
-    //     {
-    //         // mesh = s_RendererData.MissingMesh.get();
-    //     }
+        if (mesh == nullptr)
+        {
+            // mesh = s_RendererData.MissingMesh.get();
+        }
 
-    //     const MaterialRenderSettings &settings = material->GetRenderSettings();
-    //     switch (settings.cullMode)
-    //     {
-    //     case MaterialRenderSettings::CullMode::Front:
-    //         RendererAPI::SetCullFace(CullFace::Front);
-    //         break;
-    //     case MaterialRenderSettings::CullMode::Back:
-    //         RendererAPI::SetCullFace(CullFace::Back);
-    //         break;
-    //     case MaterialRenderSettings::CullMode::None:
-    //         RendererAPI::SetFaceCulling(false);
-    //         break;
-    //     }
+        const MaterialRenderSettings &settings = material->GetRenderSettings();
+        switch (settings.cullMode)
+        {
+        case MaterialRenderSettings::CullMode::Front:
+            RendererAPI::SetCullFace(CullFace::Front);
+            break;
+        case MaterialRenderSettings::CullMode::Back:
+            RendererAPI::SetCullFace(CullFace::Back);
+            break;
+        case MaterialRenderSettings::CullMode::None:
+            RendererAPI::SetFaceCulling(false);
+            break;
+        }
 
-    //     if (settings.wireframe)
-    //     {
-    //         RendererAPI::SetPolygonMode(PolygonMode::Line);
-    //     }
-    //     else
-    //     {
-    //         RendererAPI::SetPolygonMode(PolygonMode::Fill);
-    //     }
+        if (settings.wireframe)
+        {
+            RendererAPI::SetPolygonMode(PolygonMode::Line);
+        }
+        else
+        {
+            RendererAPI::SetPolygonMode(PolygonMode::Fill);
+        }
 
-    //     RendererAPI::DrawIndexed(mesh->GetVertexArray());
-    // }
+        RendererAPI::DrawIndexed(mesh->GetVertexArray());
+    }
 
-    // ResetRenderState();
+    ResetRenderState();
 
-    // sTransparentRenderQueue.clear();
+    sTransparentRenderQueue.clear();
 }
 
 void Renderer::SkyboxPass()
