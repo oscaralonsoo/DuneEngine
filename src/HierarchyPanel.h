@@ -1,12 +1,12 @@
 #pragma once
 
 #include "ModuleEditor.h"
+#include "imgui.h"
 
-class HierarchyPanel : public Panel
+class HierarchyPanel : public EditorPanel
 {
 public:
     HierarchyPanel()
-        : Panel("Hierarchy")
     {}
 
     // initial sizes and limits
