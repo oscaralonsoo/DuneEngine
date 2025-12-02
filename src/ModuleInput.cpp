@@ -149,11 +149,19 @@ bool ModuleInput::PreUpdate()
             if (type == ResourceType::Model)
             {
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
+                std::string baseName = std::filesystem::path(file).filename().stem().string();
 
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
                 {
                     std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-                    go->SetName(ResourceUtils::ToString(ResourceType::Model));
+                    if (model->GetMeshes().size() > 1)
+                    {
+                        go->SetName(baseName + "_" + std::to_string(i));
+                    }
+                    else
+                    {
+                        go->SetName(baseName);
+                    }
 
                     auto &mesh = model->GetMeshes()[i];
 
