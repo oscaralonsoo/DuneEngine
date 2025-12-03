@@ -43,38 +43,40 @@ bool ModuleRenderer::Update()
 
     renderCamera->SetViewportSize(w, h);
 
-    // Renderizar objetos de la escena
-    for (std::shared_ptr<GameObject> go : Engine::GetInstance().scene.get()->GetGameObjects())
+    RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    // Enviar todos los objetos a las colas de render
+    for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
+        MaterialComponent* materialComp = go->GetComponent<MaterialComponent>();
+        MeshComponent* meshComp = go->GetComponent<MeshComponent>();
+        TransformComponent* transformComp = go->GetComponent<TransformComponent>();
+        if (!materialComp || !meshComp || !transformComp) continue;
 
-        MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
-        if (!materialComp || !materialComp->GetMaterial())
-            continue;
+        RenderObject ro;
+        ro.transform = transformComp->GetWorldTransform();
+        ro.mesh = meshComp->GetMesh();
+        ro.material = materialComp->GetMaterial();
+        ro.selected = go->IsSelected();
 
-        MeshComponent *meshComp = go->GetComponent<MeshComponent>();
-        if (!meshComp || !meshComp->GetMesh())
-            continue;
-
-        TransformComponent *transformComp = go->GetComponent<TransformComponent>();
-
-        RenderObject renderObject;
-        renderObject.transform = transformComp->GetWorldTransform();
-        renderObject.mesh = meshComp->GetMesh();
-        renderObject.material = materialComp->GetMaterial();
-        renderObject.transform = transformComp->GetWorldTransform();
-        renderObject.selected = go->IsSelected();
-
-        Renderer::Submit(renderObject);
+        Renderer::Submit(ro);
     }
-    RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0});
-    RendererAPI::Clear();
-    
+
     Renderer::SkyboxPass();
     Renderer::ForwardPass();
     Renderer::TransparentPass();
     Renderer::SelectedPass();
+
     return true;
 }
+
 
 bool ModuleRenderer::PostUpdate()
 {

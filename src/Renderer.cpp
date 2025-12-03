@@ -37,29 +37,37 @@ void Renderer::ForwardPass()
     std::sort(sOpaqueRenderQueue.begin(), sOpaqueRenderQueue.end(), [](const RenderObject &a, const RenderObject &b)
               { return std::tie(a.material, a.mesh) < std::tie(b.material, b.mesh); });
 
+    auto camera = Engine::GetInstance().renderer->renderCamera;
+
     for (const auto &renderObject : sOpaqueRenderQueue)
     {
         Material *material = renderObject.material.get();
+        if (!material)
+            continue;
         material->Use();
-
-        const std::shared_ptr<Shader> &shader = material->GetShader();
-
+        auto shader = material->GetShader();
         shader->Bind();
-        auto camera = Engine::GetInstance().renderer->renderCamera;
         shader->SetMat4("view", camera->GetViewMatrix());
         shader->SetMat4("projection", camera->GetProjectionMatrix());
         shader->SetMat4("model", renderObject.transform);
 
-        Mesh *mesh = renderObject.mesh.get();
+        // Escribir stencil solo si el objeto está seleccionado
+        if (renderObject.selected)
+        {
+            glEnable(GL_STENCIL_TEST);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        }
+        else
+        {
+            glStencilMask(0x00);
+        }
 
-        if (!mesh)
-            continue;
-
-        RendererAPI::DrawIndexed(mesh->GetVertexArray());
+        RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
     }
 
     ResetRenderState();
-
     sOpaqueRenderQueue.clear();
 }
 
@@ -156,25 +164,40 @@ void Renderer::SkyboxPass()
 
     ResetRenderState();
 }
-
 void Renderer::SelectedPass()
 {
-    for (const auto &renderObject : sSelectedRenderQueue)
+    if (sSelectedRenderQueue.empty())
+        return;
+
+    auto camera = Engine::GetInstance().renderer->renderCamera;
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+
+    sSingleColorShader->Bind();
+    sSingleColorShader->SetMat4("view", camera->GetViewMatrix());
+    sSingleColorShader->SetMat4("projection", camera->GetProjectionMatrix());
+    sSingleColorShader->SetVec3("outlineColor", glm::vec3(0.87f, 0.72f, 0.53f));
+    sSingleColorShader->SetFloat("outlineThickness", 0.07f);
+
+    for (auto &renderObject : sSelectedRenderQueue)
     {
-        sSingleColorShader->Bind();
-        auto camera = Engine::GetInstance().renderer->renderCamera;
-        glm::mat4 view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
-        glm::mat4 proj = camera->GetProjectionMatrix();
-
-        sSingleColorShader->SetMat4("view", view);
-        sSingleColorShader->SetMat4("projection", proj);
-
         glm::mat4 model = renderObject.transform;
-        model = glm::scale(model, glm::vec3(2.0f));
-        sSingleColorShader->SetMat4("model", model);
-        RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
+        glm::mat4 scaled = model * glm::scale(glm::mat4(1.0f), glm::vec3(1.05f));
+        sSingleColorShader->SetMat4("model", scaled);
 
+        glCullFace(GL_FRONT);
+        RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
     }
+
+    glEnable(GL_DEPTH_TEST);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+
+    ResetRenderState();
+
     sSelectedRenderQueue.clear();
 }
 
