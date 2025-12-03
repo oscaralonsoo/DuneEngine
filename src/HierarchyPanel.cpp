@@ -49,6 +49,9 @@ void HierarchyPanel::OnImGuiRender()
 
 void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject, std::shared_ptr<GameObject> selected)
 {
+    static std::shared_ptr<GameObject> editingObject = nullptr;
+    static char editBuffer[256];
+
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
     if (gameObject == selected)
     {
@@ -61,20 +64,44 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
         flags |= ImGuiTreeNodeFlags_Leaf;
     }
 
-    bool nodeOpen = ImGui::TreeNodeEx(gameObject->GetName().c_str(), flags);
+    bool isEditing = (editingObject == gameObject);
 
-    if (ImGui::IsItemClicked())
+    if (isEditing)
     {
-        Engine::GetInstance().scene->SetSelected(gameObject);
-    }
-
-    if (nodeOpen)
-    {
-        for (auto& child : gameObject->GetChildren())
+        strcpy(editBuffer, gameObject->GetName().c_str());
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::InputText("##edit", editBuffer, sizeof(editBuffer), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll))
         {
-            RenderGameObjectTree(child, selected);
+            gameObject->SetName(editBuffer);
+            editingObject = nullptr;
         }
-        ImGui::TreePop();
+        if (ImGui::IsItemDeactivated())
+        {
+            editingObject = nullptr;
+        }
+    }
+    else
+    {
+        bool nodeOpen = ImGui::TreeNodeEx(gameObject->GetName().c_str(), flags);
+
+        if (ImGui::IsItemClicked())
+        {
+            Engine::GetInstance().scene->SetSelected(gameObject);
+        }
+
+        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+        {
+            editingObject = gameObject;
+        }
+
+        if (nodeOpen)
+        {
+            for (auto& child : gameObject->GetChildren())
+            {
+                RenderGameObjectTree(child, selected);
+            }
+            ImGui::TreePop();
+        }
     }
 }
 

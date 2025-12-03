@@ -44,7 +44,13 @@ void InspectorPanel::OnImGuiRender()
         std::shared_ptr<GameObject> selected = scene->GetSelected();
         if (selected)
         {
-            ImGui::Text("Name: %s", selected->GetName().c_str());
+            static char nameBuffer[256];
+            strcpy(nameBuffer, selected->GetName().c_str());
+            ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer), ImGuiInputTextFlags_EnterReturnsTrue);
+            if (ImGui::IsItemDeactivatedAfterEdit())
+            {
+                selected->SetName(nameBuffer);
+            }
             ImGui::Separator();
 
             // Automatically detect and render all components
