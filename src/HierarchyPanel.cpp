@@ -28,23 +28,54 @@ void HierarchyPanel::OnImGuiRender()
                             ImGuiWindowFlags_AlwaysUseWindowPadding |
                             ImGuiWindowFlags_NoScrollbar;
 
-                             
+
     ImGui::Begin("Hierarchy", nullptr, flags);
 
     if (auto scene = Engine::GetInstance().scene)
     {
         std::shared_ptr<GameObject> selected = scene->GetSelected();
-        for (std::shared_ptr<GameObject> go : scene->GetGameObjects())
+        for (std::shared_ptr<GameObject> gameObject : scene->GetGameObjects())
         {
-            bool isSelected = (go == selected);
-            if (ImGui::Selectable(go->GetName().c_str(), isSelected))
+            // Only render root objects
+            if (!gameObject->GetParent())
             {
-                scene->SetSelected(go);
+                RenderGameObjectTree(gameObject, selected);
             }
         }
     }
 
     ImGui::End();
+}
+
+void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject, std::shared_ptr<GameObject> selected)
+{
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+    if (gameObject == selected)
+    {
+        flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    bool hasChildren = !gameObject->GetChildren().empty();
+    if (!hasChildren)
+    {
+        flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    bool nodeOpen = ImGui::TreeNodeEx(gameObject->GetName().c_str(), flags);
+
+    if (ImGui::IsItemClicked())
+    {
+        Engine::GetInstance().scene->SetSelected(gameObject);
+    }
+
+    if (nodeOpen)
+    {
+        for (auto& child : gameObject->GetChildren())
+        {
+            RenderGameObjectTree(child, selected);
+        }
+        ImGui::TreePop();
+    }
 }
 
 void HierarchyPanel::CleanUp()

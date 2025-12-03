@@ -2,6 +2,9 @@
 
 #include "ModuleEditor.h"
 #include "imgui.h"
+#include <memory>
+
+class GameObject;
 
 class HierarchyPanel : public EditorPanel
 {
@@ -17,4 +20,7 @@ public:
     bool Start() override;
     void OnImGuiRender() override;
     void CleanUp() override;
+
+private:
+    void RenderGameObjectTree(std::shared_ptr<GameObject> go, std::shared_ptr<GameObject> selected);
 };

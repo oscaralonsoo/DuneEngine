@@ -151,27 +151,34 @@ bool ModuleInput::PreUpdate()
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
                 std::string baseName = std::filesystem::path(file).filename().stem().string();
 
+                // Create parent 
+                std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObject();
+                parentGameObject->SetName(baseName);
+
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
                 {
-                    std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
+                    std::shared_ptr<GameObject> childGameObject = Engine::GetInstance().scene.get()->CreateGameObject();
                     if (model->GetMeshes().size() > 1)
                     {
-                        go->SetName(baseName + "_" + std::to_string(i));
+                        childGameObject->SetName(baseName + "_" + std::to_string(i));
                     }
                     else
                     {
-                        go->SetName(baseName);
+                        childGameObject->SetName(baseName);
                     }
 
                     auto &mesh = model->GetMeshes()[i];
 
-                    go->CreateComponent(ComponentType::Mesh);
-                    MeshComponent *meshComp = go->GetComponent<MeshComponent>();
+                    childGameObject->CreateComponent(ComponentType::Mesh);
+                    MeshComponent *meshComp = childGameObject->GetComponent<MeshComponent>();
                     meshComp->SetMesh(mesh);
 
-                    go->CreateComponent(ComponentType::Material);
-                    MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
-                    materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+                    childGameObject->CreateComponent(ComponentType::Material);
+                    MaterialComponent *materialComponent = childGameObject->GetComponent<MaterialComponent>();
+                    materialComponent->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+
+                    // Set parent-child relation
+                    childGameObject->SetParent(parentGameObject);
                 }
             }
             else if (type == ResourceType::Texture)
@@ -183,12 +190,12 @@ bool ModuleInput::PreUpdate()
                 if (!selected)
                     break;
 
-                MaterialComponent *materialComp = selected->GetComponent<MaterialComponent>();
-                if (!materialComp)
+                MaterialComponent *materialComponent = selected->GetComponent<MaterialComponent>();
+                if (!materialComponent)
                     break;
 
                 std::shared_ptr<Texture> texture = std::make_shared<Texture>(file);
-                materialComp->GetMaterial()->SetTexture(TextureType::Albedo, texture);
+                materialComponent->GetMaterial()->SetTexture(TextureType::Albedo, texture);
             }
         }
         break;
@@ -229,8 +236,8 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
 
     if (ResourceUtils::GetTypeFromExtension(draggedFile) == ResourceType::Model)
     {
-        std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-        go->SetName(std::filesystem::path(draggedFile).filename().stem().string());
+        std::shared_ptr<GameObject> gameObject = Engine::GetInstance().scene.get()->CreateGameObject();
+        gameObject->SetName(std::filesystem::path(draggedFile).filename().stem().string());
 
         std::shared_ptr<Model> model = std::make_shared<Model>(draggedFile);
 
@@ -238,13 +245,13 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
         {
             auto &mesh = model->GetMeshes()[i];
 
-            go->CreateComponent(ComponentType::Mesh);
-            MeshComponent *meshComp = go->GetComponent<MeshComponent>();
-            meshComp->SetMesh(mesh);
+            gameObject->CreateComponent(ComponentType::Mesh);
+            MeshComponent *meshComponent = gameObject->GetComponent<MeshComponent>();
+            meshComponent->SetMesh(mesh);
 
-            go->CreateComponent(ComponentType::Material);
-            MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
-            materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+            gameObject->CreateComponent(ComponentType::Material);
+            MaterialComponent *materialComponent = gameObject->GetComponent<MaterialComponent>();
+            materialComponent->SetMaterial(std::make_shared<Material>(ResourceType::Material));
         }
     }
 }

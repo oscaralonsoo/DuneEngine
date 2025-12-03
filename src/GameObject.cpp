@@ -39,3 +39,52 @@ void GameObject::SetName(const std::string &name)
 {
     mName = name;
 }
+
+// Parent-Child hierarchy implementation
+void GameObject::SetParent(std::shared_ptr<GameObject> parent)
+{
+    if (auto currentParent = mParent.lock())
+    {
+        currentParent->RemoveChild(shared_from_this());
+    }
+
+    mParent = parent;
+
+    if (parent)
+    {
+        parent->AddChild(shared_from_this());
+    }
+}
+
+void GameObject::AddChild(std::shared_ptr<GameObject> child)
+{
+    if (child && std::find(mChildren.begin(), mChildren.end(), child) == mChildren.end())
+    {
+        mChildren.push_back(child);
+        child->mParent = shared_from_this();
+    }
+}
+
+void GameObject::RemoveChild(std::shared_ptr<GameObject> child)
+{
+    auto it = std::find(mChildren.begin(), mChildren.end(), child);
+    if (it != mChildren.end())
+    {
+        mChildren.erase(it);
+        child->mParent.reset();
+    }
+}
+
+std::vector<std::shared_ptr<GameObject>> GameObject::GetAllDescendants() const
+{
+    std::vector<std::shared_ptr<GameObject>> descendants;
+
+    for (const auto& child : mChildren)
+    {
+        descendants.push_back(child);
+        auto childDescendants = child->GetAllDescendants();
+        descendants.insert(descendants.end(), childDescendants.begin(), childDescendants.end());
+    }
+
+    return descendants;
+}
