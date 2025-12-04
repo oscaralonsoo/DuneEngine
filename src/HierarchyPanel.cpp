@@ -181,6 +181,10 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
 
         if (ImGui::BeginPopup("GameObjectContextMenu"))
         {
+            if (ImGui::MenuItem("Rename"))
+            {
+                editingObject = gameObject;
+            }
             if (ImGui::MenuItem("Delete"))
             {
                 Engine::GetInstance().scene->RemoveGameObject(gameObject);
