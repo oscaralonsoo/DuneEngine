@@ -40,7 +40,9 @@ public:
     void RemoveChild(std::shared_ptr<GameObject> child);
     const std::vector<std::shared_ptr<GameObject>>& GetChildren() const { return mChildren; }
 
-    // Get all descendants (recursive)
+    virtual void OnChildRemoved(std::shared_ptr<GameObject> removedChild) {}
+
+    // Get all descendants
     std::vector<std::shared_ptr<GameObject>> GetAllDescendants() const;
 
 private:

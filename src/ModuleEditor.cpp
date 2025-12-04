@@ -1,7 +1,16 @@
+#include "Engine.h"
 #include "ModuleEditor.h"
+#include "ModuleScene.h"
 #include "HierarchyPanel.h"
 #include "InspectorPanel.h"
+#include "ProjectPanel.h"
+#include "ResourceUtils.h"
+#include "Model.h"
+#include "MeshComponent.h"
+#include "MaterialComponent.h"
 #include <imgui.h>
+#include <algorithm>
+#include <filesystem>
 
 ModuleEditor::ModuleEditor()
 {
@@ -12,6 +21,7 @@ bool ModuleEditor::Start()
 {
     AddPanel<HierarchyPanel>();
     AddPanel<InspectorPanel>();
+     AddPanel<ProjectPanel>();
 
     for (auto& panel : panels)
         panel->Start();

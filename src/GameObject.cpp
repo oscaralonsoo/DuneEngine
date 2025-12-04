@@ -67,11 +67,14 @@ void GameObject::AddChild(std::shared_ptr<GameObject> child)
 
 void GameObject::RemoveChild(std::shared_ptr<GameObject> child)
 {
+    if (!child) return;
+
     auto it = std::find(mChildren.begin(), mChildren.end(), child);
     if (it != mChildren.end())
     {
         mChildren.erase(it);
         child->mParent.reset();
+        OnChildRemoved(child);
     }
 }
 

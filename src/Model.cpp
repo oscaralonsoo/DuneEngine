@@ -41,6 +41,11 @@ void Model::ProcessNodeHierarchy(aiNode *node, const aiScene *scene)
     }
 }
 
+std::shared_ptr<Model> Model::Load(const std::filesystem::path &path)
+{
+    return std::make_shared<Model>(path);
+}
+
 std::shared_ptr<Mesh> Model::ProcessMesh(aiMesh *mesh, const aiScene *scene)
 {
     std::vector<Vertex> vertices;

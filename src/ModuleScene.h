@@ -15,6 +15,7 @@ public:
 
     bool Start() override;
     bool Update() override;
+    bool PostUpdate() override;
     bool CleanUp() override;
 
     std::shared_ptr<GameObject> CreateGameObject();
@@ -24,10 +25,13 @@ public:
     void SetSelected(std::shared_ptr<GameObject> go);
     void ResetSelecteds();
     std::shared_ptr<GameObject> GetSelected() const { return selected; }
+    void RemoveGameObject(std::shared_ptr<GameObject> go);
+    void ProcessPendingDeletes();
 private:
     std::shared_ptr<GameObject> root;
     std::shared_ptr<GameObject> test;
     std::vector<std::shared_ptr<GameObject>> mGameObjects;
     Raycaster *raycaster;
     std::shared_ptr<GameObject> selected;
+    std::vector<std::shared_ptr<GameObject>> pendingDelete;
 };

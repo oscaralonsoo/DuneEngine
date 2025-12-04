@@ -4,8 +4,6 @@
 #include "TransformComponent.h"
 #include "Mesh.h"
 #include "PrimitiveMesh.h"
-#include "Buffer.h"
-#include "VertexArray.h"
 #include <glad/glad.h>
 
 ModuleScene::ModuleScene()
@@ -15,13 +13,18 @@ ModuleScene::ModuleScene()
 
 bool ModuleScene::Start()
 {
-    root = std::make_shared<GameObject>();
+    root = std::make_shared<GameObject>(); //Create Root
     root->SetName("Root");
     mGameObjects.push_back(root);
+
+    // Add root Components 
     root->CreateComponent(ComponentType::Mesh);
     root->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
+
     root->CreateComponent(ComponentType::Material);
-    root->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    root->GetComponent<MaterialComponent>()->SetMaterial(
+        std::make_shared<Material>(ResourceType::Material)
+    );
 
     raycaster = new Raycaster();
 
@@ -33,6 +36,15 @@ bool ModuleScene::Update()
     return true;
 }
 
+bool ModuleScene::PostUpdate()
+{
+    if (!pendingDelete.empty())
+    {
+        ProcessPendingDeletes();
+    }
+    return true;
+}
+
 bool ModuleScene::CleanUp()
 {
     return true;
@@ -40,9 +52,10 @@ bool ModuleScene::CleanUp()
 
 std::shared_ptr<GameObject> ModuleScene::CreateGameObject()
 {
-    std::shared_ptr<GameObject> go = std::make_shared<GameObject>();
-    mGameObjects.push_back(go);
-    return go;
+    auto gameObject = std::make_shared<GameObject>();
+    mGameObjects.push_back(gameObject);
+
+    return gameObject;
 }
 
 const std::vector<std::shared_ptr<GameObject>> ModuleScene::GetGameObjects()
@@ -50,18 +63,74 @@ const std::vector<std::shared_ptr<GameObject>> ModuleScene::GetGameObjects()
     return mGameObjects;
 }
 
-void ModuleScene::SetSelected(std::shared_ptr<GameObject> go)
+void ModuleScene::SetSelected(std::shared_ptr<GameObject> gameObject)
 {
-    selected = go;
-    go->SetSelected(!go->IsSelected());
+    if (!gameObject) return;
+
+    selected = gameObject;
+    gameObject->SetSelected(!gameObject->IsSelected());
 }
 
 void ModuleScene::ResetSelecteds()
 {
     selected = nullptr;
-    
-    for (auto& go : mGameObjects)
+
+    for (auto& gameObject : mGameObjects)
     {
-        go->SetSelected(false);
+        if (gameObject->IsSelected())
+        {
+            gameObject->SetSelected(false);
+        }
     }
+}
+
+void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
+{
+    if (!gameObject) return;
+
+    // If has parent, just delete itself
+    if (gameObject->GetParent())
+    {
+        pendingDelete.push_back(gameObject);
+    }
+    else
+    {
+        // if doesn't have parent, delete all children too
+        auto children = gameObject->GetAllDescendants();
+        children.push_back(gameObject);
+
+        for (auto& child : children)
+        {
+            pendingDelete.push_back(child);
+        }
+    }
+    
+    if (selected == gameObject)
+    {
+        selected = nullptr;
+    }
+}
+
+void ModuleScene::ProcessPendingDeletes()
+{
+    for (auto& gameObject : pendingDelete)
+    {
+        // remove from parent
+        if (auto parent = gameObject->GetParent())
+        {
+            parent->RemoveChild(gameObject);
+        }
+
+        // Remove from scene
+        for (size_t i = 0; i < mGameObjects.size(); i++)
+        {
+            if (mGameObjects[i] == gameObject)
+            {
+                mGameObjects.erase(mGameObjects.begin() + i);
+                break;
+            }
+        }
+    }
+
+    pendingDelete.clear();
 }
