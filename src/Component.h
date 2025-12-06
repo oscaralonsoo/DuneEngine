@@ -21,6 +21,8 @@ public:
     virtual void Enable();
     virtual void Disable();
 
+    ComponentType GetType() const { return mType; }
+
     virtual void OnInspectorRender(float panelWidth) {}
 
 private:
