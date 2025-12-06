@@ -76,6 +76,9 @@ public:
     void ClearDropState() { fileDropped = false; dropPosition = {0, 0}; }
 
 private:
+    void HandleKeyboardShortcuts();
+
+private:
     void HandleFileDrop(const SDL_Event& event);
     bool windowEvents[WE_COUNT];
     KeyState *keyboard;

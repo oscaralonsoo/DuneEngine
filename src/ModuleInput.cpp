@@ -12,6 +12,7 @@
 #include <imgui_impl_sdl3.h>
 #include <string.h>
 #include <filesystem>
+#include "HierarchyPanel.h"
 
 #define MAX_KEYS 300
 
@@ -151,7 +152,7 @@ bool ModuleInput::PreUpdate()
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
                 std::string baseName = std::filesystem::path(file).filename().stem().string();
 
-                // Create parent 
+                // Create parent
                 std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObject();
                 parentGameObject->SetName(baseName);
 
@@ -202,6 +203,9 @@ bool ModuleInput::PreUpdate()
         }
     }
 
+    // Handle keyboard shortcuts
+    HandleKeyboardShortcuts();
+
     return true;
 }
 
@@ -227,7 +231,39 @@ SDL_Point ModuleInput::GetMouseMotion() const
     return {mouseMotionX, mouseMotionY};
 }
 
-// Handles file drop events
+void ModuleInput::HandleKeyboardShortcuts()
+{
+    // Ctrl+D to Duplicate
+    if (GetKey(SDL_SCANCODE_D) == KEY_DOWN && GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT)
+    {
+        ModuleScene* scene = Engine::GetInstance().scene.get();
+        if (scene)
+        {
+            std::shared_ptr<GameObject> selected = scene->GetSelected();
+            if (selected)
+            {
+                // Duplicate the GameObject
+                auto duplicated = scene->CreateGameObject();
+                duplicated->SetName(scene->GenerateUniqueName(selected->GetName()));
+
+                for (auto& comp : selected->GetComponents())
+                {
+                    duplicated->CreateComponent(comp->GetType());
+                }
+                for (auto& child : selected->GetChildren())
+                {
+                    scene->DuplicateGameObject(child, duplicated);
+                }
+                // Set parent if selected has one
+                if (auto parent = selected->GetParent())
+                {
+                    duplicated->SetParent(parent);
+                }
+            }
+        }
+    }
+}
+
 void ModuleInput::HandleFileDrop(const SDL_Event& event)
 {
     draggedFile = event.drop.data ? event.drop.data : "";
@@ -255,3 +291,5 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
         }
     }
 }
+
+
