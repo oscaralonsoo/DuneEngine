@@ -5,6 +5,7 @@
 #include <memory>
 
 class GameObject;
+class ModuleScene;
 
 class HierarchyPanel : public EditorPanel
 {
@@ -22,5 +23,10 @@ public:
     void CleanUp() override;
 
 private:
-    void RenderGameObjectTree(std::shared_ptr<GameObject> go, std::shared_ptr<GameObject> selected);
+    void RenderGameObjectTree(std::shared_ptr<GameObject> go, std::shared_ptr<GameObject> selected, ModuleScene* scene);
+    void RenderHierarchyTree(ModuleScene* scene, std::shared_ptr<GameObject> selected);
+    void HandleHierarchyContextMenu(ModuleScene* scene);
+    void HandleDragDrop(ModuleScene* scene);
+    static bool IsDescendant(std::shared_ptr<GameObject> potentialDescendant, std::shared_ptr<GameObject> ancestor);
+    static void DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent, ModuleScene* scene);
 };
