@@ -26,6 +26,10 @@ const std::shared_ptr<Material>& MaterialComponent::GetMaterial() const
 // Opens a file dialog for selecting image files
 std::string OpenFile()
 {
+    // Save current directory
+    CHAR currentDir[MAX_PATH];
+    GetCurrentDirectoryA(MAX_PATH, currentDir);
+
     OPENFILENAMEA openFileName;
     CHAR szFile[260] = { 0 };
     CHAR szFilter[] = "Image Files\0*.png;*.jpg;*.jpeg;*.bmp;*.tga;*.dds\0All Files\0*.*\0";
@@ -39,10 +43,14 @@ std::string OpenFile()
     openFileName.nFilterIndex = 1;
     openFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
+    std::string result;
     if (GetOpenFileNameA(&openFileName) == TRUE)
-        return std::string(openFileName.lpstrFile);
+        result = std::string(openFileName.lpstrFile);
 
-    return "";
+    // Restore current directory
+    SetCurrentDirectoryA(currentDir);
+
+    return result;
 }
 
 // Renders a texture slot in the inspector
