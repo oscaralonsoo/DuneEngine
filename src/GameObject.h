@@ -2,9 +2,12 @@
 #include <string>
 #include <vector>
 #include "Component.h"
+#include "ComponentTypes.h"
 #include <memory>
 
-class Component;
+// Forward declaration
+class Component;  
+enum class ComponentType;  // forward declaration del enum
 
 class GameObject : public std::enable_shared_from_this<GameObject>
 {
@@ -42,7 +45,6 @@ public:
 
     virtual void OnChildRemoved(std::shared_ptr<GameObject> removedChild) {}
 
-    // Get all descendants
     std::vector<std::shared_ptr<GameObject>> GetAllDescendants() const;
 
 private:

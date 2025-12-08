@@ -31,6 +31,7 @@ public:
     // Utility methods for hierarchy management
     std::string GenerateUniqueName(const std::string& baseName);
     std::shared_ptr<GameObject> CreateGameObjectWithName(const std::string& name);
+    std::shared_ptr<GameObject> CreateEmptyGameObject();
     std::shared_ptr<GameObject> CreateCube();
     std::shared_ptr<GameObject> CreateGameObjectFromModel(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent = nullptr);

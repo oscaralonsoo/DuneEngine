@@ -54,7 +54,6 @@ bool ModuleScene::CleanUp()
 std::shared_ptr<GameObject> ModuleScene::CreateGameObject()
 {
     auto gameObject = std::make_shared<GameObject>();
-    mGameObjects.push_back(gameObject);
 
     return gameObject;
 }
@@ -165,6 +164,7 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectWithName(const std::str
 {
     auto gameObject = CreateGameObject();
     gameObject->SetName(GenerateUniqueName(name));
+    mGameObjects.push_back(gameObject);
     return gameObject;
 }
 
@@ -175,6 +175,12 @@ std::shared_ptr<GameObject> ModuleScene::CreateCube()
     gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
     gameObject->CreateComponent(ComponentType::Material);
     gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateEmptyGameObject()
+{
+    auto gameObject = CreateGameObjectWithName("GameObject");
     return gameObject;
 }
 
@@ -220,7 +226,10 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
     // Copy components
     for (auto& comp : original->GetComponents())
     {
-        duplicated->CreateComponent(comp->GetType());
+        if (comp->GetType() != ComponentType::Transform) //Created by Constructor
+        {
+            duplicated->CreateComponent(comp->GetType());
+        }
     }
     // Copy children recursively
     for (auto& child : original->GetChildren())
@@ -229,5 +238,10 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
     }
     // Set parent
     duplicated->SetParent(parent);
+    // If it's a root object, add to scene
+    if (!duplicated->GetParent())
+    {
+        mGameObjects.push_back(duplicated);
+    }
     return duplicated;
 }

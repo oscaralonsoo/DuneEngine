@@ -200,6 +200,10 @@ void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
 
     if (ImGui::BeginPopup("HierarchyContextMenu"))
     {
+        if (ImGui::MenuItem("Create Empty GameObject"))
+        {
+            scene->CreateEmptyGameObject();
+        }
         if (ImGui::MenuItem("Create Cube"))
         {
             scene->CreateCube();
