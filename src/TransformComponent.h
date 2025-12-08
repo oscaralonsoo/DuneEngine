@@ -2,7 +2,6 @@
 
 #include "Component.h"
 #include <glm/glm.hpp>
-#include "GameObject.h"
 
 class TransformComponent : public Component
 {

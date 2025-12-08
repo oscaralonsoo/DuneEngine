@@ -22,8 +22,34 @@ void TransformComponent::UpdateWorldMatrix()
     glm::mat4 rotationZ   = glm::rotate(glm::mat4(1.0f), glm::radians(rot.z), glm::vec3(0, 0, 1));
     glm::mat4 scaling     = glm::scale(glm::mat4(1.0f), scl);
 
-    // ✅ Orden TRS correcto:
-    mWorldMatrix = translation * rotationZ * rotationY * rotationX * scaling;
+    // Local matrix
+    glm::mat4 localMatrix = translation * rotationZ * rotationY * rotationX * scaling;
+
+    // If has parent, multiply by parent's world matrix
+    if (auto parent = GetOwner()->GetParent())
+    {
+        if (auto parentTransform = parent->GetComponent<TransformComponent>())
+        {
+            mWorldMatrix = parentTransform->GetWorldTransform() * localMatrix;
+        }
+        else
+        {
+            mWorldMatrix = localMatrix;
+        }
+    }
+    else
+    {
+        mWorldMatrix = localMatrix;
+    }
+
+    // Update children
+    for (auto& child : GetOwner()->GetChildren())
+    {
+        if (auto childTransform = child->GetComponent<TransformComponent>())
+        {
+            childTransform->UpdateWorldMatrix();
+        }
+    }
 }
 
 void TransformComponent::OnInspectorRender(float panelWidth)
