@@ -187,7 +187,6 @@ std::shared_ptr<GameObject> ModuleScene::CreateEmptyGameObject()
 std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::filesystem::path& assetPath)
 {
     auto gameObject = CreateGameObjectWithName(assetPath.stem().string());
-    gameObject->CreateComponent(ComponentType::Transform);
 
     auto model = Model::Load(assetPath);
     if (model && !model->GetMeshes().empty())
@@ -199,7 +198,6 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
                 auto childGo = CreateGameObject();
                 std::string childName = gameObject->GetName() + "_" + std::to_string(i);
                 childGo->SetName(GenerateUniqueName(childName));
-                childGo->CreateComponent(ComponentType::Transform);
                 childGo->CreateComponent(ComponentType::Mesh);
                 childGo->GetComponent<MeshComponent>()->SetMesh(model->GetMeshes()[i]);
                 childGo->CreateComponent(ComponentType::Material);
