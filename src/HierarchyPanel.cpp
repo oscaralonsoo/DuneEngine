@@ -112,7 +112,7 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
                 std::shared_ptr<GameObject> dragged = *(std::shared_ptr<GameObject>*)payload->Data;
                 if (dragged != gameObject && !IsDescendant(gameObject, dragged))
                 {
-                    editingObject = nullptr; // Cancel any ongoing rename to prevent crashes
+                    editingObject = nullptr;
                     pendingParentChanges.push_back({dragged, gameObject});
                 }
             }
@@ -143,18 +143,33 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
             }
             if (ImGui::MenuItem("Duplicate"))
             {
-                editingObject = nullptr; // Cancel any ongoing rename to prevent crashes
-                // Duplicate the GameObject
+                editingObject = nullptr; 
                 scene->DuplicateGameObject(gameObject, gameObject->GetParent());
+            }
+            if (ImGui::BeginMenu("Create Child"))
+            {
+                if (ImGui::MenuItem("Empty"))
+                {
+                    editingObject = nullptr; 
+                    auto child = scene->CreateEmptyGameObject();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Cube"))
+                {
+                    editingObject = nullptr; 
+                    auto child = scene->CreateCube();
+                    child->SetParent(gameObject);
+                }
+                ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Unparent"))
             {
-                editingObject = nullptr; // Cancel any ongoing rename to prevent crashes
+                editingObject = nullptr; 
                 pendingParentChanges.push_back({gameObject, nullptr});
             }
             if (ImGui::MenuItem("Delete"))
             {
-                editingObject = nullptr; // Cancel any ongoing rename to prevent crashes
+                editingObject = nullptr;
                 Engine::GetInstance().scene->RemoveGameObject(gameObject);
             }
             ImGui::EndPopup();
