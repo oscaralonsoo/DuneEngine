@@ -3,6 +3,8 @@
 #include "ModuleEditor.h"
 #include "imgui.h"
 #include <filesystem>
+#include <set>
+#include <chrono>
 
 class ProjectPanel : public EditorPanel
 {
@@ -21,4 +23,18 @@ public:
 
 private:
     void RenderDirectoryTree(const std::filesystem::path& path, const std::filesystem::path& basePath);
+    void RenderContentView();
+    void RefreshAssets();
+    std::string GetFileIcon(const std::filesystem::path& path);
+    void HandleContextMenu(const std::filesystem::path& path, bool isDirectory);
+    void RenderModalDialogs();
+
+    std::filesystem::path selectedFolder = "Assets";
+    std::set<std::filesystem::path> selectedItems;
+    std::chrono::steady_clock::time_point lastRefreshTime;
+    std::filesystem::file_time_type lastAssetsWriteTime;
+
+    // Pending operations for modal dialogs
+    std::filesystem::path pendingRenamePath;
+    std::filesystem::path pendingDeletePath;
 };
