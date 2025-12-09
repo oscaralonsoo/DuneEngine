@@ -153,8 +153,7 @@ bool ModuleInput::PreUpdate()
                 std::string baseName = std::filesystem::path(file).filename().stem().string();
 
                 // Create parent
-                std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObject();
-                parentGameObject->SetName(baseName);
+                std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObjectWithName(baseName);
 
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
                 {
@@ -170,6 +169,7 @@ bool ModuleInput::PreUpdate()
 
                     auto &mesh = model->GetMeshes()[i];
 
+                    childGameObject->CreateComponent(ComponentType::Transform);
                     childGameObject->CreateComponent(ComponentType::Mesh);
                     MeshComponent *meshComp = childGameObject->GetComponent<MeshComponent>();
                     meshComp->SetMesh(mesh);

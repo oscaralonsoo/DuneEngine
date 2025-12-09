@@ -7,6 +7,7 @@
 #include "MeshComponent.h"
 #include "MaterialComponent.h"
 #include "TransformComponent.h"
+#include <functional>
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -53,20 +54,29 @@ bool ModuleRenderer::Update()
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
     // Enviar todos los objetos a las colas de render
-    for (auto go : Engine::GetInstance().scene->GetGameObjects())
-    {
+    std::function<void(std::shared_ptr<GameObject>)> renderGameObject = [&](std::shared_ptr<GameObject> go) {
         MaterialComponent* materialComp = go->GetComponent<MaterialComponent>();
         MeshComponent* meshComp = go->GetComponent<MeshComponent>();
         TransformComponent* transformComp = go->GetComponent<TransformComponent>();
-        if (!materialComp || !meshComp || !transformComp) continue;
+        if (materialComp && meshComp && transformComp) {
+            RenderObject ro;
+            ro.transform = transformComp->GetWorldTransform();
+            ro.mesh = meshComp->GetMesh();
+            ro.material = materialComp->GetMaterial();
+            ro.selected = go->IsSelected();
 
-        RenderObject ro;
-        ro.transform = transformComp->GetWorldTransform();
-        ro.mesh = meshComp->GetMesh();
-        ro.material = materialComp->GetMaterial();
-        ro.selected = go->IsSelected();
+            Renderer::Submit(ro);
+        }
 
-        Renderer::Submit(ro);
+        // Render children recursively
+        for (auto child : go->GetChildren()) {
+            renderGameObject(child);
+        }
+    };
+
+    for (auto go : Engine::GetInstance().scene->GetGameObjects())
+    {
+        renderGameObject(go);
     }
 
     Renderer::SkyboxPass();
