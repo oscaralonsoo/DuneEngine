@@ -1,10 +1,15 @@
 #pragma once
 
 #include "ModuleEditor.h"
+#include "Resource.h"
+#include "Texture.h"
 #include "imgui.h"
 #include <filesystem>
 #include <set>
 #include <chrono>
+#include <map>
+#include <memory>
+#include <glad/glad.h>
 
 class ProjectPanel : public EditorPanel
 {
@@ -22,19 +27,41 @@ public:
     void CleanUp() override;
 
 private:
-    void RenderDirectoryTree(const std::filesystem::path& path, const std::filesystem::path& basePath);
+    // Content view rendering
     void RenderContentView();
+    void RenderAssetItem(const std::filesystem::path& assetPath, bool& rightClickedOnItem);
+
+    // Directory tree
+    void RenderDirectoryTree(const std::filesystem::path& path, const std::filesystem::path& basePath);
+
+    // Asset operations
     void RefreshAssets();
+
+    // Utilities
     std::string GetFileIcon(const std::filesystem::path& path);
-    void HandleContextMenu(const std::filesystem::path& path, bool isDirectory);
+    GLuint GetIconOrThumbnail(const std::filesystem::path& path);
+    void HandleContextMenu(const std::filesystem::path& path, bool isDirectory, bool& rightClickedOnItem);
     void RenderModalDialogs();
 
     std::filesystem::path selectedFolder = "Assets";
     std::set<std::filesystem::path> selectedItems;
     std::chrono::steady_clock::time_point lastRefreshTime;
-    std::filesystem::file_time_type lastAssetsWriteTime;
 
     // Pending operations for modal dialogs
     std::filesystem::path pendingRenamePath;
-    std::filesystem::path pendingDeletePath;
+    std::set<std::filesystem::path> pendingDeletePaths;
+    bool showDeleteModal = false;
+
+    // In-place editing
+    bool isEditing = false;
+    std::filesystem::path editingPath;
+    char editBuffer[256] = {0};
+    std::map<std::filesystem::path, std::string> renamedThisFrame;
+
+    // Thumbnails
+    std::map<std::filesystem::path, std::unique_ptr<Texture>> thumbnailTextures;
+    // Icon textures for different resource types
+    std::map<ResourceType, std::unique_ptr<Texture>> iconTextures;
+    static constexpr float kThumbnailSize = 64.0f;
+    static constexpr float kItemSpacing = 8.0f;
 };
