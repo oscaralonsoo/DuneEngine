@@ -1,4 +1,4 @@
-#pragma once
+    #pragma once
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -32,7 +32,7 @@ private:
 
 protected:
     float mFOV = 45.0f;
-    float mAspectRatio = 1.778;
+    float mAspectRatio = 1.778f;
     float mNearClip = 0.1f;
     float mFarClip = 1000.0f;
 
