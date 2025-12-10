@@ -6,7 +6,58 @@
 #include "PrimitiveMesh.h"
 #include "Buffer.h"
 #include "VertexArray.h"
+#include "GameTime.h" 
 #include <glad/glad.h>
+
+namespace
+{
+    std::shared_ptr<GameObject> CloneGameObject(const std::shared_ptr<GameObject>& src)
+    {
+        auto dst = std::make_shared<GameObject>();
+        dst->SetName(src->GetName());
+        dst->SetSelected(false); // nunca arrancamos con selección
+
+        // --- Transform ---
+        if (auto* srcTransform = src->GetComponent<TransformComponent>())
+        {
+            auto& dstTransformComp = dst->CreateComponent(ComponentType::Transform);
+            auto* dstTransform = dynamic_cast<TransformComponent*>(&dstTransformComp);
+
+            if (dstTransform)
+            {
+                // Copia profunda de TRS  🔥
+                dstTransform->SetPosition(srcTransform->GetPosition());
+                dstTransform->SetRotation(srcTransform->GetRotation());
+                dstTransform->SetScale(srcTransform->GetScale());
+            }
+        }
+
+        // --- Mesh ---
+        if (auto* srcMesh = src->GetComponent<MeshComponent>())
+        {
+            auto& dstMeshComp = dst->CreateComponent(ComponentType::Mesh);
+            auto* dstMesh = dynamic_cast<MeshComponent*>(&dstMeshComp);
+            if (dstMesh)
+            {
+                dstMesh->SetMesh(srcMesh->GetMesh());
+            }
+        }
+
+        // --- Material ---
+        if (auto* srcMat = src->GetComponent<MaterialComponent>())
+        {
+            auto& dstMatComp = dst->CreateComponent(ComponentType::Material);
+            auto* dstMat = dynamic_cast<MaterialComponent*>(&dstMatComp);
+            if (dstMat)
+            {
+                dstMat->SetMaterial(srcMat->GetMaterial());
+            }
+        }
+
+        return dst;
+    }
+}
+
 
 ModuleScene::ModuleScene()
 {
@@ -30,6 +81,15 @@ bool ModuleScene::Start()
 
 bool ModuleScene::Update()
 {
+    if (!GameTime::IsPlaying() && !GameTime::IsStepFrame())
+        return true;
+
+    for (auto& go : mGameObjects)
+    {
+        if (!go->Update())
+            return false;
+    }
+
     return true;
 }
 
@@ -63,5 +123,38 @@ void ModuleScene::ResetSelecteds()
     for (auto& go : mGameObjects)
     {
         go->SetSelected(false);
+    }
+}
+
+void ModuleScene::SaveInitialSnapshot()
+{
+    if (mHasSnapshot)
+        return; // solo guardamos una vez antes del primer Play
+
+    mInitialSnapshot.clear();
+    mInitialSnapshot.reserve(mGameObjects.size());
+
+    for (const auto& go : mGameObjects)
+    {
+        mInitialSnapshot.push_back(CloneGameObject(go));
+    }
+
+    mHasSnapshot = true;
+}
+
+void ModuleScene::RestoreSnapshot()
+{
+    if (!mHasSnapshot)
+        return;
+
+    // Limpiar selección
+    selected = nullptr;
+
+    // Sustituimos la escena actual por el snapshot
+    mGameObjects.clear();
+
+    for (const auto& savedGo : mInitialSnapshot)
+    {
+        mGameObjects.push_back(CloneGameObject(savedGo));
     }
 }

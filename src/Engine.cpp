@@ -9,6 +9,7 @@
 #include "ModuleScene.h"
 #include "Globals.h"
 #include <iostream>
+#include "GameTime.h" 
 
 Engine::Engine()
 {
@@ -69,6 +70,8 @@ bool Engine::Start()
 
 bool Engine::Update()
 {
+
+    GameTime::Update();
 
     bool ret = true;
 
@@ -169,7 +172,10 @@ int Engine::Run()
 
         case EngineState::START:
             if (Start())
+            {
+                GameTime::Init();              
                 state = EngineState::LOOP;
+            }
             else
                 state = EngineState::FAIL;
             break;

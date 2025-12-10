@@ -33,6 +33,8 @@ public:
 
     const std::vector<std::unique_ptr<Component>>& GetComponents() const { return mComponents; }
 
+    bool Update();
+
 private:
     bool mActive = true;
     std::string mName;

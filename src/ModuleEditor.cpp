@@ -2,6 +2,8 @@
 #include "HierarchyPanel.h"
 #include "InspectorPanel.h"
 #include <imgui.h>
+#include "GameTime.h" 
+#include "ToolbarPanel.h"
 
 ModuleEditor::ModuleEditor()
 {
@@ -12,6 +14,7 @@ bool ModuleEditor::Start()
 {
     AddPanel<HierarchyPanel>();
     AddPanel<InspectorPanel>();
+    AddPanel<ToolbarPanel>();
 
     for (auto& panel : panels)
         panel->Start();

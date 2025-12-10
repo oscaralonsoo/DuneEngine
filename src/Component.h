@@ -23,6 +23,8 @@ public:
 
     virtual void OnInspectorRender(float panelWidth) {}
 
+    bool IsActive() const { return mActive; }
+
 private:
     ComponentType mType;
     bool mActive = true;

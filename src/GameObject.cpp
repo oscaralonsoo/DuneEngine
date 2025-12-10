@@ -32,10 +32,27 @@ Component &GameObject::CreateComponent(ComponentType type)
 
     mComponents.push_back(std::move(component));
 
-    return *component;
+    return *mComponents.back();
 }
 
 void GameObject::SetName(const std::string &name)
 {
     mName = name;
+}
+
+bool GameObject::Update()
+{
+    if (!mActive)
+        return true;
+
+    for (auto& comp : mComponents)
+    {
+        if (comp->IsActive())
+        {
+            if (!comp->Update())
+                return false;
+        }
+    }
+
+    return true;
 }

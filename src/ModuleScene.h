@@ -24,10 +24,17 @@ public:
     void SetSelected(std::shared_ptr<GameObject> go);
     void ResetSelecteds();
     std::shared_ptr<GameObject> GetSelected() const { return selected; }
+
+    void SaveInitialSnapshot();
+
+    void RestoreSnapshot();
 private:
     std::shared_ptr<GameObject> root;
     std::shared_ptr<GameObject> test;
     std::vector<std::shared_ptr<GameObject>> mGameObjects;
     Raycaster *raycaster;
     std::shared_ptr<GameObject> selected;
+
+    std::vector<std::shared_ptr<GameObject>> mInitialSnapshot;
+    bool mHasSnapshot = false;
 };
