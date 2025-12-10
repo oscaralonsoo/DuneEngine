@@ -7,6 +7,7 @@
 #include <commdlg.h>
 #include <SDL3/SDL.h>
 #include <filesystem>
+#include "FileDialogUtils.h"
 
 MaterialComponent::MaterialComponent(GameObject* owner, const std::shared_ptr<Material>& material)
     : Component(ComponentType::Material, owner), mMaterial(material)
@@ -23,38 +24,26 @@ const std::shared_ptr<Material>& MaterialComponent::GetMaterial() const
     return mMaterial;
 }
 
-// Opens a file dialog for selecting image files
-std::string OpenFile()
-{
-    // Save current directory
-    CHAR currentDir[MAX_PATH];
-    GetCurrentDirectoryA(MAX_PATH, currentDir);
-
-    OPENFILENAMEA openFileName;
-    CHAR szFile[260] = { 0 };
-    CHAR szFilter[] = "Image Files\0*.png;*.jpg;*.jpeg;*.bmp;*.tga;*.dds\0All Files\0*.*\0";
-
-    ZeroMemory(&openFileName, sizeof(openFileName));
-    openFileName.lStructSize = sizeof(openFileName);
-    openFileName.hwndOwner = nullptr;
-    openFileName.lpstrFile = szFile;
-    openFileName.nMaxFile = sizeof(szFile);
-    openFileName.lpstrFilter = szFilter;
-    openFileName.nFilterIndex = 1;
-    openFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    std::string result;
-    if (GetOpenFileNameA(&openFileName) == TRUE)
-        result = std::string(openFileName.lpstrFile);
-
-    // Restore current directory
-    SetCurrentDirectoryA(currentDir);
-
-    return result;
-}
-
 // Renders a texture slot in the inspector
 void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+{
+    RenderSlotBorder(name, texture);
+    HandleDragDrop(name, texture, input);
+    HandleSlotClick(name, texture);
+    HandleFileDrop(name, texture, input);
+
+    // Add X button to remove texture (only if texture exists)
+    if (texture)
+    {
+        ImGui::SameLine();
+        if (ImGui::Button(("X##" + std::string(name)).c_str()))
+            texture = nullptr;
+    }
+
+    ImGui::Spacing();
+}
+
+void MaterialComponent::RenderSlotBorder(const char* name, std::shared_ptr<Texture>& texture)
 {
     ImGui::Text("%s", name);
 
@@ -63,7 +52,6 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
 
     ImGui::InvisibleButton(("##slot_" + std::string(name)).c_str(), slotSize);
     bool hovered = ImGui::IsItemHovered();
-    bool clicked = ImGui::IsItemClicked();
 
     // Border color: blue on hover, white otherwise
     ImU32 borderColor = hovered ? IM_COL32(100, 149, 237, 255) : IM_COL32(255, 255, 255, 255);
@@ -75,15 +63,7 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
         borderColor
     );
 
-    // Handle click to open file
-    if (clicked)
-    {
-        std::string path = OpenFile();
-        if (!path.empty())
-            texture = std::make_shared<Texture>(path.c_str());
-    }
-
-    // Render texture preview
+    // Draw texture preview inside the slot if texture exists
     if (texture)
     {
         GLuint id = texture->GetID();
@@ -92,16 +72,53 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
             pos,
             ImVec2(pos.x + slotSize.x, pos.y + slotSize.y)
         );
-
-        ImGui::SameLine();
-        if (ImGui::Button(("X##" + std::string(name)).c_str()))
-            texture = nullptr;
     }
+}
 
-    // Handle drag and drop
+void MaterialComponent::HandleSlotClick(const char* name, std::shared_ptr<Texture>& texture)
+{
+    if (ImGui::IsItemClicked())
+    {
+        std::string path = FileDialogUtils::OpenImageFile();
+        if (!path.empty())
+            texture = std::make_shared<Texture>(path.c_str());
+    }
+}
+
+void MaterialComponent::RenderTexturePreview(const char* name, std::shared_ptr<Texture>& texture)
+{
+    if (!texture)
+        return;
+
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImVec2 slotSize(32, 32);
+
+    GLuint id = texture->GetID();
+    ImGui::GetWindowDrawList()->AddImage(
+        (ImTextureID)(uintptr_t)id,
+        pos,
+        ImVec2(pos.x + slotSize.x, pos.y + slotSize.y)
+    );
+
+    ImGui::SameLine();
+    if (ImGui::Button(("X##" + std::string(name)).c_str()))
+        texture = nullptr;
+}
+
+void MaterialComponent::HandleDragDrop(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+{
     if (ImGui::BeginDragDropTarget())
     {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+        {
+            const char* relativePath = (const char*)payload->Data;
+            if (relativePath && relativePath[0] != '\0')
+            {
+                std::filesystem::path fullPath = "Assets" / std::filesystem::path(relativePath);
+                texture = std::make_shared<Texture>(fullPath);
+            }
+        }
+        else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
         {
             const char* path = (const char*)payload->Data;
             if (path && path[0] != '\0')
@@ -109,8 +126,11 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
         }
         ImGui::EndDragDropTarget();
     }
+}
 
-    // Handle file drop
+void MaterialComponent::HandleFileDrop(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+{
+    bool hovered = ImGui::IsItemHovered();
     if (input->WasFileDropped() && hovered)
     {
         std::string path = input->GetDraggedFile();
@@ -121,8 +141,6 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
             input->ClearDraggedFile();
         }
     }
-
-    ImGui::Spacing();
 }
 
 void MaterialComponent::OnInspectorRender(float panelWidth)
