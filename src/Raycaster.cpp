@@ -31,7 +31,12 @@ Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
 
     glm::vec3 rayDir = glm::normalize(glm::vec3(glm::inverse(view) * ray_eye));
 
-    return Ray{ camera->GetPosition(), rayDir };
+    Ray ray{ camera->GetPosition(), rayDir };
+
+    mLastRay   = ray;
+    mHasLastRay = true;
+
+    return ray;
 }
 
 std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const

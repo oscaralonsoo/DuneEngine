@@ -48,23 +48,20 @@ void Frustum::Update(const glm::mat4& view, const glm::mat4& projection)
 
 bool Frustum::ContainsAABB(const AABB& box) const
 {
-    glm::vec3 corners[8];
-    box.GetVertices(corners);
-
     for (int p = 0; p < Count; ++p)
     {
-        int insideCount = 0;
+        const Plane& plane = mPlanes[p];
 
-        for (int i = 0; i < 8; ++i)
+        glm::vec3 positiveVertex;
+        positiveVertex.x = (plane.normal.x >= 0.0f) ? box.max.x : box.min.x;
+        positiveVertex.y = (plane.normal.y >= 0.0f) ? box.max.y : box.min.y;
+        positiveVertex.z = (plane.normal.z >= 0.0f) ? box.max.z : box.min.z;
+
+        float dist = plane.Distance(positiveVertex);
+        if (dist < 0.0f)
         {
-            float dist = mPlanes[p].Distance(corners[i]);
-            if (dist >= 0.0f) 
-                ++insideCount;
-        }
-
-        if (insideCount == 0)
             return false;
+        }
     }
-
     return true;
 }

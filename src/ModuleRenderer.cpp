@@ -23,6 +23,113 @@ namespace
         }
         return nullptr;
     }
+
+    void DebugDrawAABB(const AABB& box,
+                       const glm::mat4& view,
+                       const glm::mat4& projection,
+                       const glm::vec3& color)
+    {
+        // 8 vértices de la caja
+        glm::vec3 v[8];
+        box.GetVertices(v);
+
+        // 12 aristas -> 24 puntos (líneas)
+        glm::vec3 lines[24] = {
+            // Cara frontal
+            v[0], v[1],
+            v[1], v[3],
+            v[3], v[2],
+            v[2], v[0],
+            // Cara trasera
+            v[4], v[5],
+            v[5], v[7],
+            v[7], v[6],
+            v[6], v[4],
+            // Conectores
+            v[0], v[4],
+            v[1], v[5],
+            v[2], v[6],
+            v[3], v[7],
+        };
+
+        static GLuint sVAO = 0;
+        static GLuint sVBO = 0;
+
+        if (sVAO == 0)
+        {
+            glGenVertexArrays(1, &sVAO);
+            glGenBuffers(1, &sVBO);
+        }
+
+        glBindVertexArray(sVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, sVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(lines), lines, GL_DYNAMIC_DRAW);
+
+        // Atributo posición en location 0 (asumimos layout(location = 0) in vec3 aPosition;
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+        // Usamos el shader de color único del Renderer
+        auto singleColorShader = Renderer::GetSingleColorShader(); // lo añadimos ahora
+        if (!singleColorShader)
+            return;
+
+        singleColorShader->Bind();
+        singleColorShader->SetMat4("view",       view);
+        singleColorShader->SetMat4("projection", projection);
+        singleColorShader->SetMat4("model",      glm::mat4(1.0f));
+        singleColorShader->SetVec3("outlineColor", color);
+        singleColorShader->SetFloat("outlineThickness", 0.0f); // no lo usamos aquí
+
+        glDrawArrays(GL_LINES, 0, 24);
+
+        glDisableVertexAttribArray(0);
+        glBindVertexArray(0);
+    }
+
+    void DebugDrawRay(const Ray& ray,
+                      float length,
+                      const glm::mat4& view,
+                      const glm::mat4& projection,
+                      const glm::vec3& color)
+    {
+        glm::vec3 p0 = ray.origin;
+        glm::vec3 p1 = ray.origin + ray.direction * length;
+
+        glm::vec3 line[2] = { p0, p1 };
+
+        static GLuint sRayVAO = 0;
+        static GLuint sRayVBO = 0;
+
+        if (sRayVAO == 0)
+        {
+            glGenVertexArrays(1, &sRayVAO);
+            glGenBuffers(1, &sRayVBO);
+        }
+
+        glBindVertexArray(sRayVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, sRayVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(line), line, GL_DYNAMIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+        auto singleColorShader = Renderer::GetSingleColorShader();
+        if (!singleColorShader)
+            return;
+
+        singleColorShader->Bind();
+        singleColorShader->SetMat4("view",       view);
+        singleColorShader->SetMat4("projection", projection);
+        singleColorShader->SetMat4("model",      glm::mat4(1.0f));
+        singleColorShader->SetVec3("outlineColor", color);
+        singleColorShader->SetFloat("outlineThickness", 0.0f);
+
+        glDrawArrays(GL_LINES, 0, 2);
+
+        glDisableVertexAttribArray(0);
+        glBindVertexArray(0);
+    }
 }
 
 
@@ -110,10 +217,22 @@ bool ModuleRenderer::Update()
         const AABB& localBox = mesh->GetAABB();
         AABB worldBox        = TransformAABB(localBox, world);
 
-        if (!mFrustum.ContainsAABB(worldBox))
+        // === FRUSTUM TEST UNA SOLA VEZ ===
+        bool inside = mFrustum.ContainsAABB(worldBox);
+
+        // === DEBUG: dibujar la caja siempre en el editor ===
+        // Solo en modo editor (cuando no está jugando)
+        if (!GameTime::IsPlaying())
         {
-            continue;
+            glm::vec3 color = inside ? glm::vec3(0.0f, 1.0f, 0.0f)   // verde dentro
+                                    : glm::vec3(1.0f, 0.0f, 0.0f);  // rojo fuera
+
+            DebugDrawAABB(worldBox, view, projection, color);
         }
+
+        // No renderizar el mesh si está fuera del frustum
+        if (!inside)
+            continue;
 
         RenderObject ro;
         ro.transform = world;
@@ -128,6 +247,17 @@ bool ModuleRenderer::Update()
     Renderer::ForwardPass();
     Renderer::TransparentPass();
     Renderer::SelectedPass();
+
+    if (!isPlaying)
+    {
+        auto* scene     = Engine::GetInstance().scene.get();
+        Raycaster* rc   = scene->GetRaycaster();
+        if (rc && rc->HasLastRay())
+        {
+            Ray lastRay = rc->GetLastRay();
+            DebugDrawRay(lastRay, 100.0f, view, projection, glm::vec3(1.0f, 1.0f, 0.0f));
+        }
+    }
 
     return true;
 }
