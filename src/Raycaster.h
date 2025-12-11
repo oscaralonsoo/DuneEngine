@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Camera.h"
+#include "Camera.h"   // contiene ICamera
 #include "MeshComponent.h"
 #include "Mesh.h"
 #include "GameObject.h"
@@ -32,8 +32,4 @@ public:
 private:
     static bool RayIntersectsAABB(const Ray &ray, const AABB &box, float *tMinOut = nullptr);
     static AABB TransformAABB(const AABB &aabb, const glm::mat4 &transform);
-
-private:
-    Camera *camera;
-    int screenWidth, screenHeight;
 };

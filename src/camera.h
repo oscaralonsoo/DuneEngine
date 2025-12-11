@@ -1,7 +1,22 @@
 #pragma once
 
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+// Interfaz común de cámara para el renderer
+class ICamera
+{
+public:
+    virtual ~ICamera() = default;
+
+    virtual const glm::mat4& GetViewMatrix() const = 0;
+    virtual const glm::mat4& GetProjectionMatrix() const = 0;
+    virtual glm::vec3 GetPosition() const = 0;
+
+    virtual void SetViewportSize(float width, float height) = 0;
+};
+
+// Cámara “base” con solo proyección
 class Camera
 {
 public:
@@ -32,12 +47,12 @@ private:
 
 protected:
     float mFOV = 45.0f;
-    float mAspectRatio = 1.778;
+    float mAspectRatio = 1.778f;
     float mNearClip = 0.1f;
     float mFarClip = 1000.0f;
 
     glm::mat4 mProjection = glm::mat4(1.0f);
 
-    float mViewportWidth = 1280;
-    float mViewportHeight = 720;
+    float mViewportWidth = 1280.0f;
+    float mViewportHeight = 720.0f;
 };

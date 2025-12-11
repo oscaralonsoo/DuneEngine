@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "EditorCamera.h"
 #include "Texture.h"
+#include "Camera.h" 
 
 #include <vector>
 #include <IL/il.h>
@@ -36,7 +37,8 @@ public:
 
 	bool CleanUp();
 
-	EditorCamera *renderCamera = nullptr;
+    ICamera*     renderCamera = nullptr; 
+    EditorCamera* editorCamera = nullptr;
 
 private:
 	std::shared_ptr<Shader> shader = nullptr;

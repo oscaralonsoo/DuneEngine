@@ -7,6 +7,7 @@
 #include "Buffer.h"
 #include "VertexArray.h"
 #include "GameTime.h" 
+#include "CameraComponent.h"
 #include <glad/glad.h>
 
 namespace
@@ -20,12 +21,18 @@ namespace
         // --- Transform ---
         if (auto* srcTransform = src->GetComponent<TransformComponent>())
         {
-            auto& dstTransformComp = dst->CreateComponent(ComponentType::Transform);
-            auto* dstTransform = dynamic_cast<TransformComponent*>(&dstTransformComp);
+            // Reutilizar el Transform que GameObject ya crea en su constructor
+            auto* dstTransform = dst->GetComponent<TransformComponent>();
+
+            // Por si algún día tienes GameObjects sin Transform, aseguramos
+            if (!dstTransform)
+            {
+                auto& dstTransformComp = dst->CreateComponent(ComponentType::Transform);
+                dstTransform = dynamic_cast<TransformComponent*>(&dstTransformComp);
+            }
 
             if (dstTransform)
             {
-                // Copia profunda de TRS  🔥
                 dstTransform->SetPosition(srcTransform->GetPosition());
                 dstTransform->SetRotation(srcTransform->GetRotation());
                 dstTransform->SetScale(srcTransform->GetScale());
@@ -53,6 +60,17 @@ namespace
                 dstMat->SetMaterial(srcMat->GetMaterial());
             }
         }
+        if (auto* srcCam = src->GetComponent<CameraComponent>())
+        {
+            auto& dstCamComp = dst->CreateComponent(ComponentType::Camera);
+            auto* dstCam = dynamic_cast<CameraComponent*>(&dstCamComp);
+            if (dstCam)
+            {
+                dstCam->SetFOV(srcCam->GetFOV());
+                dstCam->SetNearClip(srcCam->GetNearClip());
+                dstCam->SetFarClip(srcCam->GetFarClip());
+            }
+        }
 
         return dst;
     }
@@ -75,6 +93,17 @@ bool ModuleScene::Start()
     root->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
 
     raycaster = new Raycaster();
+
+    std::shared_ptr<GameObject> cameraGO = std::make_shared<GameObject>();
+    cameraGO->SetName("Main Camera");
+
+    auto* camTransform = cameraGO->GetComponent<TransformComponent>();
+    camTransform->SetPosition({ 0.0f, 1.0f, 5.0f });   
+    camTransform->SetRotation({ 0.0f, 0.0f, 0.0f });
+
+    cameraGO->CreateComponent(ComponentType::Camera);
+
+    mGameObjects.push_back(cameraGO);
 
     return true;
 }

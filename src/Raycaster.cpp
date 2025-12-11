@@ -11,26 +11,29 @@ Raycaster::Raycaster()
 
 Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
 {
-    EditorCamera* camera = Engine::GetInstance().renderer.get()->renderCamera;
+    ICamera* camera = Engine::GetInstance().renderer->renderCamera;
     
     int width, height;
-    SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &width, &height);
-
-    float aspect = (height > 0) ? (float)width / (float)height : 4.0f / 3.0f;
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    SDL_GetWindowSizeInPixels(
+        Engine::GetInstance().window->GetWindow(),
+        &width, &height);
 
     float x = (2.0f * mouseX) / width - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / height;
 
     glm::vec4 ray_clip(x, y, -1.0f, 1.0f);
 
+    glm::mat4 projection = camera->GetProjectionMatrix();
+    glm::mat4 view       = camera->GetViewMatrix();
+
     glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
     ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
-    glm::mat4 view = camera->GetViewMatrix();
+
     glm::vec3 rayDir = glm::normalize(glm::vec3(glm::inverse(view) * ray_eye));
 
-    return Ray{camera->GetPosition(), rayDir};
+    return Ray{ camera->GetPosition(), rayDir };
 }
+
 
 std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const
 {

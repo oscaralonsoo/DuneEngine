@@ -8,6 +8,23 @@
 #include "MaterialComponent.h"
 #include "TransformComponent.h"
 #include "AABB.h"
+#include "CameraComponent.h"
+#include "GameTime.h"
+
+namespace
+{
+    ICamera* FindGameCamera()
+    {
+        auto* scene = Engine::GetInstance().scene.get();
+        for (auto& go : scene->GetGameObjects())
+        {
+            if (auto* cam = go->GetComponent<CameraComponent>())
+                return cam;
+        }
+        return nullptr;
+    }
+}
+
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -17,11 +34,13 @@ ModuleRenderer::ModuleRenderer() : Module()
 bool ModuleRenderer::Start()
 {
     // Crear cámara de render
-    renderCamera = new EditorCamera(
+    editorCamera = new EditorCamera(
         45.0f,
         16.0f / 9.0f,
         0.1f,
         1000.0f);
+
+    renderCamera = editorCamera;
 
     RendererAPI::Init();
     Renderer::Init();
@@ -35,27 +54,44 @@ bool ModuleRenderer::PreUpdate()
 
 bool ModuleRenderer::Update()
 {
-    renderCamera->Update();
+    bool isPlaying = GameTime::IsPlaying();
 
+    // 1) Elegir qué cámara usar este frame
+    if (isPlaying)
+    {
+        // Intentar usar una cámara de juego
+        if (ICamera* gameCam = FindGameCamera())
+            renderCamera = gameCam;
+        else
+            renderCamera = editorCamera; // fallback
+    }
+    else
+    {
+        renderCamera = editorCamera;
+    }
+
+    // 2) Actualizar cámara del editor solo en modo editor
+    if (!isPlaying && editorCamera)
+    {
+        editorCamera->Update();
+    }
+
+    // 3) Ajustar viewport de la cámara activa
     int w, h;
     SDL_GetWindowSizeInPixels(
         Engine::GetInstance().window->GetWindow(),
         &w, &h);
 
-    renderCamera->SetViewportSize(w, h);
+    if (renderCamera)
+        renderCamera->SetViewportSize((float)w, (float)h);
 
+    // 4) Frustum y clear
     glm::mat4 view       = renderCamera->GetViewMatrix();
     glm::mat4 projection = renderCamera->GetProjectionMatrix();
     mFrustum.Update(view, projection);
 
     RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glEnable(GL_STENCIL_TEST);
-    glStencilMask(0xFF);
-    glClear(GL_STENCIL_BUFFER_BIT);
-    glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
     for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
@@ -103,7 +139,9 @@ bool ModuleRenderer::PostUpdate()
 
 bool ModuleRenderer::CleanUp()
 {
-    delete renderCamera;
+    delete editorCamera;
+    editorCamera = nullptr;
+    renderCamera = nullptr;
 
     return true;
 }
