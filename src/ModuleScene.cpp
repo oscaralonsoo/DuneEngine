@@ -338,6 +338,7 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
                         childGo->CreateComponent(ComponentType::Material);
                         childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
                         childGo->SetParent(gameObject);
+                        mGameObjects.push_back(childGo);
                     }
                 }
                 else
