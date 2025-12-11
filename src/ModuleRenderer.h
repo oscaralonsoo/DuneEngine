@@ -13,6 +13,7 @@
 #include <SDL3/SDL.h>
 #include "Shader.h"
 #include <glad/glad.h>
+#include "Frustum.h"
 
 struct CameraData
 {
@@ -35,10 +36,11 @@ public:
 
 	bool CleanUp();
 
-	EditorCamera *renderCamera = nullptr; //FIXME -> Move to other class
+	EditorCamera *renderCamera = nullptr;
 
 private:
 	std::shared_ptr<Shader> shader = nullptr;
 	std::shared_ptr<Texture> texture;
 	glm::mat4 model, view, projection;
+	Frustum mFrustum;
 };

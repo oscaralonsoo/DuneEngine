@@ -7,6 +7,7 @@
 #include "MeshComponent.h"
 #include "MaterialComponent.h"
 #include "TransformComponent.h"
+#include "AABB.h"
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -43,6 +44,10 @@ bool ModuleRenderer::Update()
 
     renderCamera->SetViewportSize(w, h);
 
+    glm::mat4 view       = renderCamera->GetViewMatrix();
+    glm::mat4 projection = renderCamera->GetProjectionMatrix();
+    mFrustum.Update(view, projection);
+
     RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -52,19 +57,33 @@ bool ModuleRenderer::Update()
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    // Enviar todos los objetos a las colas de render
     for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
-        MaterialComponent* materialComp = go->GetComponent<MaterialComponent>();
-        MeshComponent* meshComp = go->GetComponent<MeshComponent>();
+        MaterialComponent*  materialComp  = go->GetComponent<MaterialComponent>();
+        MeshComponent*      meshComp      = go->GetComponent<MeshComponent>();
         TransformComponent* transformComp = go->GetComponent<TransformComponent>();
-        if (!materialComp || !meshComp || !transformComp) continue;
+        if (!materialComp || !meshComp || !transformComp) 
+            continue;
+
+        const std::shared_ptr<Mesh>& mesh = meshComp->GetMesh();
+        if (!mesh)
+            continue;
+
+        glm::mat4 world = transformComp->GetWorldTransform();
+
+        const AABB& localBox = mesh->GetAABB();
+        AABB worldBox        = TransformAABB(localBox, world);
+
+        if (!mFrustum.ContainsAABB(worldBox))
+        {
+            continue;
+        }
 
         RenderObject ro;
-        ro.transform = transformComp->GetWorldTransform();
-        ro.mesh = meshComp->GetMesh();
-        ro.material = materialComp->GetMaterial();
-        ro.selected = go->IsSelected();
+        ro.transform = world;
+        ro.mesh      = mesh;
+        ro.material  = materialComp->GetMaterial();
+        ro.selected  = go->IsSelected();
 
         Renderer::Submit(ro);
     }
@@ -76,7 +95,6 @@ bool ModuleRenderer::Update()
 
     return true;
 }
-
 
 bool ModuleRenderer::PostUpdate()
 {
