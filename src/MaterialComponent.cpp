@@ -24,7 +24,7 @@ const std::shared_ptr<Material>& MaterialComponent::GetMaterial() const
     return mMaterial;
 }
 
-// Renders a texture slot in the inspector
+// Renders a texture slot
 void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
 {
     RenderSlotBorder(name, texture);
@@ -32,7 +32,7 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
     HandleSlotClick(name, texture);
     HandleFileDrop(name, texture, input);
 
-    // Add X button to remove texture (only if texture exists)
+    // X button to remove texture
     if (texture)
     {
         ImGui::SameLine();
@@ -53,17 +53,15 @@ void MaterialComponent::RenderSlotBorder(const char* name, std::shared_ptr<Textu
     ImGui::InvisibleButton(("##slot_" + std::string(name)).c_str(), slotSize);
     bool hovered = ImGui::IsItemHovered();
 
-    // Border color: blue on hover, white otherwise
+    // Border
     ImU32 borderColor = hovered ? IM_COL32(100, 149, 237, 255) : IM_COL32(255, 255, 255, 255);
-
-    // Draw slot border
     ImGui::GetWindowDrawList()->AddRect(
         pos,
         ImVec2(pos.x + slotSize.x, pos.y + slotSize.y),
         borderColor
     );
 
-    // Draw texture preview inside the slot if texture exists
+    // Draw texture preview inside the slot
     if (texture)
     {
         GLuint id = texture->GetID();

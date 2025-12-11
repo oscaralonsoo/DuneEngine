@@ -34,6 +34,7 @@ public:
     std::shared_ptr<GameObject> CreateEmptyGameObject();
     std::shared_ptr<GameObject> CreateCube();
     std::shared_ptr<GameObject> CreateGameObjectFromModel(const std::filesystem::path& assetPath);
+    std::shared_ptr<GameObject> CreateGameObjectFromPrefab(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent = nullptr);
 private:
     std::shared_ptr<GameObject> root;

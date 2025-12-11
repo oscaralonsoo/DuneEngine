@@ -6,7 +6,6 @@
 #include "PrimitiveMesh.h"
 #include "Model.h"
 #include <glad/glad.h>
-
 ModuleScene::ModuleScene()
 {
     name = "scene";
@@ -188,32 +187,78 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
 {
     auto gameObject = CreateGameObjectWithName(assetPath.stem().string());
 
-    auto model = Model::Load(assetPath);
-    if (model && !model->GetMeshes().empty())
+    try
     {
-        if (model->GetMeshes().size() > 1)
+        auto model = Model::Load(assetPath);
+        if (model)
         {
-            for (size_t i = 0; i < model->GetMeshes().size(); ++i)
+            // Filter meshes that have vertices
+            std::vector<std::shared_ptr<Mesh>> validMeshes;
+            for (auto& mesh : model->GetMeshes())
             {
-                auto childGo = CreateGameObject();
-                std::string childName = gameObject->GetName() + "_" + std::to_string(i);
-                childGo->SetName(GenerateUniqueName(childName));
-                childGo->CreateComponent(ComponentType::Mesh);
-                childGo->GetComponent<MeshComponent>()->SetMesh(model->GetMeshes()[i]);
-                childGo->CreateComponent(ComponentType::Material);
-                childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-                childGo->SetParent(gameObject);
+                if (!mesh->GetVertices().empty())
+                {
+                    validMeshes.push_back(mesh);
+                }
+            }
+
+            if (!validMeshes.empty())
+            {
+                if (validMeshes.size() > 1)
+                {
+                    for (size_t i = 0; i < validMeshes.size(); ++i)
+                    {
+                        auto childGo = CreateGameObject();
+                        std::string childName = gameObject->GetName() + "_" + std::to_string(i);
+                        childGo->SetName(GenerateUniqueName(childName));
+                        childGo->CreateComponent(ComponentType::Mesh);
+                        childGo->GetComponent<MeshComponent>()->SetMesh(validMeshes[i]);
+                        childGo->CreateComponent(ComponentType::Material);
+                        childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+                        childGo->SetParent(gameObject);
+                    }
+                }
+                else
+                {
+                    // Single valid mesh
+                    gameObject->CreateComponent(ComponentType::Mesh);
+                    gameObject->GetComponent<MeshComponent>()->SetMesh(validMeshes[0]);
+                    gameObject->CreateComponent(ComponentType::Material);
+                    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+                }
+            }
+            else
+            {
+                // No valid meshes, use fallback
+                gameObject->CreateComponent(ComponentType::Mesh);
+                gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
+                gameObject->CreateComponent(ComponentType::Material);
+                gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
             }
         }
         else
         {
-            // Single mesh
+            // Model failed to load, use fallback
             gameObject->CreateComponent(ComponentType::Mesh);
-            gameObject->GetComponent<MeshComponent>()->SetMesh(model->GetMeshes()[0]);
+            gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
             gameObject->CreateComponent(ComponentType::Material);
             gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
         }
     }
+    catch (const std::exception& e)
+    {
+        // Exception occurred, use fallback
+        gameObject->CreateComponent(ComponentType::Mesh);
+        gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
+        gameObject->CreateComponent(ComponentType::Material);
+        gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    }
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromPrefab(const std::filesystem::path& assetPath)
+{
+    auto gameObject = CreateGameObjectWithName(assetPath.stem().string());
     return gameObject;
 }
 
