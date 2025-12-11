@@ -24,6 +24,7 @@ bool ModuleImGui::Start()
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImGui::LoadIniSettingsFromDisk("imgui.ini");
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -86,6 +87,7 @@ bool ModuleImGui::PostUpdate()
 
 bool ModuleImGui::CleanUp()
 {
+    ImGui::SaveIniSettingsToDisk("imgui.ini");
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();

@@ -338,11 +338,11 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
         auto model = Model::Load(assetPath);
         if (model)
         {
-            // Filter meshes that have vertices
+            // Filter meshes that have vertices and indices
             std::vector<std::shared_ptr<Mesh>> validMeshes;
             for (auto& mesh : model->GetMeshes())
             {
-                if (!mesh->GetVertices().empty())
+                if (!mesh->GetVertices().empty() && !mesh->GetIndices().empty())
                 {
                     validMeshes.push_back(mesh);
                 }
@@ -362,7 +362,6 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
                         childGo->CreateComponent(ComponentType::Material);
                         childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
                         childGo->SetParent(gameObject);
-                        mGameObjects.push_back(childGo);
                     }
                 }
                 else
