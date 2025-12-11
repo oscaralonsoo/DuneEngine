@@ -60,12 +60,8 @@ void ProjectPanel::OnImGuiRender()
 {
     RefreshAssets();
 
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    float panelHeight;
-
-    SetupWindow(viewport, panelHeight);
-
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
+                            ImGuiWindowFlags_NoCollapse |
                             ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Project", nullptr, flags);
