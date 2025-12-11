@@ -20,29 +20,25 @@ bool ProjectPanel::Start()
     return true;
 }
 
-void ProjectPanel::OnImGuiRender()
+// Sets up the ImGui window for the ProjectPanel
+void ProjectPanel::SetupWindow(ImGuiViewport* viewport, float& panelHeight)
 {
-    RefreshAssets();
-
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImVec2 workPos  = viewport->WorkPos;
+    ImVec2 workPos = viewport->WorkPos;
     ImVec2 workSize = viewport->WorkSize;
 
     float desiredHeight = workSize.y * ProjectPanel::kDefaultFraction;
     float otherPanelEstimate = workSize.y * ProjectPanel::kDefaultFraction;
     float maxAllowed = workSize.y - otherPanelEstimate - ProjectPanel::kMinCenterWidth;
-    float panelHeight = std::clamp(desiredHeight, ProjectPanel::kMinPanelWidth, maxAllowed);
+    panelHeight = std::clamp(desiredHeight, ProjectPanel::kMinPanelWidth, maxAllowed);
 
     ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - panelHeight), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(workSize.x, panelHeight), ImGuiCond_Always);
     ImGui::SetNextWindowViewport(viewport->ID);
+}
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
-                            ImGuiWindowFlags_AlwaysUseWindowPadding |
-                            ImGuiWindowFlags_NoScrollbar;
-
-    ImGui::Begin("Project", nullptr, flags);
-
+// Renders the main content of the ProjectPanel
+void ProjectPanel::RenderContent(ModuleScene* scene)
+{
     ImGui::Columns(2, "ProjectColumns", true);
 
     ImGui::BeginChild("TreeView", ImVec2(0, 0), true);
@@ -58,6 +54,24 @@ void ProjectPanel::OnImGuiRender()
     RenderContentView();
 
     ImGui::Columns(1);
+}
+
+void ProjectPanel::OnImGuiRender()
+{
+    RefreshAssets();
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    float panelHeight;
+
+    SetupWindow(viewport, panelHeight);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
+                            ImGuiWindowFlags_AlwaysUseWindowPadding |
+                            ImGuiWindowFlags_NoScrollbar;
+
+    ImGui::Begin("Project", nullptr, flags);
+
+    RenderContent(nullptr); // scene not needed here
 
     ImGui::End();
 
@@ -84,7 +98,6 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path, const 
             std::string label = filename;
             std::string uniqueId = entryPath.string();
 
-            // Display folder icon
             GLuint textureID = GetIconOrThumbnail(entryPath);
             if (textureID != 0)
             {
@@ -100,7 +113,6 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path, const 
                 selectedItems.clear();
             }
 
-            // Drag and drop target for folders
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
@@ -111,12 +123,10 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path, const 
                     try
                     {
                         std::filesystem::rename(draggedPath, newPath);
-                        // Force refresh
                         lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
                     }
                     catch (const std::filesystem::filesystem_error&)
                     {
-                        // TODO: Show error message
                     }
                 }
                 ImGui::EndDragDropTarget();
@@ -140,6 +150,30 @@ void ProjectPanel::RenderContentView()
 
     bool rightClickedOnItem = false;
 
+    // Search bar
+    ImGui::PushItemWidth(-1);
+    if (ImGui::InputTextWithHint("##Search", "Search assets...", searchBuffer, sizeof(searchBuffer)))
+    {
+        assetSearch.SetQuery(searchBuffer);
+        // Clear selection when search changes
+        selectedItems.clear();
+    }
+    ImGui::PopItemWidth();
+
+    // Clear search button
+    if (assetSearch.IsActive())
+    {
+        ImGui::SameLine();
+        if (ImGui::Button("X"))
+        {
+            searchBuffer[0] = '\0';
+            assetSearch.Clear();
+            selectedItems.clear();
+        }
+    }
+
+    ImGui::Separator();
+
     // Back button
     if (selectedFolder.has_parent_path() && selectedFolder.parent_path() != selectedFolder)
     {
@@ -154,15 +188,32 @@ void ProjectPanel::RenderContentView()
     if (std::filesystem::exists(selectedFolder) && std::filesystem::is_directory(selectedFolder))
     {
         float availWidth = ImGui::GetContentRegionAvail().x;
-        float itemWidth = kThumbnailSize + 8.0f; // thumbnail + padding
+        float itemWidth = kThumbnailSize + 8.0f;
         int itemsPerRow = std::max(2, static_cast<int>(availWidth / itemWidth));
 
         ImGui::Columns(itemsPerRow, "AssetGrid", false);
 
-        for (const auto& entry : std::filesystem::directory_iterator(selectedFolder))
+        //recursive iterator when searching & regular iterator when not searching
+        if (assetSearch.IsActive())
         {
-            const auto& entryPath = entry.path();
-            RenderAssetItem(entryPath, rightClickedOnItem);
+            //search through all subfolders
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(selectedFolder))
+            {
+                const auto& entryPath = entry.path();
+                if (assetSearch.Matches(entryPath))
+                {
+                    RenderAssetItem(entryPath, rightClickedOnItem);
+                }
+            }
+        }
+        else
+        {
+            // Regular display for normal browsing
+            for (const auto& entry : std::filesystem::directory_iterator(selectedFolder))
+            {
+                const auto& entryPath = entry.path();
+                RenderAssetItem(entryPath, rightClickedOnItem);
+            }
         }
 
         ImGui::Columns(1);
@@ -203,12 +254,10 @@ GLuint ProjectPanel::GetIconOrThumbnail(const std::filesystem::path& path)
 {
     if (std::filesystem::is_directory(path))
     {
-        // Return folder icon
         auto it = iconTextures.find(ResourceType::Unknown);
         return (it != iconTextures.end()) ? it->second->GetID() : 0;
     }
 
-    // Check for cached thumbnail first
     auto thumbIt = thumbnailTextures.find(path);
     if (thumbIt != thumbnailTextures.end())
         return thumbIt->second->GetID();
@@ -216,13 +265,11 @@ GLuint ProjectPanel::GetIconOrThumbnail(const std::filesystem::path& path)
     ResourceType type = ResourceUtils::GetTypeFromExtension(path);
     if (type == ResourceType::Texture)
     {
-        // Load actual thumbnail for textures
-        thumbnailTextures[path] = std::make_unique<Texture>(path, true); 
+        thumbnailTextures[path] = std::make_unique<Texture>(path, true);
         return thumbnailTextures[path]->GetID();
     }
     else
     {
-        // Return icon for other types
         auto iconIt = iconTextures.find(type);
         return (iconIt != iconTextures.end()) ? iconIt->second->GetID() : 0;
     }
@@ -303,16 +350,9 @@ void ProjectPanel::HandleContextMenu(const std::filesystem::path& path, bool isD
     }
 }
 
-void ProjectPanel::RenderModalDialogs()
+// Renders the delete confirmation modal dialog
+void ProjectPanel::RenderDeleteConfirmationModal()
 {
-    // Open delete popup if flag is set
-    if (showDeleteModal)
-    {
-        ImGui::OpenPopup("DeleteConfirmation");
-        showDeleteModal = false;
-    }
-
-    // Delete confirmation
     if (!pendingDeletePaths.empty())
     {
         if (ImGui::BeginPopup("DeleteConfirmation", ImGuiWindowFlags_AlwaysAutoResize))
@@ -347,7 +387,6 @@ void ProjectPanel::RenderModalDialogs()
                             selectedFolder = "Assets";
                         }
                     }
-                    // Force refresh
                     lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
                 }
                 catch (const std::filesystem::filesystem_error&)
@@ -367,6 +406,17 @@ void ProjectPanel::RenderModalDialogs()
     }
 }
 
+void ProjectPanel::RenderModalDialogs()
+{
+    if (showDeleteModal)
+    {
+        ImGui::OpenPopup("DeleteConfirmation");
+        showDeleteModal = false;
+    }
+
+    RenderDeleteConfirmationModal();
+}
+
 void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool& rightClickedOnItem)
 {
     std::string filename = assetPath.filename().string();
@@ -374,7 +424,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool&
 
     ImVec2 itemPos = ImGui::GetCursorPos();
 
-    // Thumbnail/Icon
     GLuint textureID = GetIconOrThumbnail(assetPath);
     if (textureID != 0)
     {
@@ -399,6 +448,7 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool&
         ImGui::SetCursorPos(textPos);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 5));
         ImGui::PushItemWidth(-1);
+        ImGui::SetKeyboardFocusHere();
         if (ImGui::InputText("##edit", editBuffer, sizeof(editBuffer), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll))
         {
             std::string newName = editBuffer;
@@ -419,13 +469,16 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool&
             }
             isEditing = false;
         }
+        if (ImGui::IsItemDeactivated())
+        {
+            isEditing = false;
+        }
         ImGui::PopItemWidth();
         ImGui::PopStyleVar();
         if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         {
             isEditing = false;
         }
-        // Context menu on the InputText
         HandleContextMenu(assetPath, std::filesystem::is_directory(assetPath), rightClickedOnItem);
     }
     else
@@ -433,11 +486,10 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool&
         ImGui::Text(displayName.c_str());
 
         ImGui::SetCursorPos(itemPos);
-        if (ImGui::Selectable(("##" + filename).c_str(), isSelected, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(kThumbnailSize, kThumbnailSize + 20.0f)))
+        if (ImGui::Selectable(("##" + assetPath.string()).c_str(), isSelected, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(kThumbnailSize, kThumbnailSize + 20.0f)))
         {
             if (ImGui::GetIO().KeyCtrl)
             {
-                // Multi-select with Ctrl key held
                 if (isSelected)
                     selectedItems.erase(assetPath);
                 else
@@ -445,12 +497,10 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool&
             }
             else
             {
-                // Single select
                 selectedItems.clear();
                 selectedItems.insert(assetPath);
             }
 
-            // Handle double-click navigation
             if (ImGui::IsMouseDoubleClicked(0))
             {
                 if (std::filesystem::is_directory(assetPath))
@@ -458,11 +508,9 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath, bool&
                     selectedFolder = assetPath;
                     selectedItems.clear();
                 }
-                // TODO: Handle opening files in editor
             }
         }
 
-        // Drag and drop source
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
         {
             std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();

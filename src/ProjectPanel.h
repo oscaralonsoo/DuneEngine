@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ModuleEditor.h"
+#include "ModuleScene.h"
 #include "Resource.h"
 #include "Texture.h"
+#include "AssetSearch.h"
 #include "imgui.h"
 #include <filesystem>
 #include <set>
@@ -23,6 +25,8 @@ public:
     static constexpr float kMinCenterWidth = 180.0f; // ancho mínimo reservado para zona central
 
     bool Start() override;
+    void SetupWindow(ImGuiViewport *viewport, float &panelHeight);
+    void RenderContent(ModuleScene *scene);
     void OnImGuiRender() override;
     void CleanUp() override;
 
@@ -41,6 +45,7 @@ private:
     std::string GetFileIcon(const std::filesystem::path& path);
     GLuint GetIconOrThumbnail(const std::filesystem::path& path);
     void HandleContextMenu(const std::filesystem::path& path, bool isDirectory, bool& rightClickedOnItem);
+    void RenderDeleteConfirmationModal();
     void RenderModalDialogs();
 
     std::filesystem::path selectedFolder = "Assets";
@@ -64,4 +69,8 @@ private:
     std::map<ResourceType, std::unique_ptr<Texture>> iconTextures;
     static constexpr float kThumbnailSize = 64.0f;
     static constexpr float kItemSpacing = 8.0f;
+
+    // Search functionality
+    AssetSearch assetSearch;
+    char searchBuffer[256] = {0};
 };
