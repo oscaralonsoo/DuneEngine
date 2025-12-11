@@ -140,33 +140,33 @@ void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
     MaterialComponent*  materialComp  = go->GetComponent<MaterialComponent>();
     MeshComponent*      meshComp      = go->GetComponent<MeshComponent>();
     TransformComponent* transformComp = go->GetComponent<TransformComponent>();
-    if (!materialComp || !meshComp || !transformComp)
-        return;
 
-    const std::shared_ptr<Mesh>& mesh = meshComp->GetMesh();
-    if (!mesh)
-        return;
+    if (materialComp && meshComp && transformComp)
+    {
+        const std::shared_ptr<Mesh>& mesh = meshComp->GetMesh();
+        if (mesh)
+        {
+            glm::mat4 world = transformComp->GetWorldTransform();
 
-    glm::mat4 world = transformComp->GetWorldTransform();
+            const AABB& localBox = mesh->GetAABB();
+            AABB worldBox        = TransformAABB(localBox, world);
 
-    const AABB& localBox = mesh->GetAABB();
-    AABB worldBox        = TransformAABB(localBox, world);
+            bool inside = mFrustum.ContainsAABB(worldBox);
+            if (inside)
+            {
+                RenderObject ro;
+                ro.transform = world;
+                ro.mesh      = mesh;
+                ro.material  = materialComp->GetMaterial();
+                ro.selected  = go->IsSelected();
 
-    bool inside = mFrustum.ContainsAABB(worldBox);
+                Renderer::Submit(ro);
+            }
+        }
+    }
 
-    if (!inside)
-        return;
-
-    RenderObject ro;
-    ro.transform = world;
-    ro.mesh      = mesh;
-    ro.material  = materialComp->GetMaterial();
-    ro.selected  = go->IsSelected();
-
-    Renderer::Submit(ro);
-
-    // Render children recursively
-    for (auto child : go->GetChildren()) {
+    for (auto& child : go->GetChildren())
+    {
         renderGameObject(child);
     }
 }

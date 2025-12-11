@@ -12,6 +12,7 @@
 #include "CameraComponent.h"
 #include <glad/glad.h>
 #include "Material.h"
+#include <algorithm>
 
 namespace
 {
@@ -507,5 +508,17 @@ void ModuleScene::RebuildQuadtree()
         {
             mQuadtree->Insert(go, worldBox);
         }
+    }
+}
+
+void ModuleScene::AddGameObject(std::shared_ptr<GameObject> go)
+{
+    if (!go) return;
+
+    // Evitar duplicados
+    auto it = std::find(mGameObjects.begin(), mGameObjects.end(), go);
+    if (it == mGameObjects.end())
+    {
+        mGameObjects.push_back(go);
     }
 }

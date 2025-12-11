@@ -33,7 +33,8 @@ private:
     struct Node
     {
         AABB bounds;
-        std::vector<std::shared_ptr<GameObject>> objects;
+        // Guardamos objeto + su AABB en mundo
+        std::vector<std::pair<std::shared_ptr<GameObject>, AABB>> objects;
         std::unique_ptr<Node> children[4]; // subdivisión en XZ
 
         Node(const AABB& b) : bounds(b) {}
@@ -47,14 +48,20 @@ private:
     void Subdivide(Node* node);
     int GetChildIndex(const Node* node, const AABB& box) const;
 
-    void InsertRecursive(Node* node, const std::shared_ptr<GameObject>& object,
-                         const AABB& box, int depth);
+    void InsertRecursive(Node* node,
+                         const std::shared_ptr<GameObject>& object,
+                         const AABB& box,
+                         int depth);
 
-    void QueryRayRecursive(const Node* node, const Ray& ray,
+    void QueryRayRecursive(const Node* node,
+                           const Ray& ray,
                            std::vector<std::shared_ptr<GameObject>>& outObjects) const;
 
-    void QueryFrustumRecursive(const Node* node, const Frustum& frustum,
+    void QueryFrustumRecursive(const Node* node,
+                               const Frustum& frustum,
                                std::vector<std::shared_ptr<GameObject>>& outObjects) const;
 
-    static bool RayIntersectsAABB(const Ray& ray, const AABB& box, float* tMinOut = nullptr);
+    static bool RayIntersectsAABB(const Ray& ray,
+                                  const AABB& box,
+                                  float* tMinOut = nullptr);
 };

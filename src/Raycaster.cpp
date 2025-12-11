@@ -41,28 +41,39 @@ Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
     return ray;
 }
 
-std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const
+std::shared_ptr<GameObject> Raycaster::PickObject(
+    float mouseX,
+    float mouseY,
+    const std::vector<std::shared_ptr<GameObject>> objects) const
 {
     Ray ray = ScreenPointToRay(mouseX, mouseY);
 
     std::shared_ptr<GameObject> closest = nullptr;
     float closestT = std::numeric_limits<float>::max();
 
-    // --- NUEVO: usar quadtree si está disponible ---
     std::vector<std::shared_ptr<GameObject>> candidates;
 
     ModuleScene* scene = Engine::GetInstance().scene.get();
     if (scene && scene->GetQuadtree())
     {
         scene->GetQuadtree()->QueryRay(ray, candidates);
+
+        // Evitar duplicados
+        std::sort(candidates.begin(), candidates.end(),
+                  [](const auto& a, const auto& b){ return a.get() < b.get(); });
+
+        candidates.erase(std::unique(candidates.begin(), candidates.end()),
+                         candidates.end());
+
+        if (candidates.empty())
+            candidates = objects;
     }
     else
     {
-        // Fallback: usar la lista completa (como antes)
         candidates = objects;
     }
 
-    for (std::shared_ptr<GameObject> obj : candidates)
+    for (auto& obj : candidates)
     {
         MeshComponent *meshComp = obj->GetComponent<MeshComponent>();
         if (!meshComp || !meshComp->GetMesh())
@@ -70,12 +81,11 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
 
         const AABB &localBox = meshComp->GetMesh()->GetAABB();
 
-        // Transform AABB to world space
         AABB worldBox = localBox;
         if (auto tc = obj->GetComponent<TransformComponent>())
         {
             glm::mat4 worldTransform = tc->GetWorldTransform();
-            worldBox = TransformAABB(localBox, worldTransform); // usa el de AABB.h
+            worldBox = TransformAABB(localBox, worldTransform);
         }
 
         float tHit;
@@ -84,7 +94,7 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
             if (tHit < closestT)
             {
                 closestT = tHit;
-                closest = obj;
+                closest  = obj;
             }
         }
     }

@@ -1,6 +1,6 @@
 #include "Quadtree.h"
-#include "Raycaster.h"   
-#include "Frustum.h"     
+#include "Raycaster.h"
+#include "Frustum.h"
 
 Quadtree::Quadtree(const AABB& bounds, int maxDepth, int maxObjectsPerNode)
     : mMaxDepth(maxDepth)
@@ -83,13 +83,15 @@ int Quadtree::GetChildIndex(const Node* node, const AABB& box) const
     return 3; // right && top
 }
 
-void Quadtree::InsertRecursive(Node* node, const std::shared_ptr<GameObject>& object,
-                               const AABB& box, int depth)
+void Quadtree::InsertRecursive(Node* node,
+                               const std::shared_ptr<GameObject>& object,
+                               const AABB& box,
+                               int depth)
 {
     // Si hemos llegado a la profundidad máxima, nos quedamos aquí
     if (depth >= mMaxDepth)
     {
-        node->objects.push_back(object);
+        node->objects.push_back({object, box});
         return;
     }
 
@@ -99,16 +101,24 @@ void Quadtree::InsertRecursive(Node* node, const std::shared_ptr<GameObject>& ob
         Subdivide(node);
 
         // Recolocar los objetos antiguos en hijos si caben
-        std::vector<std::shared_ptr<GameObject>> oldObjects = node->objects;
+        auto oldObjects = node->objects;
         node->objects.clear();
 
-        for (const auto& obj : oldObjects)
+        for (const auto& entry : oldObjects)
         {
-            // Aquí podríamos guardar el AABB de cada obj, pero para simplificar
-            // asumimos que el quadtree es estático y se reconstruye completo
-            // desde fuera, así que no lo necesitamos aquí.
-            // Los objetos antiguos se quedan en el nodo si no tenemos su AABB.
-            node->objects.push_back(obj);
+            const auto& obj  = entry.first;
+            const auto& aabb = entry.second;
+
+            int childIndex = GetChildIndex(node, aabb);
+            if (childIndex != -1)
+            {
+                InsertRecursive(node->children[childIndex].get(), obj, aabb, depth + 1);
+            }
+            else
+            {
+                // No cabe completamente en un hijo, se queda en este nodo
+                node->objects.push_back(entry);
+            }
         }
     }
 
@@ -123,7 +133,7 @@ void Quadtree::InsertRecursive(Node* node, const std::shared_ptr<GameObject>& ob
     }
 
     // Si no cabe en ningún hijo o es hoja sin subdividir, se queda en este nodo
-    node->objects.push_back(object);
+    node->objects.push_back({object, box});
 }
 
 // --- Raycast ---
@@ -144,14 +154,16 @@ bool Quadtree::RayIntersectsAABB(const Ray& ray, const AABB& box, float* tMinOut
     return hit;
 }
 
-void Quadtree::QueryRay(const Ray& ray, std::vector<std::shared_ptr<GameObject>>& outObjects) const
+void Quadtree::QueryRay(const Ray& ray,
+                        std::vector<std::shared_ptr<GameObject>>& outObjects) const
 {
     if (!mRoot) return;
     outObjects.clear();
     QueryRayRecursive(mRoot.get(), ray, outObjects);
 }
 
-void Quadtree::QueryRayRecursive(const Node* node, const Ray& ray,
+void Quadtree::QueryRayRecursive(const Node* node,
+                                 const Ray& ray,
                                  std::vector<std::shared_ptr<GameObject>>& outObjects) const
 {
     float t;
@@ -159,9 +171,9 @@ void Quadtree::QueryRayRecursive(const Node* node, const Ray& ray,
         return;
 
     // Añadir los objetos de este nodo
-    for (const auto& obj : node->objects)
+    for (const auto& entry : node->objects)
     {
-        outObjects.push_back(obj);
+        outObjects.push_back(entry.first);
     }
 
     // Recursión en hijos
@@ -185,15 +197,16 @@ void Quadtree::QueryFrustum(const Frustum& frustum,
     QueryFrustumRecursive(mRoot.get(), frustum, outObjects);
 }
 
-void Quadtree::QueryFrustumRecursive(const Node* node, const Frustum& frustum,
+void Quadtree::QueryFrustumRecursive(const Node* node,
+                                     const Frustum& frustum,
                                      std::vector<std::shared_ptr<GameObject>>& outObjects) const
 {
     if (!frustum.ContainsAABB(node->bounds))
         return;
 
-    for (const auto& obj : node->objects)
+    for (const auto& entry : node->objects)
     {
-        outObjects.push_back(obj);
+        outObjects.push_back(entry.first);
     }
 
     if (!node->IsLeaf())

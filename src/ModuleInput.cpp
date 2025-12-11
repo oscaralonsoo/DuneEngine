@@ -155,9 +155,11 @@ bool ModuleInput::PreUpdate()
                 // Create parent
                 std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObjectWithName(baseName);
 
+                auto* scene = Engine::GetInstance().scene.get();
+
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
                 {
-                    std::shared_ptr<GameObject> childGameObject = Engine::GetInstance().scene.get()->CreateGameObject();
+                    std::shared_ptr<GameObject> childGameObject = scene->CreateGameObject();
                     if (model->GetMeshes().size() > 1)
                     {
                         childGameObject->SetName(baseName + "_" + std::to_string(i));
@@ -180,6 +182,9 @@ bool ModuleInput::PreUpdate()
 
                     // Set parent-child relation
                     childGameObject->SetParent(parentGameObject);
+
+                    // ⬅️ NUEVO: meter el hijo en la escena
+                    scene->AddGameObject(childGameObject);
                 }
 
                 Engine::GetInstance().scene->RebuildQuadtree();
