@@ -10,7 +10,9 @@
 #include <imgui.h>
 #include <algorithm>
 #include <filesystem>
+#include <string>
 
+// Checks if a GameObject is a descendant of another GameObject
 bool HierarchyPanel::IsDescendant(std::shared_ptr<GameObject> potentialDescendant, std::shared_ptr<GameObject> ancestor)
 {
     if (!potentialDescendant || !ancestor) return false;
@@ -100,6 +102,7 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
     }
 
     bool nodeOpen = ImGui::TreeNodeEx(gameObject->GetName().c_str(), flags);
+    
 
     // Handle drag/drop and other interactions that don't depend on editing
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
@@ -118,6 +121,41 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
             {
                 editingObject = nullptr;
                 pendingParentChanges.push_back({dragged, gameObject});
+            }
+        }
+        else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+        {
+            std::string relativePath = (const char*)payload->Data;
+            std::filesystem::path assetPath = "Assets/" + relativePath;
+            ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
+            if (type == ResourceType::Model)
+            {
+                auto newGameObject = scene->CreateGameObjectFromModel(assetPath);
+                newGameObject->SetParent(gameObject);
+                scene->SetSelected(newGameObject);
+            }
+            // Add other types if needed
+        }
+        else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILES"))
+        {
+            const char* files = (const char*)payload->Data;
+            size_t len = strlen(files);
+            size_t start = 0;
+            while (start < len)
+            {
+                std::string filePath = &files[start];
+                if (!filePath.empty())
+                {
+                    std::filesystem::path path(filePath);
+                    ResourceType type = ResourceUtils::GetTypeFromExtension(path);
+                    if (type == ResourceType::Model)
+                    {
+                        auto newGameObject = scene->CreateGameObjectFromModel(path);
+                        newGameObject->SetParent(gameObject);
+                        scene->SetSelected(newGameObject);
+                    }
+                }
+                start += filePath.size() + 1;
             }
         }
         ImGui::EndDragDropTarget();
@@ -142,11 +180,11 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
 
 void HierarchyPanel::RenderTreeNode(std::shared_ptr<GameObject> gameObject, std::shared_ptr<GameObject> selected, ModuleScene* scene)
 {
-    // Handle in-place renaming when this object is being edited
     if (editingObject == gameObject)
     {
         strcpy(editBuffer, gameObject->GetName().c_str());
         ImGui::SetNextItemWidth(-1);
+        ImGui::SetKeyboardFocusHere();
         if (ImGui::InputText("##edit", editBuffer, sizeof(editBuffer), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll))
         {
             gameObject->SetName(editBuffer);
@@ -159,7 +197,6 @@ void HierarchyPanel::RenderTreeNode(std::shared_ptr<GameObject> gameObject, std:
         return;
     }
 
-    // Set up drag source for reparenting GameObjects
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
     {
         ImGui::SetDragDropPayload("GAMEOBJECT_PAYLOAD", &gameObject, sizeof(std::shared_ptr<GameObject>));
@@ -167,13 +204,11 @@ void HierarchyPanel::RenderTreeNode(std::shared_ptr<GameObject> gameObject, std:
         ImGui::EndDragDropSource();
     }
 
-    // Set up drop target for reparenting - prevent circular hierarchies
     if (ImGui::BeginDragDropTarget())
     {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECT_PAYLOAD"))
         {
             std::shared_ptr<GameObject> dragged = *(std::shared_ptr<GameObject>*)payload->Data;
-            // Only allow drop if not dropping on self and not creating circular dependency
             if (dragged != gameObject && !IsDescendant(gameObject, dragged))
             {
                 editingObject = nullptr;
@@ -196,7 +231,6 @@ void HierarchyPanel::HandleNodeInteraction(std::shared_ptr<GameObject> gameObjec
         editingObject = gameObject;
     }
 
-    // Right-click context menu
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1))
     {
         ImGui::OpenPopup("GameObjectContextMenu");
@@ -252,14 +286,12 @@ void HierarchyPanel::RenderHierarchyTree(ModuleScene* scene, std::shared_ptr<Gam
 
     for (std::shared_ptr<GameObject> gameObject : scene->GetGameObjects())
     {
-        // Only render root objects
         if (!gameObject->GetParent())
         {
             RenderGameObjectTree(gameObject, selected, scene);
         }
     }
 
-    // Invisible button to cover the remaining area for drop target
     ImGui::SetCursorPos(ImVec2(0, ImGui::GetCursorPosY()));
     ImGui::InvisibleButton("HierarchyDropTarget", ImVec2(contentSize.x, ImGui::GetContentRegionAvail().y));
 }
@@ -300,7 +332,8 @@ void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
             ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
             if (type == ResourceType::Model)
             {
-                scene->CreateGameObjectFromModel(assetPath);
+                auto gameObject = scene->CreateGameObjectFromModel(assetPath);
+                scene->SetSelected(gameObject);
             }
             // Add other types if needed
         }
@@ -308,29 +341,7 @@ void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
     }
 }
 
-void HierarchyPanel::HandleDragDrop(ModuleScene* scene)
-{
-    if (ImGui::BeginDragDropTarget())
-    {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECT_PAYLOAD"))
-        {
-            std::shared_ptr<GameObject> dragged = *(std::shared_ptr<GameObject>*)payload->Data;
-            pendingParentChanges.push_back({dragged, nullptr});
-        }
-        else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
-        {
-            std::string relativePath = (const char*)payload->Data;
-            std::filesystem::path assetPath = "Assets/" + relativePath;
-            ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
-            if (type == ResourceType::Model)
-            {
-                scene->CreateGameObjectFromModel(assetPath);
-            }
-            // Add other types if needed
-        }
-        ImGui::EndDragDropTarget();
-    }
-}
+
 
 void HierarchyPanel::ProcessPendingParentChanges()
 {

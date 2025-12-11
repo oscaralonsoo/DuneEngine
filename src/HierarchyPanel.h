@@ -41,7 +41,8 @@ private:
     void HandleNodeInteraction(std::shared_ptr<GameObject> gameObject, ModuleScene* scene);
     void RenderGameObjectContextMenu(std::shared_ptr<GameObject> gameObject, ModuleScene* scene);
     void HandleHierarchyContextMenu(ModuleScene* scene);
-    void HandleDragDrop(ModuleScene* scene);
+
+    void HandleDragDrop(ModuleScene *scene);
 
     // Utilities
     void ProcessPendingParentChanges();
