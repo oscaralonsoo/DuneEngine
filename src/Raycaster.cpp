@@ -4,6 +4,8 @@
 #include "ModuleWindow.h"
 #include "ModuleRenderer.h"
 #include "TransformComponent.h"
+#include "ModuleScene.h"   
+#include "Quadtree.h"
 
 Raycaster::Raycaster()
 {
@@ -46,10 +48,24 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
     std::shared_ptr<GameObject> closest = nullptr;
     float closestT = std::numeric_limits<float>::max();
 
-    for (std::shared_ptr<GameObject> obj : objects)
+    // --- NUEVO: usar quadtree si está disponible ---
+    std::vector<std::shared_ptr<GameObject>> candidates;
+
+    ModuleScene* scene = Engine::GetInstance().scene.get();
+    if (scene && scene->GetQuadtree())
+    {
+        scene->GetQuadtree()->QueryRay(ray, candidates);
+    }
+    else
+    {
+        // Fallback: usar la lista completa (como antes)
+        candidates = objects;
+    }
+
+    for (std::shared_ptr<GameObject> obj : candidates)
     {
         MeshComponent *meshComp = obj->GetComponent<MeshComponent>();
-        if (!meshComp)
+        if (!meshComp || !meshComp->GetMesh())
             continue;
 
         const AABB &localBox = meshComp->GetMesh()->GetAABB();
@@ -59,7 +75,7 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
         if (auto tc = obj->GetComponent<TransformComponent>())
         {
             glm::mat4 worldTransform = tc->GetWorldTransform();
-            worldBox = TransformAABB(localBox, worldTransform);
+            worldBox = TransformAABB(localBox, worldTransform); // usa el de AABB.h
         }
 
         float tHit;

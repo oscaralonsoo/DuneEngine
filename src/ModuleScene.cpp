@@ -74,6 +74,28 @@ namespace
 
         return dst;
     }
+
+    bool ComputeWorldAABB(const std::shared_ptr<GameObject>& go, AABB& outBox)
+    {
+        MeshComponent* meshComp = go->GetComponent<MeshComponent>();
+        if (!meshComp)
+            return false;
+
+        std::shared_ptr<Mesh> mesh = meshComp->GetMesh();
+        if (!mesh)
+            return false;
+
+        const AABB& localBox = mesh->GetAABB();
+
+        glm::mat4 world = glm::mat4(1.0f);
+        if (auto* tc = go->GetComponent<TransformComponent>())
+        {
+            world = tc->GetWorldTransform();
+        }
+
+        outBox = TransformAABB(localBox, world);
+        return true;
+    }
 }
 
 
@@ -104,6 +126,10 @@ bool ModuleScene::Start()
     cameraGO->CreateComponent(ComponentType::Camera);
 
     mGameObjects.push_back(cameraGO);
+
+    AABB initialBounds(glm::vec3(-1000.0f), glm::vec3(1000.0f));
+    mQuadtree = std::make_unique<Quadtree>(initialBounds, 6, 4);
+    RebuildQuadtree();
 
     return true;
 }
@@ -190,5 +216,50 @@ void ModuleScene::RestoreSnapshot()
     for (const auto& savedGo : mInitialSnapshot)
     {
         mGameObjects.push_back(CloneGameObject(savedGo));
+    }
+
+    RebuildQuadtree();
+}
+
+void ModuleScene::RebuildQuadtree()
+{
+    if (!mQuadtree)
+        return;
+
+    // Calcular AABB global de la escena (solo objetos con Mesh)
+    AABB sceneBounds;
+    bool hasAny = false;
+
+    for (const auto& go : mGameObjects)
+    {
+        AABB worldBox;
+        if (ComputeWorldAABB(go, worldBox))
+        {
+            if (!hasAny)
+            {
+                sceneBounds = worldBox;
+                hasAny = true;
+            }
+            else
+            {
+                sceneBounds.Encapsulate(worldBox);
+            }
+        }
+    }
+
+    if (!hasAny)
+        return; // no hay nada que meter en el quadtree
+
+    // Resetear el árbol con estos límites
+    mQuadtree->SetBounds(sceneBounds);
+
+    // Insertar todos los estáticos (aquí, todos los que tengan Mesh)
+    for (const auto& go : mGameObjects)
+    {
+        AABB worldBox;
+        if (ComputeWorldAABB(go, worldBox))
+        {
+            mQuadtree->Insert(go, worldBox);
+        }
     }
 }

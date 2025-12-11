@@ -80,10 +80,10 @@ private:
     bool windowEvents[WE_COUNT];
     KeyState *keyboard;
     KeyState mouseButtons[NUM_MOUSE_BUTTONS];
-    int mouseMotionX;
-    int mouseMotionY;
-    int mouseX;
-    int mouseY;
+    float mouseMotionX;
+    float mouseMotionY;
+    float mouseX;
+    float mouseY;
     std::string draggedFile;
     bool fileDropped;
     SDL_Point dropPosition;
