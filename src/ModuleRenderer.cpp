@@ -161,6 +161,8 @@ void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
                 ro.selected  = go->IsSelected();
 
                 Renderer::Submit(ro);
+
+                mVisibleBoxes.push_back(worldBox);
             }
         }
     }
@@ -231,9 +233,12 @@ bool ModuleRenderer::Update()
         renderCamera->SetViewportSize((float)w, (float)h);
 
     // 4) Frustum y clear
-    glm::mat4 view       = renderCamera->GetViewMatrix();
-    glm::mat4 projection = renderCamera->GetProjectionMatrix();
+    view       = renderCamera->GetViewMatrix();
+    projection = renderCamera->GetProjectionMatrix();
     mFrustum.Update(view, projection);
+
+    // Limpiar las cajas visibles de este frame
+    mVisibleBoxes.clear();
 
     RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -256,6 +261,11 @@ bool ModuleRenderer::Update()
 
     if (!isPlaying)
     {
+        for (const auto& box : mVisibleBoxes)
+        {
+            DebugDrawAABB(box, view, projection, glm::vec3(0.0f, 1.0f, 0.0f)); // verde
+        }
+        
         auto* scene     = Engine::GetInstance().scene.get();
         Raycaster* rc   = scene->GetRaycaster();
         if (rc && rc->HasLastRay())

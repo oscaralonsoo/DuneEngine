@@ -46,4 +46,5 @@ private:
 	std::shared_ptr<Texture> texture;
 	glm::mat4 model, view, projection;
 	Frustum mFrustum;
+	std::vector<AABB> mVisibleBoxes;
 };
