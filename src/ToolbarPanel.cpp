@@ -32,7 +32,6 @@ void ToolbarPanel::OnImGuiRender()
         {
             if (ImGui::Button("Play"))
             {
-                // Guardar snapshot antes del primer Play
                 scene->SaveInitialSnapshot();
                 GameTime::Play();
             }

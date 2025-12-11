@@ -11,6 +11,7 @@
 #include "GameTime.h" 
 #include "CameraComponent.h"
 #include <glad/glad.h>
+#include "Material.h"
 
 namespace
 {
@@ -53,15 +54,37 @@ namespace
         }
 
         // --- Material ---
+        // --- Material ---
         if (auto* srcMat = src->GetComponent<MaterialComponent>())
         {
             auto& dstMatComp = dst->CreateComponent(ComponentType::Material);
             auto* dstMat = dynamic_cast<MaterialComponent*>(&dstMatComp);
             if (dstMat)
             {
-                dstMat->SetMaterial(srcMat->GetMaterial());
+                std::shared_ptr<Material> srcMaterial = srcMat->GetMaterial();
+                if (srcMaterial)
+                {
+                    // Crear un material nuevo
+                    auto clonedMaterial = std::make_shared<Material>(ResourceType::Material);
+
+                    // Copiar shader
+                    clonedMaterial->SetShader(srcMaterial->GetShader());
+
+                    // Copiar propiedades PBR
+                    clonedMaterial->GetProperties()      = srcMaterial->GetProperties();
+
+                    // Copiar texturas
+                    clonedMaterial->GetTextures()        = srcMaterial->GetTextures();
+
+                    // Copiar render settings (culling, blend, etc.)
+                    clonedMaterial->GetRenderSettings()  = srcMaterial->GetRenderSettings();
+
+                    // Asignar el material clonado al componente destino
+                    dstMat->SetMaterial(clonedMaterial);
+                }
             }
         }
+
         if (auto* srcCam = src->GetComponent<CameraComponent>())
         {
             auto& dstCamComp = dst->CreateComponent(ComponentType::Camera);
@@ -411,11 +434,9 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
     }
     return duplicated;
 }
+
 void ModuleScene::SaveInitialSnapshot()
 {
-    if (mHasSnapshot)
-        return; // solo guardamos una vez antes del primer Play
-
     mInitialSnapshot.clear();
     mInitialSnapshot.reserve(mGameObjects.size());
 
