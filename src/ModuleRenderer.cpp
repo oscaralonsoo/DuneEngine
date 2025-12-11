@@ -10,6 +10,7 @@
 #include "AABB.h"
 #include "CameraComponent.h"
 #include "GameTime.h"
+#include "Globals.h"
 
 namespace
 {
@@ -217,20 +218,8 @@ bool ModuleRenderer::Update()
         const AABB& localBox = mesh->GetAABB();
         AABB worldBox        = TransformAABB(localBox, world);
 
-        // === FRUSTUM TEST UNA SOLA VEZ ===
         bool inside = mFrustum.ContainsAABB(worldBox);
 
-        // === DEBUG: dibujar la caja siempre en el editor ===
-        // Solo en modo editor (cuando no está jugando)
-        if (!GameTime::IsPlaying())
-        {
-            glm::vec3 color = inside ? glm::vec3(0.0f, 1.0f, 0.0f)   // verde dentro
-                                    : glm::vec3(1.0f, 0.0f, 0.0f);  // rojo fuera
-
-            DebugDrawAABB(worldBox, view, projection, color);
-        }
-
-        // No renderizar el mesh si está fuera del frustum
         if (!inside)
             continue;
 
