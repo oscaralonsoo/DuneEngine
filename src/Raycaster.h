@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Camera.h"   // contiene ICamera
+#include "Camera.h"   
 #include "MeshComponent.h"
 #include "Mesh.h"
 #include "GameObject.h"

@@ -34,7 +34,6 @@ Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
     return Ray{ camera->GetPosition(), rayDir };
 }
 
-
 std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const
 {
     Ray ray = ScreenPointToRay(mouseX, mouseY);
