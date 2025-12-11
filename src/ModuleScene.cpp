@@ -185,10 +185,10 @@ void ModuleScene::SetSelected(std::shared_ptr<GameObject> gameObject)
 {
     ResetSelecteds();
 
-    selected = go;
+    selected = gameObject;
 
-    if (go)
-        go->SetSelected(true);
+    if (gameObject)
+        gameObject->SetSelected(true);
 }
 
 
@@ -409,6 +409,7 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
         mGameObjects.push_back(duplicated);
     }
     return duplicated;
+}
 void ModuleScene::SaveInitialSnapshot()
 {
     if (mHasSnapshot)

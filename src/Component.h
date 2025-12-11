@@ -15,7 +15,6 @@ public:
     virtual void Disable();
 
     ComponentType GetType() const { return mType; }
-    GameObject* GetOwner() const { return mOwner; }
 
     virtual void OnInspectorRender(float panelWidth) {}
 

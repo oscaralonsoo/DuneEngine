@@ -94,6 +94,7 @@ std::vector<std::shared_ptr<GameObject>> GameObject::GetAllDescendants() const
     }
 
     return descendants;
+}
 bool GameObject::Update()
 {
     if (!mActive)

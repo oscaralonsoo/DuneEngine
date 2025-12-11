@@ -129,11 +129,47 @@ namespace
 
         glDrawArrays(GL_LINES, 0, 2);
 
-        glDisableVertexAttribArray(0);
-        glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
     }
 }
 
+
+void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
+{
+    MaterialComponent*  materialComp  = go->GetComponent<MaterialComponent>();
+    MeshComponent*      meshComp      = go->GetComponent<MeshComponent>();
+    TransformComponent* transformComp = go->GetComponent<TransformComponent>();
+    if (!materialComp || !meshComp || !transformComp)
+        return;
+
+    const std::shared_ptr<Mesh>& mesh = meshComp->GetMesh();
+    if (!mesh)
+        return;
+
+    glm::mat4 world = transformComp->GetWorldTransform();
+
+    const AABB& localBox = mesh->GetAABB();
+    AABB worldBox        = TransformAABB(localBox, world);
+
+    bool inside = mFrustum.ContainsAABB(worldBox);
+
+    if (!inside)
+        return;
+
+    RenderObject ro;
+    ro.transform = world;
+    ro.mesh      = mesh;
+    ro.material  = materialComp->GetMaterial();
+    ro.selected  = go->IsSelected();
+
+    Renderer::Submit(ro);
+
+    // Render children recursively
+    for (auto child : go->GetChildren()) {
+        renderGameObject(child);
+    }
+}
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -207,40 +243,6 @@ bool ModuleRenderer::Update()
     glClear(GL_STENCIL_BUFFER_BIT);
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    
-    for (auto go : Engine::GetInstance().scene->GetGameObjects())
-    {
-        MaterialComponent*  materialComp  = go->GetComponent<MaterialComponent>();
-        MeshComponent*      meshComp      = go->GetComponent<MeshComponent>();
-        TransformComponent* transformComp = go->GetComponent<TransformComponent>();
-        if (!materialComp || !meshComp || !transformComp) 
-            continue;
-
-        const std::shared_ptr<Mesh>& mesh = meshComp->GetMesh();
-        if (!mesh)
-            continue;
-
-        glm::mat4 world = transformComp->GetWorldTransform();
-
-        const AABB& localBox = mesh->GetAABB();
-        AABB worldBox        = TransformAABB(localBox, world);
-
-        bool inside = mFrustum.ContainsAABB(worldBox);
-
-        if (!inside)
-            continue;
-
-        RenderObject ro;
-        ro.transform = world;
-        ro.mesh      = mesh;
-        ro.material  = materialComp->GetMaterial();
-        ro.selected  = go->IsSelected();
-
-        // Render children recursively
-        for (auto child : go->GetChildren()) {
-            renderGameObject(child);
-        }
-    };
 
     for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
