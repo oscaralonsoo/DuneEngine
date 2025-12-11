@@ -23,6 +23,7 @@ public:
     static void SkyboxPass(/*const std::shared_ptr<RenderTarget>& target*/);
     static void Submit(const RenderObject &renderObject);
     static void ResetRenderState();
+    static std::shared_ptr<Shader> GetSingleColorShader() { return sSingleColorShader; }
 
 private:
     static std::vector<RenderObject> sOpaqueRenderQueue;

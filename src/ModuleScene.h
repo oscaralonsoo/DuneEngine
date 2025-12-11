@@ -3,6 +3,7 @@
 #include "Module.h"
 #include "GameObject.h"
 #include "Raycaster.h"
+#include "Quadtree.h"
 
 class GameObject;
 class Component;
@@ -22,6 +23,7 @@ public:
     const std::vector<std::shared_ptr<GameObject>> GetGameObjects();
 
     Raycaster* GetRaycaster() const { return raycaster; }
+    Quadtree* GetQuadtree() const { return mQuadtree.get(); }
     void SetSelected(std::shared_ptr<GameObject> go);
     void ResetSelecteds();
     std::shared_ptr<GameObject> GetSelected() const { return selected; }
@@ -36,6 +38,12 @@ public:
     std::shared_ptr<GameObject> CreateGameObjectFromModel(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> CreateGameObjectFromPrefab(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent = nullptr);
+
+    void SaveInitialSnapshot();
+
+    void RestoreSnapshot();
+
+    void RebuildQuadtree();
 private:
     std::shared_ptr<GameObject> root;
     std::shared_ptr<GameObject> test;
@@ -43,4 +51,8 @@ private:
     Raycaster *raycaster;
     std::shared_ptr<GameObject> selected;
     std::vector<std::shared_ptr<GameObject>> pendingDelete;
+
+    std::vector<std::shared_ptr<GameObject>> mInitialSnapshot;
+    bool mHasSnapshot = false;
+    std::unique_ptr<Quadtree> mQuadtree;
 };

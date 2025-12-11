@@ -3,6 +3,7 @@
 #include "PrimitiveMesh.h"
 #include "TransformComponent.h"
 #include "MaterialComponent.h"
+#include "CameraComponent.h"
 
 GameObject::GameObject()
 {
@@ -25,6 +26,9 @@ Component &GameObject::CreateComponent(ComponentType type)
     case ComponentType::Material:
         component = std::make_unique<MaterialComponent>(this);
         break;
+    case ComponentType::Camera:
+        component = std::make_unique<CameraComponent>(this);
+        break;
     default:
         component = std::make_unique<Component>(type, this);
         break;
@@ -32,7 +36,7 @@ Component &GameObject::CreateComponent(ComponentType type)
 
     mComponents.push_back(std::move(component));
 
-    return *component;
+    return *mComponents.back();
 }
 
 void GameObject::SetName(const std::string &name)
@@ -90,4 +94,19 @@ std::vector<std::shared_ptr<GameObject>> GameObject::GetAllDescendants() const
     }
 
     return descendants;
+bool GameObject::Update()
+{
+    if (!mActive)
+        return true;
+
+    for (auto& comp : mComponents)
+    {
+        if (comp->IsActive())
+        {
+            if (!comp->Update())
+                return false;
+        }
+    }
+
+    return true;
 }

@@ -2,9 +2,21 @@
 #include "VertexArray.h"
 #include "Buffer.h"
 
+static AABB ComputeLocalAABB(const std::vector<Vertex>& vertices)
+{
+    AABB box;
+    for (const auto& v : vertices)
+    {
+        box.Encapsulate(v.Position);
+    }
+    return box;
+}
+
 Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices)
     : Resource(ResourceType::Mesh), mVertices(vertices), mIndices(indices)
 {
+    mAABB = ComputeLocalAABB(mVertices);
+
     mVertexBuffer = std::make_shared<VertexBuffer>((float *)mVertices.data(), mVertices.size() * sizeof(Vertex));
     mIndexBuffer = std::make_shared<IndexBuffer>(mIndices.data(), mIndices.size());
 

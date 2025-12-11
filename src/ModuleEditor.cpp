@@ -11,6 +11,8 @@
 #include <imgui.h>
 #include <algorithm>
 #include <filesystem>
+#include "GameTime.h" 
+#include "ToolbarPanel.h"
 
 ModuleEditor::ModuleEditor()
 {
@@ -22,6 +24,7 @@ bool ModuleEditor::Start()
     AddPanel<HierarchyPanel>();
     AddPanel<InspectorPanel>();
     AddPanel<ProjectPanel>();
+    AddPanel<ToolbarPanel>();
 
     for (auto& panel : panels)
         panel->Start();

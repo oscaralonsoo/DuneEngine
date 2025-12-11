@@ -46,6 +46,7 @@ public:
     virtual void OnChildRemoved(std::shared_ptr<GameObject> removedChild) {}
 
     std::vector<std::shared_ptr<GameObject>> GetAllDescendants() const;
+    bool Update();
 
 private:
     bool mActive = true;

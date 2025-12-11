@@ -37,13 +37,8 @@ bool ModuleInput::Awake()
 {
     LOG_INFO("Init SDL input event system");
     bool ret = true;
-    SDL_Init(0);
 
-    if (SDL_InitSubSystem(SDL_INIT_EVENTS) < 0)
-    {
-        LOG_ERROR("SDL_EVENTS could not initialize! SDL_Error: %s\n", SDL_GetError());
-        ret = false;
-    }
+
     return ret;
 }
 
@@ -107,7 +102,12 @@ bool ModuleInput::PreUpdate()
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
-                std::shared_ptr<GameObject> selected = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+                std::shared_ptr<GameObject> selected =
+                scene->GetRaycaster()->PickObject(
+                    static_cast<float>(mouseX),
+                    static_cast<float>(mouseY),
+                    scene->GetGameObjects());
+
                 if (selected)
                 {
                     scene->SetSelected(selected);
@@ -124,10 +124,10 @@ bool ModuleInput::PreUpdate()
         case SDL_EVENT_MOUSE_MOTION:
         {
             int scale = Engine::GetInstance().window.get()->GetScale();
-            mouseMotionX = event.motion.xrel / scale;
-            mouseMotionY = event.motion.yrel / scale;
-            mouseX = event.motion.x / scale;
-            mouseY = event.motion.y / scale;
+            mouseMotionX = event.motion.xrel / static_cast<float>(scale);
+            mouseMotionY = event.motion.yrel / static_cast<float>(scale);
+            mouseX       = event.motion.x    / static_cast<float>(scale);
+            mouseY       = event.motion.y    / static_cast<float>(scale);
         }
         break;
 
@@ -181,11 +181,18 @@ bool ModuleInput::PreUpdate()
                     // Set parent-child relation
                     childGameObject->SetParent(parentGameObject);
                 }
+
+                Engine::GetInstance().scene->RebuildQuadtree();
             }
             else if (type == ResourceType::Texture)
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
-                std::shared_ptr<GameObject> selected = scene->GetRaycaster()->PickObject(event.drop.x, event.drop.y, scene->GetGameObjects());
+                std::shared_ptr<GameObject> selected =
+                scene->GetRaycaster()->PickObject(
+                    static_cast<float>(event.drop.x),
+                    static_cast<float>(event.drop.y),
+                    scene->GetGameObjects());
+
                 scene->SetSelected(selected);
 
                 if (!selected)
@@ -212,7 +219,6 @@ bool ModuleInput::PreUpdate()
 bool ModuleInput::CleanUp()
 {
     LOG_INFO("Quitting SDL event subsystem");
-    SDL_QuitSubSystem(SDL_INIT_EVENTS);
     return true;
 }
 
@@ -223,12 +229,18 @@ bool ModuleInput::GetWindowEvent(EventWindow ev) const
 
 SDL_Point ModuleInput::GetMousePosition() const
 {
-    return {mouseX, mouseY};
+    SDL_Point p;
+    p.x = static_cast<int>(mouseX);
+    p.y = static_cast<int>(mouseY);
+    return p;
 }
 
 SDL_Point ModuleInput::GetMouseMotion() const
 {
-    return {mouseMotionX, mouseMotionY};
+    SDL_Point p;
+    p.x = static_cast<int>(mouseMotionX);
+    p.y = static_cast<int>(mouseMotionY);
+    return p;
 }
 
 void ModuleInput::HandleKeyboardShortcuts()
@@ -268,7 +280,8 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
 {
     draggedFile = event.drop.data ? event.drop.data : "";
     fileDropped = true;
-    dropPosition = {mouseX, mouseY};
+    dropPosition.x = static_cast<int>(mouseX);
+    dropPosition.y = static_cast<int>(mouseY);
 
     if (ResourceUtils::GetTypeFromExtension(draggedFile) == ResourceType::Model)
     {
@@ -290,6 +303,8 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
             materialComponent->SetMaterial(std::make_shared<Material>(ResourceType::Material));
         }
     }
+
+    Engine::GetInstance().scene->RebuildQuadtree();
 }
 
 

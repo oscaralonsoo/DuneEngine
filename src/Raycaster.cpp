@@ -4,6 +4,8 @@
 #include "ModuleWindow.h"
 #include "ModuleRenderer.h"
 #include "TransformComponent.h"
+#include "ModuleScene.h"   
+#include "Quadtree.h"
 
 Raycaster::Raycaster()
 {
@@ -11,25 +13,32 @@ Raycaster::Raycaster()
 
 Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
 {
-    EditorCamera* camera = Engine::GetInstance().renderer.get()->renderCamera;
+    ICamera* camera = Engine::GetInstance().renderer->renderCamera;
     
     int width, height;
-    SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &width, &height);
-
-    float aspect = (height > 0) ? (float)width / (float)height : 4.0f / 3.0f;
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    SDL_GetWindowSizeInPixels(
+        Engine::GetInstance().window->GetWindow(),
+        &width, &height);
 
     float x = (2.0f * mouseX) / width - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / height;
 
     glm::vec4 ray_clip(x, y, -1.0f, 1.0f);
 
+    glm::mat4 projection = camera->GetProjectionMatrix();
+    glm::mat4 view       = camera->GetViewMatrix();
+
     glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
     ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
-    glm::mat4 view = camera->GetViewMatrix();
+
     glm::vec3 rayDir = glm::normalize(glm::vec3(glm::inverse(view) * ray_eye));
 
-    return Ray{camera->GetPosition(), rayDir};
+    Ray ray{ camera->GetPosition(), rayDir };
+
+    mLastRay   = ray;
+    mHasLastRay = true;
+
+    return ray;
 }
 
 std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const
@@ -39,10 +48,24 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
     std::shared_ptr<GameObject> closest = nullptr;
     float closestT = std::numeric_limits<float>::max();
 
-    for (std::shared_ptr<GameObject> obj : objects)
+    // --- NUEVO: usar quadtree si está disponible ---
+    std::vector<std::shared_ptr<GameObject>> candidates;
+
+    ModuleScene* scene = Engine::GetInstance().scene.get();
+    if (scene && scene->GetQuadtree())
+    {
+        scene->GetQuadtree()->QueryRay(ray, candidates);
+    }
+    else
+    {
+        // Fallback: usar la lista completa (como antes)
+        candidates = objects;
+    }
+
+    for (std::shared_ptr<GameObject> obj : candidates)
     {
         MeshComponent *meshComp = obj->GetComponent<MeshComponent>();
-        if (!meshComp)
+        if (!meshComp || !meshComp->GetMesh())
             continue;
 
         const AABB &localBox = meshComp->GetMesh()->GetAABB();
@@ -52,7 +75,7 @@ std::shared_ptr<GameObject> Raycaster::PickObject(float mouseX, float mouseY, co
         if (auto tc = obj->GetComponent<TransformComponent>())
         {
             glm::mat4 worldTransform = tc->GetWorldTransform();
-            worldBox = TransformAABB(localBox, worldTransform);
+            worldBox = TransformAABB(localBox, worldTransform); // usa el de AABB.h
         }
 
         float tHit;
