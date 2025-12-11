@@ -25,7 +25,7 @@ bool ModuleEditor::Start()
     AddPanel<HierarchyPanel>();
     AddPanel<InspectorPanel>();
     AddPanel<ProjectPanel>();
-    AddPanel<ToolbarPanel>();
+    AddPanel<ScenePanel>();
 
     for (auto& panel : panels)
         panel->Start();

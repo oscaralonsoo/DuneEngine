@@ -19,8 +19,7 @@ public:
     virtual void OnInspectorRender(float panelWidth) {}
 
     bool IsActive() const { return mActive; }
-    
-protected:
+
     GameObject* GetOwner() const { return mOwner; }
 
 private:
