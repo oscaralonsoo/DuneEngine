@@ -35,8 +35,8 @@ void HierarchyPanel::SetupWindow(ImGuiViewport* viewport, float& panelWidth)
     float maxAllowed = workSize.x - otherPanelEstimate - HierarchyPanel::kMinCenterWidth;
     panelWidth = std::clamp(desiredWidth, HierarchyPanel::kMinPanelWidth, maxAllowed);
 
-    ImGui::SetNextWindowPos(workPos, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(workPos, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowViewport(viewport->ID);
 }
 
@@ -59,12 +59,11 @@ void HierarchyPanel::OnImGuiRender()
     float maxAllowed = workSize.x - otherPanelEstimate - HierarchyPanel::kMinCenterWidth;
     float panelWidth = std::clamp(desiredWidth, HierarchyPanel::kMinPanelWidth, maxAllowed);
 
-    ImGui::SetNextWindowPos(workPos, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(workPos, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, workSize.y), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowViewport(viewport->ID);
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
-                            ImGuiWindowFlags_AlwaysUseWindowPadding |
                             ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Hierarchy", nullptr, flags);

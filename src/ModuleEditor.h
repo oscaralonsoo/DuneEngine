@@ -31,11 +31,6 @@ public:
         if (!open)
             return;
 
-        ImGuiViewport* viewport = ImGui::GetMainViewport();
-        ImVec2 pos = viewport->WorkPos;
-        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-        ImGui::SetNextWindowViewport(viewport->ID);
-
         ImGuiWindowFlags flags = windowFlags;
 
         if (ImGui::Begin(panelName.c_str(), &open, flags))
@@ -56,10 +51,7 @@ protected:
     std::string       panelName;
     bool              open = true;
     ImGuiWindowFlags  windowFlags =
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags_NoCollapse;
 };
 
 class ModuleEditor : public Module

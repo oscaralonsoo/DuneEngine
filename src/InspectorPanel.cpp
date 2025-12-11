@@ -28,12 +28,11 @@ void InspectorPanel::OnImGuiRender()
 
     // Anchor to right
     ImVec2 pos = ImVec2(workPos.x + workSize.x - panelWidth, workPos.y);
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(pos, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowViewport(viewport->ID);
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
-                            ImGuiWindowFlags_AlwaysUseWindowPadding |
                             ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Inspector", nullptr, flags);

@@ -5,19 +5,17 @@
 void ToolbarPanel::OnImGuiRender()
 {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(viewport->WorkPos);
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, 40.0f));
+    ImGui::SetNextWindowPos(viewport->WorkPos, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, 40.0f), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowViewport(viewport->ID);
 
     ImGuiWindowFlags toolbarFlags =
         ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoDocking |
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     if (ImGui::Begin("Toolbar", nullptr, toolbarFlags))
     {
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
@@ -82,4 +80,5 @@ void ToolbarPanel::OnImGuiRender()
     }
 
     ImGui::End();
+    ImGui::PopStyleVar(1);
 }

@@ -31,8 +31,8 @@ void ProjectPanel::SetupWindow(ImGuiViewport* viewport, float& panelHeight)
     float maxAllowed = workSize.y - otherPanelEstimate - ProjectPanel::kMinCenterWidth;
     panelHeight = std::clamp(desiredHeight, ProjectPanel::kMinPanelWidth, maxAllowed);
 
-    ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - panelHeight), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(workSize.x, panelHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - panelHeight), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(workSize.x, panelHeight), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowViewport(viewport->ID);
 }
 
@@ -66,7 +66,6 @@ void ProjectPanel::OnImGuiRender()
     SetupWindow(viewport, panelHeight);
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
-                            ImGuiWindowFlags_AlwaysUseWindowPadding |
                             ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Project", nullptr, flags);
