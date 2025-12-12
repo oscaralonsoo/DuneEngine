@@ -68,15 +68,6 @@ void ProjectPanel::OnImGuiRender()
 
     RenderContent(nullptr); // scene not needed here
 
-    // Handle deselection on click
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
-    {
-        if (auto scene = Engine::GetInstance().scene)
-        {
-            scene->SetSelected(nullptr);
-        }
-    }
-
     ImGui::End();
 
     RenderModalDialogs();

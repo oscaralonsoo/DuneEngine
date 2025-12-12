@@ -122,17 +122,3 @@ int ModuleWindow::GetScale() const
 {
 	return scale;
 }
-
-void ModuleWindow::ToggleFullscreen()
-{
-    if (isFullscreen)
-    {
-        SDL_SetWindowFullscreen(window, false);
-        isFullscreen = false;
-    }
-    else
-    {
-        SDL_SetWindowFullscreen(window, true);
-        isFullscreen = true;
-    }
-}
