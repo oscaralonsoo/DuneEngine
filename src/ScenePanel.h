@@ -19,12 +19,16 @@ public:
     void OnImGuiRender() override;
     void CleanUp() override;
 
+    void DrawSceneLockedOverlay();
+
 private:
     void RenderSceneView();
     void RenderGameView();
     void RenderToolbarControls();
     void HandleSceneDragDrop(ImVec2 sceneViewSize, float mouseX, float mouseY);
     void HandleAssetDrop(const std::filesystem::path& assetPath, float mouseX = -1.0f, float mouseY = -1.0f);
+
+    bool IsSceneEditable() const;
 
     Framebuffer* m_SceneFramebuffer = nullptr;
     Framebuffer* m_GameFramebuffer  = nullptr;

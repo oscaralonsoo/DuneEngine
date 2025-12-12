@@ -21,7 +21,6 @@
 
 bool ScenePanel::Start()
 {
-    // Framebuffers independientes para Scene y Game
     m_SceneFramebuffer = new Framebuffer(800, 600);
     m_GameFramebuffer  = new Framebuffer(800, 600);
     return true;
@@ -42,7 +41,7 @@ void ScenePanel::OnImGuiRender()
     
     if (ImGui::BeginTabBar("ViewTabs"))
     {
-        // ---------- SCENE TAB ----------
+        //-------Scene Tab--------
         ImGuiTabItemFlags sceneFlags = 0;
         
         if (m_ForceRestoreView && m_CurrentView == ViewType::Scene)
@@ -60,7 +59,7 @@ void ScenePanel::OnImGuiRender()
         }
         ImGui::EndDisabled();
         
-        // ---------- GAME TAB ----------
+        //--------Game Tab--------
         ImGuiTabItemFlags gameFlags = 0;
         
         if (isPlaying || (m_ForceRestoreView && m_CurrentView == ViewType::Game))
@@ -82,66 +81,74 @@ void ScenePanel::OnImGuiRender()
     }
     ImGui::End();
 }
-
-
 void ScenePanel::RenderSceneView()
 {
+    const bool sceneEditable = IsSceneEditable();
+
     ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
     ImGui::BeginChild("SceneView", contentRegion, true,
-                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
     ImVec2 sceneViewSize = ImGui::GetContentRegionAvail();
     uint32_t width  = (uint32_t)sceneViewSize.x;
     uint32_t height = (uint32_t)sceneViewSize.y;
 
     if (width > 0 && height > 0 &&
-        (m_SceneFramebuffer->GetWidth() != width || m_SceneFramebuffer->GetHeight() != height))
+        (m_SceneFramebuffer->GetWidth() != width ||
+         m_SceneFramebuffer->GetHeight() != height))
     {
         m_SceneFramebuffer->Resize(width, height);
     }
 
+    //Render
     auto* renderer = Engine::GetInstance().renderer.get();
     if (renderer && renderer->editorCamera)
+    {
+        renderer->editorCamera->SetInputEnabled(sceneEditable);
         renderer->RenderToFramebuffer(m_SceneFramebuffer, renderer->editorCamera);
+    }
 
-    ImGui::Image((ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
-                 sceneViewSize, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image(
+        (ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
+        sceneViewSize, ImVec2(0, 1), ImVec2(1, 0));
 
-    // Handle selection on click
+    //Input blocked
+    if (!sceneEditable)
+    {
+        ImGui::EndChild();
+        return;
+    }
+
+    //Selection
     if (ImGui::IsItemClicked(0))
     {
         auto* scene = Engine::GetInstance().scene.get();
-        std::shared_ptr<GameObject> picked = scene->GetRaycaster()->PickObject(
-            ImGui::GetMousePos().x - ImGui::GetItemRectMin().x,
-            ImGui::GetMousePos().y - ImGui::GetItemRectMin().y,
-            width, height,
-            scene->GetGameObjects());
-        if (picked)
-        {
-            scene->SetSelected(picked);
-        }
-        else
-        {
-            scene->SetSelected(nullptr);
-        }
+        std::shared_ptr<GameObject> picked =
+            scene->GetRaycaster()->PickObject(
+                ImGui::GetMousePos().x - ImGui::GetItemRectMin().x,
+                ImGui::GetMousePos().y - ImGui::GetItemRectMin().y,
+                width, height,
+                scene->GetGameObjects());
+
+        scene->SetSelected(picked);
     }
 
-    // Calculate mouse position relative to the scene view for drag and drop
+    // Drag & Drop
     float mouseX = -1.0f, mouseY = -1.0f;
     if (ImGui::IsItemHovered())
     {
         ImVec2 mousePos = ImGui::GetMousePos();
-        ImVec2 itemMin = ImGui::GetItemRectMin();
+        ImVec2 itemMin  = ImGui::GetItemRectMin();
         mouseX = mousePos.x - itemMin.x;
         mouseY = mousePos.y - itemMin.y;
     }
 
-    // Handle drag and drop for Scene View only
     HandleSceneDragDrop(sceneViewSize, mouseX, mouseY);
 
     ImGui::EndChild();
 }
+
 
 void ScenePanel::RenderGameView()
 {
@@ -377,7 +384,11 @@ void ScenePanel::HandleAssetDrop(const std::filesystem::path& assetPath, float m
             return;
     }
 }
-
+bool ScenePanel::IsSceneEditable() const
+{
+    return !GameTime::IsPlaying() &&
+           m_CurrentView == ViewType::Scene;
+}
 void ScenePanel::CleanUp()
 {
     if (m_SceneFramebuffer)
