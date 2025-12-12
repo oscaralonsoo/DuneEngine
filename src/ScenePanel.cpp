@@ -30,49 +30,56 @@ bool ScenePanel::Start()
 void ScenePanel::OnImGuiRender()
 {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoScrollbar;
-
+    ImGuiWindowFlags_NoCollapse |
+    ImGuiWindowFlags_NoScrollbar;
+    
     ImGui::Begin("Scene", nullptr, flags);
-
+    
     RenderToolbarControls();
     ImGui::Separator();
-
+    
     bool isPlaying = GameTime::IsPlaying();
-
-    if (m_SwitchToGameOnPlay && isPlaying)
-    {
-        m_CurrentView = ViewType::Game;
-        m_SwitchToGameOnPlay = false; // solo una vez
-    }
-
+    
     if (ImGui::BeginTabBar("ViewTabs"))
     {
-        // --- Scene Tab ---
-        ImGui::BeginDisabled(isPlaying); // bloqueada durante Play
-        if (ImGui::BeginTabItem("Scene"))
+        // ---------- SCENE TAB ----------
+        ImGuiTabItemFlags sceneFlags = 0;
+        
+        if (m_ForceRestoreView && m_CurrentView == ViewType::Scene)
+        sceneFlags |= ImGuiTabItemFlags_SetSelected;
+        
+        ImGui::BeginDisabled(isPlaying);
+        if (ImGui::BeginTabItem("Scene", nullptr, sceneFlags))
         {
-            m_CurrentView = ViewType::Scene; 
             RenderSceneView();
+            
+            if (!isPlaying && ImGui::IsItemActivated())
+            m_CurrentView = ViewType::Scene;
+            
             ImGui::EndTabItem();
         }
         ImGui::EndDisabled();
-
-        // --- Game Tab ---
-        ImGuiTabItemFlags gameTabFlags = 0;
-        if (isPlaying)
-            gameTabFlags |= ImGuiTabItemFlags_SetSelected; 
-
-        if (ImGui::BeginTabItem("Game", nullptr, gameTabFlags))
+        
+        // ---------- GAME TAB ----------
+        ImGuiTabItemFlags gameFlags = 0;
+        
+        if (isPlaying || (m_ForceRestoreView && m_CurrentView == ViewType::Game))
+        gameFlags |= ImGuiTabItemFlags_SetSelected;
+        
+        if (ImGui::BeginTabItem("Game", nullptr, gameFlags))
         {
-            m_CurrentView = ViewType::Game; 
             RenderGameView();
+            
+            if (ImGui::IsItemActivated())
+            m_CurrentView = ViewType::Game;
+            
             ImGui::EndTabItem();
         }
-
+        
         ImGui::EndTabBar();
+        
+        m_ForceRestoreView = false;
     }
-
     ImGui::End();
 }
 
@@ -229,10 +236,12 @@ void ScenePanel::RenderToolbarControls()
     {
         if (!isPlaying)
         {
-            // Guardamos la tab actual antes de Play
+            // Guardar la vista actual
             m_LastViewBeforePlay = m_CurrentView;
 
-            m_SwitchToGameOnPlay = true;
+            // Forzar Game View
+            m_CurrentView = ViewType::Game;
+
             scene->SaveInitialSnapshot();
             GameTime::Play();
         }
@@ -240,9 +249,9 @@ void ScenePanel::RenderToolbarControls()
         {
             GameTime::Stop();
             scene->RestoreSnapshot();
-
-            // Restaurar tab anterior
+            
             m_CurrentView = m_LastViewBeforePlay;
+            m_ForceRestoreView = true; // ← CLAVE
         }
     }
 

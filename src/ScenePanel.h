@@ -26,14 +26,9 @@ private:
     void HandleSceneDragDrop(ImVec2 sceneViewSize, float mouseX, float mouseY);
     void HandleAssetDrop(const std::filesystem::path& assetPath, float mouseX = -1.0f, float mouseY = -1.0f);
 
-    bool m_ShowSceneView = true;
-    bool m_ShowGameView = false;
-
     Framebuffer* m_SceneFramebuffer = nullptr;
     Framebuffer* m_GameFramebuffer  = nullptr;
-
-    bool m_SwitchToGameOnPlay = false;
-    
+    bool m_ForceRestoreView = false;
     ViewType m_CurrentView = ViewType::Scene;
     ViewType m_LastViewBeforePlay = ViewType::Scene;
 };
