@@ -37,12 +37,14 @@ public:
     float GetFarClip() const;
     void SetFarClip(float farClip);
 
-
-
     const glm::mat4 &GetProjectionMatrix() const;
 
     glm::vec2 GetViewportSize() const;
     void SetViewportSize(float width, float height);
+
+private:
+    void UpdateProjection();
+
 protected:
     float mFOV = 45.0f;
     float mAspectRatio = 1.778f;
@@ -53,6 +55,4 @@ protected:
 
     float mViewportWidth = 1280.0f;
     float mViewportHeight = 720.0f;
-private:
-    void UpdateProjection();
 };

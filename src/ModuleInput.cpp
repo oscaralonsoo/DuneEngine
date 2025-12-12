@@ -13,6 +13,9 @@
 #include <string.h>
 #include <filesystem>
 #include "HierarchyPanel.h"
+#include "Gizmo.h"
+#include <SDL3/SDL_mouse.h>
+#include "GameTime.h"
 
 #define MAX_KEYS 300
 
@@ -98,8 +101,15 @@ bool ModuleInput::PreUpdate()
             mouseButtons[event.button.button - 1] = KEY_DOWN;
 
             // Handle object picking on left mouse button click
-            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse)
+            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse && !GameTime::IsPlaying()) 
             {
+                auto& engine = Engine::GetInstance();
+                SDL_Point mp = GetMousePosition();
+
+                // Si el gizmo lo coge, NO hacemos picking de objetos
+                if (engine.gizmo && engine.gizmo->OnMouseDown((float)mp.x, (float)mp.y))
+                    break;
+
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
                 int width, height;
@@ -122,6 +132,11 @@ bool ModuleInput::PreUpdate()
             break;
 
         case SDL_EVENT_MOUSE_BUTTON_UP:
+            if (event.button.button == SDL_BUTTON_LEFT)
+            {
+                auto& engine = Engine::GetInstance();
+                if (engine.gizmo) engine.gizmo->OnMouseUp();
+            }
             mouseButtons[event.button.button - 1] = KEY_UP;
             break;
 
@@ -223,6 +238,29 @@ bool ModuleInput::PreUpdate()
         }
     }
 
+    SDL_Window* win = Engine::GetInstance().window->GetWindow();
+
+    // Si ImGui quiere el ratón, no entramos en modo cámara
+    bool uiWantsMouse = ImGui::GetIO().WantCaptureMouse;
+
+    // RMB presionado
+    bool rmb =
+        mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_DOWN ||
+        mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_REPEAT;
+
+    if (!uiWantsMouse && rmb && !rmbRelativeMode)
+    {
+        SDL_SetWindowRelativeMouseMode(win, true);     // oculta cursor + movimiento relativo
+        SDL_SetWindowMouseGrab(win, true);  // captura el ratón
+        rmbRelativeMode = true;
+    }
+    else if ((!rmb || uiWantsMouse) && rmbRelativeMode)
+    {
+        SDL_SetWindowRelativeMouseMode(win, false);   // vuelve el cursor
+        SDL_SetWindowMouseGrab(win, false);
+        rmbRelativeMode = false;
+    }
+
     // Handle keyboard shortcuts
     HandleKeyboardShortcuts();
 
@@ -258,7 +296,7 @@ SDL_Point ModuleInput::GetMouseMotion() const
 
 void ModuleInput::HandleKeyboardShortcuts()
 {
-    // Ctrl+D to Duplicate
+    // Ctrl+D to Duplicate (tu código tal cual)
     if (GetKey(SDL_SCANCODE_D) == KEY_DOWN && GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT)
     {
         ModuleScene* scene = Engine::GetInstance().scene.get();
@@ -267,7 +305,6 @@ void ModuleInput::HandleKeyboardShortcuts()
             std::shared_ptr<GameObject> selected = scene->GetSelected();
             if (selected)
             {
-                // Duplicate the GameObject
                 auto duplicated = scene->CreateGameObject();
                 duplicated->SetName(scene->GenerateUniqueName(selected->GetName()));
 
@@ -279,10 +316,49 @@ void ModuleInput::HandleKeyboardShortcuts()
                 {
                     scene->DuplicateGameObject(child, duplicated);
                 }
-                // Set parent if selected has one
                 if (auto parent = selected->GetParent())
                 {
                     duplicated->SetParent(parent);
+                }
+            }
+        }
+    }
+    
+    if (!ImGui::GetIO().WantCaptureKeyboard)
+    {
+        // Bloquear mientras RMB está siendo usado para mover cámara
+        bool rmbDown =
+            GetMouseButtonDown(3) == KEY_DOWN ||
+            GetMouseButtonDown(3) == KEY_REPEAT;
+
+        if (!rmbDown)
+        {
+            auto& engine = Engine::GetInstance();
+            ModuleScene* scene = engine.scene.get();
+            bool hasSelection = (scene && scene->GetSelected() != nullptr);
+
+            // Si no hay selección: forzar modo selección (None) y bloquear cambios
+            if (!hasSelection)
+            {
+                if (engine.gizmo)
+                    engine.gizmo->SetMode(GizmoMode::None);
+            }
+            else
+            {
+                // Con selección sí permitimos cambiar modo
+                if (engine.gizmo)
+                {
+                    if (GetKey(SDL_SCANCODE_Q) == KEY_DOWN)
+                        engine.gizmo->SetMode(GizmoMode::None);
+
+                    if (GetKey(SDL_SCANCODE_W) == KEY_DOWN)
+                        engine.gizmo->SetMode(GizmoMode::Translate);
+
+                    if (GetKey(SDL_SCANCODE_E) == KEY_DOWN)
+                        engine.gizmo->SetMode(GizmoMode::Rotate);
+
+                    if (GetKey(SDL_SCANCODE_R) == KEY_DOWN)
+                        engine.gizmo->SetMode(GizmoMode::Scale);
                 }
             }
         }

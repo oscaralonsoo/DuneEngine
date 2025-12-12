@@ -148,7 +148,7 @@ bool ModuleScene::Start()
     raycaster = new Raycaster();
 
     std::shared_ptr<GameObject> cameraGO = std::make_shared<GameObject>();
-    cameraGO->SetName("MainCamera");
+    cameraGO->SetName("Main Camera");
 
     auto* camTransform = cameraGO->GetComponent<TransformComponent>();
     camTransform->SetPosition({ 0.0f, 1.0f, 5.0f });   

@@ -57,6 +57,8 @@ bool ModuleImGui::Start()
     style.Colors[ImGuiCol_TabActive] = ImVec4(0.75f, 0.60f, 0.45f, 1.00f); 
     style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.82f, 0.71f, 0.55f, 0.50f); 
     style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.75f, 0.60f, 0.45f, 0.50f); 
+    style.Colors[ImGuiCol_DockingPreview] = ImVec4(0.90f, 0.80f, 0.65f, 0.70f);
+
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         style.WindowRounding = 0.0f;
