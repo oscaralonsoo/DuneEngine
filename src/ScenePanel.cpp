@@ -13,43 +13,39 @@
 #include <glad/glad.h>
 #include "CameraComponent.h"
 #include "ModuleWindow.h"
-#include "Framebuffer.h"
 
 bool ScenePanel::Start()
 {
-    // Framebuffers independientes para Scene y Game
-    m_SceneFramebuffer = new Framebuffer(800, 600);
-    m_GameFramebuffer  = new Framebuffer(800, 600);
     return true;
 }
 
 void ScenePanel::OnImGuiRender()
 {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoScrollbar;
+                            ImGuiWindowFlags_NoCollapse |
+                            ImGuiWindowFlags_NoScrollbar;
 
     ImGui::Begin("Scene", nullptr, flags);
 
+    // Toolbar controls at the top
     RenderToolbarControls();
     ImGui::Separator();
 
+    // Scene/Game view tabs
     if (ImGui::BeginTabBar("ViewTabs"))
     {
-        // Scene View → Editor Camera siempre
         if (ImGui::BeginTabItem("Scene"))
         {
             m_ShowSceneView = true;
-            m_ShowGameView  = false;
+            m_ShowGameView = false;
             RenderSceneView();
             ImGui::EndTabItem();
         }
 
-        // Game View → MainCamera siempre
         if (ImGui::BeginTabItem("Game"))
         {
             m_ShowSceneView = false;
-            m_ShowGameView  = true;
+            m_ShowGameView = true;
             RenderGameView();
             ImGui::EndTabItem();
         }
@@ -64,25 +60,24 @@ void ScenePanel::RenderSceneView()
 {
     ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
-    ImGui::BeginChild("SceneView", contentRegion, true,
-                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    // Reserve space for scene view
+    ImGui::BeginChild("SceneView", ImVec2(contentRegion.x, m_SceneViewHeight), true,
+                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
+    // Get the scene view rectangle
+    ImVec2 sceneViewPos = ImGui::GetCursorScreenPos();
     ImVec2 sceneViewSize = ImGui::GetContentRegionAvail();
-    uint32_t width  = (uint32_t)sceneViewSize.x;
-    uint32_t height = (uint32_t)sceneViewSize.y;
 
-    if (width > 0 && height > 0 &&
-        (m_SceneFramebuffer->GetWidth() != width || m_SceneFramebuffer->GetHeight() != height))
-    {
-        m_SceneFramebuffer->Resize(width, height);
-    }
+    // Render the 3D scene here
+    // For now, just show a placeholder
+    ImGui::Text("Scene View");
+    ImGui::Text("Size: %.0f x %.0f", sceneViewSize.x, sceneViewSize.y);
 
-    auto* renderer = Engine::GetInstance().renderer.get();
-    if (renderer && renderer->editorCamera)
-        renderer->RenderToFramebuffer(m_SceneFramebuffer, renderer->editorCamera);
-
-    ImGui::Image((ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
-                 sceneViewSize, ImVec2(0, 1), ImVec2(1, 0));
+    // TODO: Integrate actual 3D rendering
+    // This would involve:
+    // 1. Setting up a framebuffer for off-screen rendering
+    // 2. Rendering the scene using EditorCamera
+    // 3. Displaying the rendered texture in ImGui
 
     ImGui::EndChild();
 }
@@ -91,55 +86,57 @@ void ScenePanel::RenderGameView()
 {
     ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
-    ImGui::BeginChild("GameView", contentRegion, true,
-                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::BeginChild("GameView", ImVec2(contentRegion.x, m_GameViewHeight), true,
+                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    ImVec2 viewSize = ImGui::GetContentRegionAvail();
-    uint32_t width  = (uint32_t)viewSize.x;
-    uint32_t height = (uint32_t)viewSize.y;
+    ImVec2 gameViewPos = ImGui::GetCursorScreenPos();
+    ImVec2 gameViewSize = ImGui::GetContentRegionAvail();
 
-    // Buscar MainCamera siempre
+    // Find the MainCamera or first available camera component
     auto* scene = Engine::GetInstance().scene.get();
-    CameraComponent* mainCamera = nullptr;
+    CameraComponent* gameCamera = nullptr;
 
     if (scene)
     {
         for (auto& go : scene->GetGameObjects())
         {
-            if (go->GetName() == "MainCamera")
+            if (auto* cam = go->GetComponent<CameraComponent>())
             {
-                mainCamera = go->GetComponent<CameraComponent>();
-                break;
+                // Look for a camera named "MainCamera" first
+                if (go->GetName() == "MainCamera")
+                {
+                    gameCamera = cam;
+                    break;
+                }
+                // If no MainCamera found, use the first camera
+                if (!gameCamera)
+                {
+                    gameCamera = cam;
+                }
             }
         }
     }
 
-    if (mainCamera)
+    if (gameCamera)
     {
-        mainCamera->Update();
-
-        if (width > 0 && height > 0 &&
-            (m_GameFramebuffer->GetWidth() != width || m_GameFramebuffer->GetHeight() != height))
-        {
-            m_GameFramebuffer->Resize(width, height);
-        }
-
-        auto* renderer = Engine::GetInstance().renderer.get();
-        if (renderer)
-            renderer->RenderToFramebuffer(m_GameFramebuffer, mainCamera);
-
-        ImGui::Image((ImTextureID)(uintptr_t)m_GameFramebuffer->GetColorAttachment(),
-                     viewSize, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Text("Game View (from %s)", gameCamera->GetOwner()->GetName().c_str());
+        ImGui::Text("Size: %.0f x %.0f", gameViewSize.x, gameViewSize.y);
+        ImGui::Text("Game camera rendering not yet implemented");
+        ImGui::Text("FOV: %.1f°, Near: %.2f, Far: %.1f",
+                   gameCamera->GetFOV(), gameCamera->GetNearClip(), gameCamera->GetFarClip());
     }
     else
     {
         ImGui::Text("Game View");
-        ImGui::TextColored(ImVec4(1,0.5f,0,1), "No MainCamera found!");
-        ImGui::Text("Create a GameObject named 'MainCamera' with a CameraComponent.");
+        ImGui::Text("Size: %.0f x %.0f", gameViewSize.x, gameViewSize.y);
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "No camera found in scene!");
+        ImGui::Text("Create a GameObject with a CameraComponent");
+        ImGui::Text("and name it 'MainCamera' for best results.");
     }
 
     ImGui::EndChild();
 }
+
 
 void ScenePanel::RenderToolbarControls()
 {
@@ -148,41 +145,53 @@ void ScenePanel::RenderToolbarControls()
 
     auto* scene = Engine::GetInstance().scene.get();
 
-    if (ImGui::Button(isPlaying ? "Stop" : "Play"))
+    // === PLAY / PAUSE ===
+    if (!isPlaying)
     {
-        if (!isPlaying)
+        if (ImGui::Button("Play"))
         {
+            // Guardar snapshot antes del primer Play
             scene->SaveInitialSnapshot();
             GameTime::Play();
         }
-        else
+    }
+    else
+    {
+        if (ImGui::Button("Pause"))
         {
-            GameTime::Stop();
-            scene->RestoreSnapshot();
+            GameTime::Pause();
         }
     }
 
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(!isPlaying);
-    if (ImGui::Button("Pause"))
-        GameTime::Pause();
-    ImGui::EndDisabled();
+    // === STOP ===
+    if (ImGui::Button("Stop"))
+    {
+        GameTime::Stop();
+        scene->RestoreSnapshot();
+    }
 
     ImGui::SameLine();
 
+    // === STEP ===
     ImGui::BeginDisabled(!isPaused);
     if (ImGui::Button("Step"))
+    {
         GameTime::StepOneFrame();
+    }
     ImGui::EndDisabled();
 
     ImGui::SameLine(0.0f, 30.0f);
 
+    // TimeScale
     float timeScale = GameTime::GetTimeScale();
     ImGui::Text("Speed");
     ImGui::SameLine();
     if (ImGui::SliderFloat("##TimeScale", &timeScale, 0.0f, 4.0f, "%.2f"))
+    {
         GameTime::SetTimeScale(timeScale);
+    }
 
     ImGui::SameLine(0.0f, 30.0f);
     ImGui::Text("GameTime: %.2f", GameTime::GetGameTime());
@@ -192,14 +201,4 @@ void ScenePanel::RenderToolbarControls()
 
 void ScenePanel::CleanUp()
 {
-    if (m_SceneFramebuffer)
-    {
-        delete m_SceneFramebuffer;
-        m_SceneFramebuffer = nullptr;
-    }
-    if (m_GameFramebuffer)
-    {
-        delete m_GameFramebuffer;
-        m_GameFramebuffer = nullptr;
-    }
 }
