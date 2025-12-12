@@ -19,8 +19,7 @@ void Model::LoadFromFile(const std::filesystem::path &path)
                                              aiProcess_Triangulate |
                                                  aiProcess_GenSmoothNormals |
                                                  aiProcess_CalcTangentSpace |
-                                                 aiProcess_GenBoundingBoxes |
-                                                 aiProcess_FlipUVs);
+                                                 aiProcess_GenBoundingBoxes);
 
     if (!scene)
     {
