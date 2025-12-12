@@ -15,9 +15,9 @@ public:
     {}
 
     // initial sizes and limits
-    static constexpr float kDefaultFraction = 0.18f; 
-    static constexpr float kMinPanelWidth = 80.0f;  
-    static constexpr float kMinCenterWidth = 180.0f; 
+    static constexpr float kDefaultFraction = 0.18f; // fracción del ancho de la ventana
+    static constexpr float kMinPanelWidth = 80.0f;   // ancho mínimo del panel en px
+    static constexpr float kMinCenterWidth = 180.0f; // ancho mínimo reservado para zona central
 
     bool Start() override;
     void SetupWindow(ImGuiViewport *viewport, float &panelWidth);

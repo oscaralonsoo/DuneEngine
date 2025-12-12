@@ -281,12 +281,6 @@ void HierarchyPanel::RenderHierarchyTree(ModuleScene* scene, std::shared_ptr<Gam
 
     ImGui::SetCursorPos(ImVec2(0, ImGui::GetCursorPosY()));
     ImGui::InvisibleButton("HierarchyDropTarget", ImVec2(contentSize.x, ImGui::GetContentRegionAvail().y));
-
-    // Handle deselection on click away
-    if (ImGui::IsItemClicked() && selected)
-    {
-        scene->SetSelected(nullptr);
-    }
 }
 
 void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
@@ -333,6 +327,8 @@ void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
         ImGui::EndDragDropTarget();
     }
 }
+
+
 
 void HierarchyPanel::ProcessPendingParentChanges()
 {

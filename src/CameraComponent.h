@@ -23,8 +23,6 @@ public:
     float GetFarClip() const         { return mCamera.GetFarClip(); }
     void  SetFarClip(float value)    { mCamera.SetFarClip(value); }
 
-    float GetAspectRatio() const     { return mCamera.GetAspectRatio(); }
-
     // ICamera
     const glm::mat4& GetViewMatrix() const override      { return mViewMatrix; }
     const glm::mat4& GetProjectionMatrix() const override{ return mCamera.GetProjectionMatrix(); }

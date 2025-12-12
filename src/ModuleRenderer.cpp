@@ -10,8 +10,10 @@
 #include <functional>
 #include "AABB.h"
 #include "CameraComponent.h"
-#include "EditorCamera.h"
 #include "GameTime.h"
+#include "Globals.h"
+#include "Gizmo.h"
+#include "ModuleInput.h"
 
 namespace
 {
@@ -135,7 +137,7 @@ namespace
 }
 
 
-void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go, ICamera* camera)
+void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
 {
     MaterialComponent*  materialComp  = go->GetComponent<MaterialComponent>();
     MeshComponent*      meshComp      = go->GetComponent<MeshComponent>();
@@ -151,7 +153,8 @@ void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go, ICa
             const AABB& localBox = mesh->GetAABB();
             AABB worldBox        = TransformAABB(localBox, world);
 
-            if (mFrustum.ContainsAABB(worldBox))
+            bool inside = mFrustum.ContainsAABB(worldBox);
+            if (inside)
             {
                 RenderObject ro;
                 ro.transform = world;
@@ -160,18 +163,17 @@ void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go, ICa
                 ro.selected  = go->IsSelected();
 
                 Renderer::Submit(ro);
+
                 mVisibleBoxes.push_back(worldBox);
             }
         }
     }
 
-    // Render children recursively
     for (auto& child : go->GetChildren())
     {
-        renderGameObject(child, camera);
+        renderGameObject(child);
     }
 }
-
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -237,6 +239,13 @@ bool ModuleRenderer::Update()
     projection = renderCamera->GetProjectionMatrix();
     mFrustum.Update(view, projection);
 
+    if (!isPlaying)
+    {
+        auto* input = Engine::GetInstance().input.get();
+        SDL_Point mp = input->GetMousePosition();
+        Engine::GetInstance().gizmo->Update((float)mp.x, (float)mp.y);
+    }
+
     // Limpiar las cajas visibles de este frame
     mVisibleBoxes.clear();
 
@@ -249,18 +258,15 @@ bool ModuleRenderer::Update()
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    if (isPlaying)
+    for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
-        for (auto go : Engine::GetInstance().scene->GetGameObjects())
-        {
-            renderGameObject(go, renderCamera);
-        }
-
-        Renderer::SkyboxPass();
-        Renderer::ForwardPass();
-        Renderer::TransparentPass();
-        Renderer::SelectedPass();
+        renderGameObject(go);
     }
+
+    Renderer::SkyboxPass();
+    Renderer::ForwardPass();
+    Renderer::TransparentPass();
+    Renderer::SelectedPass();
 
     if (!isPlaying)
     {
@@ -276,6 +282,8 @@ bool ModuleRenderer::Update()
             Ray lastRay = rc->GetLastRay();
             DebugDrawRay(lastRay, 100.0f, view, projection, glm::vec3(1.0f, 1.0f, 0.0f));
         }
+
+        Engine::GetInstance().gizmo->Render();
     }
 
     return true;
@@ -294,54 +302,3 @@ bool ModuleRenderer::CleanUp()
 
     return true;
 }
-
-void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* camera)
-{
-    if (!framebuffer || !camera)
-        return;
-
-    framebuffer->Bind();
-
-    ICamera* prevRenderCamera = renderCamera;
-    renderCamera = camera;
-
-    // Ajustar viewport al tamaño del framebuffer
-    camera->SetViewportSize((float)framebuffer->GetWidth(), (float)framebuffer->GetHeight());
-    glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
-
-    glm::mat4 view = camera->GetViewMatrix();
-    glm::mat4 projection = camera->GetProjectionMatrix();
-    mFrustum.Update(view, projection);
-
-    // Clear del framebuffer
-    RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glEnable(GL_STENCIL_TEST);
-    glStencilMask(0xFF);
-    glClear(GL_STENCIL_BUFFER_BIT);
-    glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-    for (auto go : Engine::GetInstance().scene->GetGameObjects())
-    {
-        renderGameObject(go, renderCamera);
-    }
-
-    Renderer::SkyboxPass();
-    Renderer::ForwardPass();
-    Renderer::TransparentPass();
-    Renderer::SelectedPass();
-
-    framebuffer->Unbind();
-
-    renderCamera = prevRenderCamera;
-    
-    // Restaurar viewport a tamaño de ventana
-    int w, h;
-    SDL_GetWindowSizeInPixels(
-        Engine::GetInstance().window->GetWindow(),
-        &w, &h);
-    glViewport(0, 0, w, h);
-}
-
