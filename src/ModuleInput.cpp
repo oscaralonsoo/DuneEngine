@@ -287,6 +287,12 @@ void ModuleInput::HandleKeyboardShortcuts()
             }
         }
     }
+
+    // F11 to Toggle Fullscreen
+    if (GetKey(SDL_SCANCODE_F11) == KEY_DOWN)
+    {
+        Engine::GetInstance().window.get()->ToggleFullscreen();
+    }
 }
 
 void ModuleInput::HandleFileDrop(const SDL_Event& event)
