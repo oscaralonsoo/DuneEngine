@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include "GameTime.h"
 #include <memory>
+#include "Framebuffer.h"
 
 // ScenePanel that functions like Unity's Scene and Game panels
 class ScenePanel : public EditorPanel
@@ -23,8 +24,9 @@ private:
 
     bool m_ShowSceneView = true;
     bool m_ShowGameView = false;
-    float m_SceneViewHeight = 400.0f;
-    float m_GameViewHeight = 400.0f;
+    Framebuffer* m_SceneFramebuffer = nullptr;
+    Framebuffer* m_GameFramebuffer  = nullptr;
+
 
     // Panel sizing constants
     static constexpr float kDefaultFraction = 0.18f;
