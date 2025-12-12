@@ -89,6 +89,25 @@ void ScenePanel::RenderSceneView()
     ImGui::Image((ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
                  sceneViewSize, ImVec2(0, 1), ImVec2(1, 0));
 
+    // Handle selection on click
+    if (ImGui::IsItemClicked(0))
+    {
+        auto* scene = Engine::GetInstance().scene.get();
+        std::shared_ptr<GameObject> picked = scene->GetRaycaster()->PickObject(
+            ImGui::GetMousePos().x - ImGui::GetItemRectMin().x,
+            ImGui::GetMousePos().y - ImGui::GetItemRectMin().y,
+            width, height,
+            scene->GetGameObjects());
+        if (picked)
+        {
+            scene->SetSelected(picked);
+        }
+        else
+        {
+            scene->SetSelected(nullptr);
+        }
+    }
+
     // Calculate mouse position relative to the scene view for drag and drop
     float mouseX = -1.0f, mouseY = -1.0f;
     if (ImGui::IsItemHovered())
@@ -256,10 +275,13 @@ void ScenePanel::HandleAssetDrop(const std::filesystem::path& assetPath, float m
 
     ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
 
+    int width = m_SceneFramebuffer->GetWidth();
+    int height = m_SceneFramebuffer->GetHeight();
+
     GameObject* hoveredObject = nullptr;
     if (mouseX >= 0.0f && mouseY >= 0.0f)
     {
-        auto picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+        auto picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, width, height, scene->GetGameObjects());
         hoveredObject = picked.get();
     }
 

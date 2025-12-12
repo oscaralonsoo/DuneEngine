@@ -102,10 +102,14 @@ bool ModuleInput::PreUpdate()
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
+                int width, height;
+                SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &width, &height);
+
                 std::shared_ptr<GameObject> selected =
                 scene->GetRaycaster()->PickObject(
                     static_cast<float>(mouseX),
                     static_cast<float>(mouseY),
+                    width, height,
                     scene->GetGameObjects());
 
                 if (selected)
@@ -183,7 +187,6 @@ bool ModuleInput::PreUpdate()
                     // Set parent-child relation
                     childGameObject->SetParent(parentGameObject);
 
-                    // ⬅️ NUEVO: meter el hijo en la escena
                     scene->AddGameObject(childGameObject);
                 }
 
@@ -192,10 +195,15 @@ bool ModuleInput::PreUpdate()
             else if (type == ResourceType::Texture)
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
+
+                int width, height;
+                SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &width, &height);
+
                 std::shared_ptr<GameObject> selected =
                 scene->GetRaycaster()->PickObject(
                     static_cast<float>(event.drop.x),
                     static_cast<float>(event.drop.y),
+                    width, height,
                     scene->GetGameObjects());
 
                 scene->SetSelected(selected);
