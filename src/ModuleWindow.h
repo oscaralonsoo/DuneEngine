@@ -21,6 +21,7 @@ public:
     void SetTitle(const char *title);
     std::pair<int,int> GetWindowSize() const;
     void SetSize(int width, int height);
+    void ToggleFullscreen();
 
     int GetWidth() const { return width; }
     int GetHeight() const { return height; }
@@ -37,4 +38,5 @@ private:
     int width = 1280;
     int height = 720;
     int scale = 1;
+    bool isFullscreen = false;
 };

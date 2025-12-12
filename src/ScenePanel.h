@@ -4,8 +4,11 @@
 #include <imgui.h>
 #include "GameTime.h"
 #include <memory>
+#include "Framebuffer.h"
+#include <filesystem>
 
-// ScenePanel that functions like Unity's Scene and Game panels
+enum class ViewType { Scene, Game };
+
 class ScenePanel : public EditorPanel
 {
 public:
@@ -20,14 +23,17 @@ private:
     void RenderSceneView();
     void RenderGameView();
     void RenderToolbarControls();
+    void HandleSceneDragDrop(ImVec2 sceneViewSize, float mouseX, float mouseY);
+    void HandleAssetDrop(const std::filesystem::path& assetPath, float mouseX = -1.0f, float mouseY = -1.0f);
 
     bool m_ShowSceneView = true;
     bool m_ShowGameView = false;
-    float m_SceneViewHeight = 400.0f;
-    float m_GameViewHeight = 400.0f;
 
-    // Panel sizing constants
-    static constexpr float kDefaultFraction = 0.18f;
-    static constexpr float kMinPanelWidth = 80.0f;
-    static constexpr float kMinCenterWidth = 180.0f;
+    Framebuffer* m_SceneFramebuffer = nullptr;
+    Framebuffer* m_GameFramebuffer  = nullptr;
+
+    bool m_SwitchToGameOnPlay = false;
+    
+    ViewType m_CurrentView = ViewType::Scene;
+    ViewType m_LastViewBeforePlay = ViewType::Scene;
 };

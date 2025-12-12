@@ -39,13 +39,13 @@ public:
     std::shared_ptr<GameObject> CreateGameObjectFromPrefab(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent = nullptr);
 
+    void AddGameObject(std::shared_ptr<GameObject> go);
+
     void SaveInitialSnapshot();
 
     void RestoreSnapshot();
 
     void RebuildQuadtree();
-
-    void AddGameObject(std::shared_ptr<GameObject> go);
 private:
     std::shared_ptr<GameObject> root;
     std::shared_ptr<GameObject> test;

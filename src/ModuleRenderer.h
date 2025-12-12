@@ -15,6 +15,7 @@
 #include "Shader.h"
 #include <glad/glad.h>
 #include "Frustum.h"
+#include "Framebuffer.h"
 struct CameraData
 {
 	glm::mat4 projection = glm::mat4(1.0f);
@@ -36,11 +37,13 @@ public:
 
 	bool CleanUp();
 
-    ICamera*     renderCamera = nullptr; 
+    ICamera*     renderCamera = nullptr;
     EditorCamera* editorCamera = nullptr;
 
+    void RenderToFramebuffer(Framebuffer* framebuffer, ICamera* camera);
+
 private:
-    void renderGameObject(const std::shared_ptr<GameObject>& go);
+    void renderGameObject(const std::shared_ptr<GameObject>& go, ICamera* camera);
 
 	std::shared_ptr<Shader> shader = nullptr;
 	std::shared_ptr<Texture> texture;
