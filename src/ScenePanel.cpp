@@ -152,6 +152,7 @@ void ScenePanel::RenderToolbarControls()
         {
             // Guardar snapshot antes del primer Play
             scene->SaveInitialSnapshot();
+            scene->ResetSelecteds();
             GameTime::Play();
         }
     }

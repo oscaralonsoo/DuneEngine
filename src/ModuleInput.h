@@ -90,4 +90,5 @@ private:
     std::string draggedFile;
     bool fileDropped;
     SDL_Point dropPosition;
+    bool rmbRelativeMode = false;
 };

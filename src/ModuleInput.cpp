@@ -14,6 +14,8 @@
 #include <filesystem>
 #include "HierarchyPanel.h"
 #include "Gizmo.h"
+#include <SDL3/SDL_mouse.h>
+#include "GameTime.h"
 
 #define MAX_KEYS 300
 
@@ -99,7 +101,7 @@ bool ModuleInput::PreUpdate()
             mouseButtons[event.button.button - 1] = KEY_DOWN;
 
             // Handle object picking on left mouse button click
-            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse)
+            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse && !GameTime::IsPlaying()) 
             {
                 auto& engine = Engine::GetInstance();
                 SDL_Point mp = GetMousePosition();
@@ -226,6 +228,29 @@ bool ModuleInput::PreUpdate()
         }
         break;
         }
+    }
+
+    SDL_Window* win = Engine::GetInstance().window->GetWindow();
+
+    // Si ImGui quiere el ratón, no entramos en modo cámara
+    bool uiWantsMouse = ImGui::GetIO().WantCaptureMouse;
+
+    // RMB presionado
+    bool rmb =
+        mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_DOWN ||
+        mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_REPEAT;
+
+    if (!uiWantsMouse && rmb && !rmbRelativeMode)
+    {
+        SDL_SetWindowRelativeMouseMode(win, true);     // oculta cursor + movimiento relativo
+        SDL_SetWindowMouseGrab(win, true);  // captura el ratón
+        rmbRelativeMode = true;
+    }
+    else if ((!rmb || uiWantsMouse) && rmbRelativeMode)
+    {
+        SDL_SetWindowRelativeMouseMode(win, false);   // vuelve el cursor
+        SDL_SetWindowMouseGrab(win, false);
+        rmbRelativeMode = false;
     }
 
     // Handle keyboard shortcuts
