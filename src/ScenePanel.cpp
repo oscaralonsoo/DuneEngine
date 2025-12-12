@@ -19,7 +19,6 @@
 #include "Framebuffer.h"
 #include "PrimitiveMesh.h"
 
-
 bool ScenePanel::Start()
 {
     // Framebuffers independientes para Scene y Game
@@ -39,22 +38,34 @@ void ScenePanel::OnImGuiRender()
     RenderToolbarControls();
     ImGui::Separator();
 
+    bool isPlaying = GameTime::IsPlaying();
+
+    if (m_SwitchToGameOnPlay && isPlaying)
+    {
+        m_CurrentView = ViewType::Game;
+        m_SwitchToGameOnPlay = false; // solo una vez
+    }
+
     if (ImGui::BeginTabBar("ViewTabs"))
     {
-        // Scene View → Editor Camera siempre
+        // --- Scene Tab ---
+        ImGui::BeginDisabled(isPlaying); // bloqueada durante Play
         if (ImGui::BeginTabItem("Scene"))
         {
-            m_ShowSceneView = true;
-            m_ShowGameView  = false;
+            m_CurrentView = ViewType::Scene; 
             RenderSceneView();
             ImGui::EndTabItem();
         }
+        ImGui::EndDisabled();
 
-        // Game View → MainCamera siempre
-        if (ImGui::BeginTabItem("Game"))
+        // --- Game Tab ---
+        ImGuiTabItemFlags gameTabFlags = 0;
+        if (isPlaying)
+            gameTabFlags |= ImGuiTabItemFlags_SetSelected; 
+
+        if (ImGui::BeginTabItem("Game", nullptr, gameTabFlags))
         {
-            m_ShowSceneView = false;
-            m_ShowGameView  = true;
+            m_CurrentView = ViewType::Game; 
             RenderGameView();
             ImGui::EndTabItem();
         }
@@ -64,6 +75,7 @@ void ScenePanel::OnImGuiRender()
 
     ImGui::End();
 }
+
 
 void ScenePanel::RenderSceneView()
 {
@@ -134,10 +146,10 @@ void ScenePanel::RenderGameView()
     ImVec2 viewSize = ImGui::GetContentRegionAvail();
     uint32_t width  = (uint32_t)viewSize.x;
     uint32_t height = (uint32_t)viewSize.y;
-
-    // Buscar MainCamera siempre
+    
     auto* scene = Engine::GetInstance().scene.get();
     CameraComponent* mainCamera = nullptr;
+    std::shared_ptr<GameObject> mainCameraGO = nullptr;
 
     if (scene)
     {
@@ -146,33 +158,61 @@ void ScenePanel::RenderGameView()
             if (go->GetName() == "MainCamera")
             {
                 mainCamera = go->GetComponent<CameraComponent>();
-                break;
+                if (mainCamera)
+                {
+                    mainCameraGO = go;
+                    break;
+                }
+            }
+        }
+
+        if (!mainCamera)
+        {
+            for (auto& go : scene->GetGameObjects())
+            {
+                auto* cam = go->GetComponent<CameraComponent>();
+                if (cam)
+                {
+                    mainCamera = cam;
+                    mainCameraGO = go;
+                    break;
+                }
             }
         }
     }
 
     if (mainCamera)
     {
-        mainCamera->Update();
+        mainCamera->SetViewportSize((float)width, (float)height);
+        mainCamera->Update();                    // Genera ViewMatrix + posición
 
+        // Resize framebuffer si hace falta
         if (width > 0 && height > 0 &&
             (m_GameFramebuffer->GetWidth() != width || m_GameFramebuffer->GetHeight() != height))
         {
             m_GameFramebuffer->Resize(width, height);
         }
 
+        // Render
         auto* renderer = Engine::GetInstance().renderer.get();
         if (renderer)
             renderer->RenderToFramebuffer(m_GameFramebuffer, mainCamera);
 
+        // Mostrar textura
         ImGui::Image((ImTextureID)(uintptr_t)m_GameFramebuffer->GetColorAttachment(),
                      viewSize, ImVec2(0, 1), ImVec2(1, 0));
+
+        glm::vec3 camPos = mainCamera->GetPosition();
+        std::string camName = mainCameraGO ? mainCameraGO->GetName() : std::string("Unnamed Camera");
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 18.0f); // superponer texto arriba del frame
+        ImGui::TextColored(ImVec4(0.9f,0.9f,0.9f,0.9f), "Cam: %s (%.2f, %.2f, %.2f)", camName.c_str(),
+                           camPos.x, camPos.y, camPos.z);
     }
     else
     {
         ImGui::Text("Game View");
-        ImGui::TextColored(ImVec4(1,0.5f,0,1), "No MainCamera found!");
-        ImGui::Text("Create a GameObject named 'MainCamera' with a CameraComponent.");
+        ImGui::TextColored(ImVec4(1,0.5f,0,1), "No camera found in the scene!");
+        ImGui::Text("Create a GameObject with a CameraComponent or name one 'MainCamera'.");
     }
 
     ImGui::EndChild();
@@ -189,6 +229,10 @@ void ScenePanel::RenderToolbarControls()
     {
         if (!isPlaying)
         {
+            // Guardamos la tab actual antes de Play
+            m_LastViewBeforePlay = m_CurrentView;
+
+            m_SwitchToGameOnPlay = true;
             scene->SaveInitialSnapshot();
             GameTime::Play();
         }
@@ -196,6 +240,9 @@ void ScenePanel::RenderToolbarControls()
         {
             GameTime::Stop();
             scene->RestoreSnapshot();
+
+            // Restaurar tab anterior
+            m_CurrentView = m_LastViewBeforePlay;
         }
     }
 
@@ -226,6 +273,7 @@ void ScenePanel::RenderToolbarControls()
     ImGui::SameLine();
     ImGui::Text("RealTime: %.2f", GameTime::GetRealTimeSinceStartup());
 }
+
 
 void ScenePanel::HandleSceneDragDrop(ImVec2 sceneViewSize, float mouseX, float mouseY)
 {
@@ -320,8 +368,6 @@ void ScenePanel::HandleAssetDrop(const std::filesystem::path& assetPath, float m
             return;
     }
 }
-
-
 
 void ScenePanel::CleanUp()
 {

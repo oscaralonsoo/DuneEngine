@@ -302,14 +302,18 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
 
     framebuffer->Bind();
 
-    camera->SetViewportSize((float)framebuffer->GetWidth(), (float)framebuffer->GetHeight());
+    ICamera* prevRenderCamera = renderCamera;
+    renderCamera = camera;
 
+    // Ajustar viewport al tamaño del framebuffer
+    camera->SetViewportSize((float)framebuffer->GetWidth(), (float)framebuffer->GetHeight());
     glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
 
     glm::mat4 view = camera->GetViewMatrix();
     glm::mat4 projection = camera->GetProjectionMatrix();
     mFrustum.Update(view, projection);
 
+    // Clear del framebuffer
     RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -321,7 +325,7 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
 
     for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
-        renderGameObject(go, camera);
+        renderGameObject(go, renderCamera);
     }
 
     Renderer::SkyboxPass();
@@ -330,4 +334,14 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
     Renderer::SelectedPass();
 
     framebuffer->Unbind();
+
+    renderCamera = prevRenderCamera;
+    
+    // Restaurar viewport a tamaño de ventana
+    int w, h;
+    SDL_GetWindowSizeInPixels(
+        Engine::GetInstance().window->GetWindow(),
+        &w, &h);
+    glViewport(0, 0, w, h);
 }
+

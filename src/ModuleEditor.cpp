@@ -13,7 +13,6 @@
 #include <filesystem>
 #include <cstring>
 #include "GameTime.h"
-#include "ToolbarPanel.h"
 #include "ScenePanel.h"
 
 ModuleEditor::ModuleEditor()

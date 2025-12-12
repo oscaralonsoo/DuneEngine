@@ -7,7 +7,8 @@
 #include "Framebuffer.h"
 #include <filesystem>
 
-// ScenePanel that functions like Unity's Scene and Game panels
+enum class ViewType { Scene, Game };
+
 class ScenePanel : public EditorPanel
 {
 public:
@@ -27,12 +28,12 @@ private:
 
     bool m_ShowSceneView = true;
     bool m_ShowGameView = false;
+
     Framebuffer* m_SceneFramebuffer = nullptr;
     Framebuffer* m_GameFramebuffer  = nullptr;
 
-
-    // Panel sizing constants
-    static constexpr float kDefaultFraction = 0.18f;
-    static constexpr float kMinPanelWidth = 80.0f;
-    static constexpr float kMinCenterWidth = 180.0f;
+    bool m_SwitchToGameOnPlay = false;
+    
+    ViewType m_CurrentView = ViewType::Scene;
+    ViewType m_LastViewBeforePlay = ViewType::Scene;
 };
