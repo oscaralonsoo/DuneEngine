@@ -19,7 +19,6 @@ public:
     void OnImGuiRender() override;
     void CleanUp() override;
 
-    void DrawSceneLockedOverlay();
 
 private:
     void RenderSceneView();
@@ -33,6 +32,7 @@ private:
     Framebuffer* m_SceneFramebuffer = nullptr;
     Framebuffer* m_GameFramebuffer  = nullptr;
     bool m_ForceRestoreView = false;
+    
     ViewType m_CurrentView = ViewType::Scene;
     ViewType m_LastViewBeforePlay = ViewType::Scene;
 };
