@@ -44,6 +44,8 @@ public:
     void RestoreSnapshot();
 
     void RebuildQuadtree();
+
+    void AddGameObject(std::shared_ptr<GameObject> go);
 private:
     std::shared_ptr<GameObject> root;
     std::shared_ptr<GameObject> test;
