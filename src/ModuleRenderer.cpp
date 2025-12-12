@@ -10,8 +10,8 @@
 #include <functional>
 #include "AABB.h"
 #include "CameraComponent.h"
+#include "EditorCamera.h"
 #include "GameTime.h"
-#include "Globals.h"
 
 namespace
 {
@@ -135,7 +135,7 @@ namespace
 }
 
 
-void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
+void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go, ICamera* camera)
 {
     MaterialComponent*  materialComp  = go->GetComponent<MaterialComponent>();
     MeshComponent*      meshComp      = go->GetComponent<MeshComponent>();
@@ -151,8 +151,7 @@ void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
             const AABB& localBox = mesh->GetAABB();
             AABB worldBox        = TransformAABB(localBox, world);
 
-            bool inside = mFrustum.ContainsAABB(worldBox);
-            if (inside)
+            if (mFrustum.ContainsAABB(worldBox))
             {
                 RenderObject ro;
                 ro.transform = world;
@@ -161,17 +160,18 @@ void ModuleRenderer::renderGameObject(const std::shared_ptr<GameObject>& go)
                 ro.selected  = go->IsSelected();
 
                 Renderer::Submit(ro);
-
                 mVisibleBoxes.push_back(worldBox);
             }
         }
     }
 
+    // Render children recursively
     for (auto& child : go->GetChildren())
     {
-        renderGameObject(child);
+        renderGameObject(child, camera);
     }
 }
+
 
 ModuleRenderer::ModuleRenderer() : Module()
 {
@@ -249,15 +249,18 @@ bool ModuleRenderer::Update()
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    for (auto go : Engine::GetInstance().scene->GetGameObjects())
+    if (isPlaying)
     {
-        renderGameObject(go);
-    }
+        for (auto go : Engine::GetInstance().scene->GetGameObjects())
+        {
+            renderGameObject(go, renderCamera);
+        }
 
-    Renderer::SkyboxPass();
-    Renderer::ForwardPass();
-    Renderer::TransparentPass();
-    Renderer::SelectedPass();
+        Renderer::SkyboxPass();
+        Renderer::ForwardPass();
+        Renderer::TransparentPass();
+        Renderer::SelectedPass();
+    }
 
     if (!isPlaying)
     {
@@ -290,4 +293,41 @@ bool ModuleRenderer::CleanUp()
     renderCamera = nullptr;
 
     return true;
+}
+
+void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* camera)
+{
+    if (!framebuffer || !camera)
+        return;
+
+    framebuffer->Bind();
+
+    camera->SetViewportSize((float)framebuffer->GetWidth(), (float)framebuffer->GetHeight());
+
+    glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
+
+    glm::mat4 view = camera->GetViewMatrix();
+    glm::mat4 projection = camera->GetProjectionMatrix();
+    mFrustum.Update(view, projection);
+
+    RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    for (auto go : Engine::GetInstance().scene->GetGameObjects())
+    {
+        renderGameObject(go, camera);
+    }
+
+    Renderer::SkyboxPass();
+    Renderer::ForwardPass();
+    Renderer::TransparentPass();
+    Renderer::SelectedPass();
+
+    framebuffer->Unbind();
 }
