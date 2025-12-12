@@ -43,9 +43,9 @@ bool ModuleImGui::Start()
     style.Colors[ImGuiCol_FrameBg] = ImVec4(0.72f, 0.67f, 0.58f, 1.00f);
     style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.77f, 0.72f, 0.63f, 1.00f);
     style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.55f, 0.50f, 0.42f, 1.00f);
-    style.Colors[ImGuiCol_Header] = ImVec4(0.82f, 0.71f, 0.55f, 1.00f); 
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.90f, 0.80f, 0.65f, 1.00f); 
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.75f, 0.60f, 0.45f, 1.00f);
+    style.Colors[ImGuiCol_Header] = ImVec4(0.82f, 0.71f, 0.55f, 0.30f); 
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.90f, 0.80f, 0.65f, 0.30f);
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.75f, 0.60f, 0.45f, 0.70f);
     style.Colors[ImGuiCol_TitleBg] = ImVec4(0.82f, 0.71f, 0.55f, 1.00f); 
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.75f, 0.60f, 0.45f, 1.00f); 
     style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.82f, 0.71f, 0.55f, 0.50f); 
