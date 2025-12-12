@@ -11,8 +11,8 @@
 #include <imgui.h>
 #include <algorithm>
 #include <filesystem>
-#include "GameTime.h" 
-#include "ToolbarPanel.h"
+#include <cstring>
+#include "GameTime.h"
 #include "ScenePanel.h"
 
 ModuleEditor::ModuleEditor()

@@ -9,7 +9,6 @@ class ModuleRenderer;
 class ModuleImGui;
 class ModuleEditor;
 class ModuleScene;
-class Gizmo;
 
 class Engine
 {
@@ -58,5 +57,4 @@ public:
 	std::shared_ptr<ModuleImGui> imgui;
 	std::shared_ptr<ModuleEditor> editor;
 	std::shared_ptr<ModuleScene> scene;
-	std::shared_ptr<Gizmo> gizmo;
 };

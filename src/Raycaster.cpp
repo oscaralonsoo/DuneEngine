@@ -11,14 +11,9 @@ Raycaster::Raycaster()
 {
 }
 
-Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
+Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY, int width, int height) const
 {
     ICamera* camera = Engine::GetInstance().renderer->renderCamera;
-    
-    int width, height;
-    SDL_GetWindowSizeInPixels(
-        Engine::GetInstance().window->GetWindow(),
-        &width, &height);
 
     float x = (2.0f * mouseX) / width - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / height;
@@ -44,9 +39,11 @@ Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
 std::shared_ptr<GameObject> Raycaster::PickObject(
     float mouseX,
     float mouseY,
+    int width,
+    int height,
     const std::vector<std::shared_ptr<GameObject>> objects) const
 {
-    Ray ray = ScreenPointToRay(mouseX, mouseY);
+    Ray ray = ScreenPointToRay(mouseX, mouseY, width, height);
 
     std::shared_ptr<GameObject> closest = nullptr;
     float closestT = std::numeric_limits<float>::max();
