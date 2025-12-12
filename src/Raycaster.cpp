@@ -11,6 +11,15 @@ Raycaster::Raycaster()
 {
 }
 
+Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY) const
+{
+    int w = 1280, h = 720;
+    if (Engine::GetInstance().window && Engine::GetInstance().window->GetWindow())
+        SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &w, &h);
+
+    return ScreenPointToRay(mouseX, mouseY, w, h);
+}
+
 Ray Raycaster::ScreenPointToRay(float mouseX, float mouseY, int width, int height) const
 {
     ICamera* camera = Engine::GetInstance().renderer->renderCamera;

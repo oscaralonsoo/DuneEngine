@@ -10,6 +10,7 @@
 #include "Globals.h"
 #include <iostream>
 #include "GameTime.h" 
+#include "Gizmo.h"
 
 Engine::Engine()
 {
@@ -19,6 +20,7 @@ Engine::Engine()
     imgui = std::make_shared<ModuleImGui>();
     editor = std::make_shared<ModuleEditor>();
     scene = std::make_shared<ModuleScene>();
+    gizmo = std::make_shared<Gizmo>();
 
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));

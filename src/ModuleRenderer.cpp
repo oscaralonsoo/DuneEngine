@@ -12,6 +12,9 @@
 #include "CameraComponent.h"
 #include "EditorCamera.h"
 #include "GameTime.h"
+#include "Globals.h"
+#include "Gizmo.h"
+#include "ModuleInput.h"
 
 namespace
 {
@@ -276,6 +279,13 @@ bool ModuleRenderer::Update()
             Ray lastRay = rc->GetLastRay();
             DebugDrawRay(lastRay, 100.0f, view, projection, glm::vec3(1.0f, 1.0f, 0.0f));
         }
+    }
+
+    if (!isPlaying)
+    {
+        auto* input = Engine::GetInstance().input.get();
+        SDL_Point mp = input->GetMousePosition();
+        Engine::GetInstance().gizmo->Update((float)mp.x, (float)mp.y);
     }
 
     return true;

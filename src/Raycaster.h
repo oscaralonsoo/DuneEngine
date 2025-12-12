@@ -27,6 +27,7 @@ public:
     Raycaster();
     ~Raycaster() = default;
 
+    Ray ScreenPointToRay(float mouseX, float mouseY) const;
     Ray ScreenPointToRay(float mouseX, float mouseY, int width, int height) const;
 
     bool HasLastRay() const { return mHasLastRay; }
