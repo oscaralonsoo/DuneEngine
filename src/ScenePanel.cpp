@@ -2,8 +2,11 @@
 #include "HierarchyPanel.h"
 #include "Engine.h"
 #include "ModuleScene.h"
+#include "ModuleInput.h"
+#include "ResourceUtils.h"
 #include <imgui.h>
 #include <algorithm>
+#include <filesystem>
 #include "RendererAPI.h"
 #include "MaterialComponent.h"
 #include "TransformComponent.h"
@@ -14,6 +17,8 @@
 #include "CameraComponent.h"
 #include "ModuleWindow.h"
 #include "Framebuffer.h"
+#include "PrimitiveMesh.h"
+
 
 bool ScenePanel::Start()
 {
@@ -83,6 +88,19 @@ void ScenePanel::RenderSceneView()
 
     ImGui::Image((ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
                  sceneViewSize, ImVec2(0, 1), ImVec2(1, 0));
+
+    // Calculate mouse position relative to the scene view for drag and drop
+    float mouseX = -1.0f, mouseY = -1.0f;
+    if (ImGui::IsItemHovered())
+    {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        ImVec2 itemMin = ImGui::GetItemRectMin();
+        mouseX = mousePos.x - itemMin.x;
+        mouseY = mousePos.y - itemMin.y;
+    }
+
+    // Handle drag and drop for Scene View only
+    HandleSceneDragDrop(sceneViewSize, mouseX, mouseY);
 
     ImGui::EndChild();
 }
@@ -189,6 +207,99 @@ void ScenePanel::RenderToolbarControls()
     ImGui::SameLine();
     ImGui::Text("RealTime: %.2f", GameTime::GetRealTimeSinceStartup());
 }
+
+void ScenePanel::HandleSceneDragDrop(ImVec2 sceneViewSize, float mouseX, float mouseY)
+{
+    if (ImGui::BeginDragDropTarget())
+    {
+        // Handle assets from ProjectPanel
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+        {
+            const char* relativePath = (const char*)payload->Data;
+            if (relativePath && relativePath[0] != '\0')
+            {
+                std::filesystem::path fullPath = "Assets" / std::filesystem::path(relativePath);
+                HandleAssetDrop(fullPath, mouseX, mouseY);
+            }
+        }
+        // Handle external files from File Explorer
+        else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
+        {
+            const char* path = (const char*)payload->Data;
+            if (path && path[0] != '\0')
+            {
+                std::filesystem::path assetPath = path;
+                HandleAssetDrop(assetPath, mouseX, mouseY);
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+
+    // Also handle file drops via ModuleInput
+    auto* input = Engine::GetInstance().input.get();
+    if (input && input->WasFileDropped())
+    {
+        std::string path = input->GetDraggedFile();
+        if (!path.empty())
+        {
+            HandleAssetDrop(std::filesystem::path(path));
+            input->ClearDropState();
+            input->ClearDraggedFile();
+        }
+    }
+}
+
+void ScenePanel::HandleAssetDrop(const std::filesystem::path& assetPath, float mouseX, float mouseY)
+{
+    auto* scene = Engine::GetInstance().scene.get();
+    if (!scene) return;
+
+    ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
+
+    GameObject* hoveredObject = nullptr;
+    if (mouseX >= 0.0f && mouseY >= 0.0f)
+    {
+        auto picked = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+        hoveredObject = picked.get();
+    }
+
+    switch (type)
+    {
+        case ResourceType::Unknown:
+            return;
+
+        case ResourceType::Texture:
+        {
+            if (!hoveredObject)
+                return;
+
+            auto* matComp = hoveredObject->GetComponent<MaterialComponent>();
+            if (!matComp)
+                return;
+
+            auto material = matComp->GetMaterial();
+            if (!material)
+                return;
+
+            material->GetTextures().albedo = std::make_shared<Texture>(assetPath);
+            matComp->SetMaterial(material);
+            return;
+        }
+
+        case ResourceType::Model:
+            scene->CreateGameObjectFromModel(assetPath);
+            return;
+
+        case ResourceType::Prefab:
+            scene->CreateGameObjectFromPrefab(assetPath);
+            return;
+
+        default:
+            return;
+    }
+}
+
+
 
 void ScenePanel::CleanUp()
 {

@@ -5,6 +5,7 @@
 #include "GameTime.h"
 #include <memory>
 #include "Framebuffer.h"
+#include <filesystem>
 
 // ScenePanel that functions like Unity's Scene and Game panels
 class ScenePanel : public EditorPanel
@@ -21,6 +22,8 @@ private:
     void RenderSceneView();
     void RenderGameView();
     void RenderToolbarControls();
+    void HandleSceneDragDrop(ImVec2 sceneViewSize, float mouseX, float mouseY);
+    void HandleAssetDrop(const std::filesystem::path& assetPath, float mouseX = -1.0f, float mouseY = -1.0f);
 
     bool m_ShowSceneView = true;
     bool m_ShowGameView = false;
