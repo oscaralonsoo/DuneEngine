@@ -13,6 +13,7 @@
 #include <string.h>
 #include <filesystem>
 #include "HierarchyPanel.h"
+#include "Gizmo.h"
 
 #define MAX_KEYS 300
 
@@ -100,6 +101,13 @@ bool ModuleInput::PreUpdate()
             // Handle object picking on left mouse button click
             if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse)
             {
+                auto& engine = Engine::GetInstance();
+                SDL_Point mp = GetMousePosition();
+
+                // Si el gizmo lo coge, NO hacemos picking de objetos
+                if (engine.gizmo && engine.gizmo->OnMouseDown((float)mp.x, (float)mp.y))
+                    break;
+
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
                 std::shared_ptr<GameObject> selected =
@@ -118,6 +126,11 @@ bool ModuleInput::PreUpdate()
             break;
 
         case SDL_EVENT_MOUSE_BUTTON_UP:
+            if (event.button.button == SDL_BUTTON_LEFT)
+            {
+                auto& engine = Engine::GetInstance();
+                if (engine.gizmo) engine.gizmo->OnMouseUp();
+            }
             mouseButtons[event.button.button - 1] = KEY_UP;
             break;
 
