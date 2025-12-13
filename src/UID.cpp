@@ -15,14 +15,13 @@ UID::UID()
     data[2] = (data[2] & 0x3FFFFFFF) | 0x80000000;
 
     std::stringstream ss;
-    ss << "{"
-       << std::hex << std::setfill('0') << std::setw(8) << data[0] << "-"
-       << std::setw(4) << (data[1] >> 16) << "-"
-       << std::setw(4) << (data[1] & 0xFFFF) << "-"
-       << std::setw(4) << (data[2] >> 16) << "-"
+    ss << std::hex << std::nouppercase << std::setfill('0')
+       << std::setw(8) << data[0] << "_"
+       << std::setw(4) << (data[1] >> 16) << "_"
+       << std::setw(4) << (data[1] & 0xFFFF) << "_"
+       << std::setw(4) << (data[2] >> 16) << "_"
        << std::setw(4) << (data[2] & 0xFFFF)
-       << std::setw(8) << data[3]
-       << "}";
+       << std::setw(8) << data[3];
 
     mID = ss.str();
 }

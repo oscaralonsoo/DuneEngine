@@ -119,4 +119,16 @@ public:
 
         return UID(uidStr);
     }
+
+    static std::string GetLibraryPath(const UID &uid)
+    {
+        std::filesystem::path libPath = std::filesystem::path("Library/Textures/" + uid.ToString() + ".bin");
+
+        if (std::filesystem::exists(libPath))
+        {
+            return libPath.string();
+        }
+
+        return "";
+    }
 };

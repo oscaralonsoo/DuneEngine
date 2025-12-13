@@ -106,17 +106,17 @@ GLenum ToGLFormat(ImageFormat format)
     return GL_RGBA;
 }
 
-Texture::Texture(const TextureProperties &props, const void *pixelData)
+Texture::Texture(const TextureProperties &props, const void *pixelData) : Resource(ResourceType::Texture)
 {
     mProperties = props;
     mID = InitializeTexture(pixelData, props.width, props.height);
 }
 
-Texture::Texture(const TextureImportData importData)
+Texture::Texture(const TextureImportData importData) : Resource(ResourceType::Texture)
 {
     mProperties.width = static_cast<GLuint>(importData.width);
     mProperties.height = static_cast<GLuint>(importData.height);
-    
+
     switch (importData.channels)
     {
     case 1:

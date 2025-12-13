@@ -8,9 +8,9 @@ public:
     ResourceSaver() = default;
     ~ResourceSaver() = default;
 
-    static void Save(const TextureImportData &importData);
-    static void SaveBinary(const TextureImportData& importData);
-    static void SaveMeta(const TextureImportData& importData);
+    static void Save(const ImportData &importData);
+    static void SaveBinary(const ImportData& importData);
+    static void SaveMeta(const ImportData& importData);
 };
 
 std::ostream &operator<<(std::ostream &os, const TextureImportData &texture);

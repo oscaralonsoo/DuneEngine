@@ -18,8 +18,6 @@ std::shared_ptr<Mesh> Renderer::sSkyboxCube;
 
 void Renderer::Init()
 {
-    ilInit();
-
     std::vector<std::shared_ptr<Texture>> faces;
     std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
     faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/right.jpg")));

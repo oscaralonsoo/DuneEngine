@@ -5,13 +5,6 @@
 
 TextureImportData ResourceImporter::Import(const std::filesystem::path &path, TextureImportData importData)
 {
-    static bool initialized = false;
-    if (!initialized)
-    {
-        ilInit();
-        initialized = true;
-    }
-
     std::ifstream f(path, std::ios::binary);
 
     std::vector<unsigned char> buf((std::istreambuf_iterator<char>(f)),

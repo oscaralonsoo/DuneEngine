@@ -1,12 +1,12 @@
 #include "ResourceLoader.h"
+#include "ResourceUtils.h"
 #include "Globals.h"
 
 #include <fstream>
 
 TextureImportData ResourceLoader::Load(const UID uid)
 {
-    std::string inputPath = "Assets/textures/" + uid.ToString() + ".texbin";
-    std::ifstream in(inputPath, std::ios::binary);
+    std::ifstream in(ResourceUtils::GetLibraryPath(uid), std::ios::binary);
 
     TextureImportData importData;
     importData.uid = uid;

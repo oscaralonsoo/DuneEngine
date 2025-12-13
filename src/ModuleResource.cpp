@@ -6,49 +6,77 @@
 #include "ResourceUtils.h"
 #include "Globals.h"
 
+#include "IL/il.h"
+
+bool ModuleResource::Awake()
+{
+    // Devil Init
+    ilInit();
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+
+    return true;
+}
+
+bool ModuleResource::Start()
+{
+
+    return true;
+}
+
 std::shared_ptr<Resource> ModuleResource::RequestResource(std::filesystem::path assetPath)
 {
     std::filesystem::path metaPath = assetPath;
     metaPath += ".meta";
 
     if (!std::filesystem::exists(metaPath))
-    {
         return Find(ImportFile(assetPath));
-    }
 
     UID uid = ResourceUtils::GetUIDFromMeta(metaPath);
 
     if (auto resource = Find(uid))
         return resource;
 
- 
-    return CreateResource(ResourceLoader::Load(uid));
+    std::string binPath = ResourceUtils::GetLibraryPath(uid);
+    if (!binPath.empty())
+    {
+        return CreateResource(ResourceLoader::Load(uid));
+    }
+    else
+    {
+        LOG_INFO("adios");
+        return Find(ImportFile(assetPath));
+    }
 }
 
 UID ModuleResource::ImportFile(std::filesystem::path assetPath)
 {
-    TextureImportData importData;
+    UID uid = UID();
 
-    importData.uid = UID();
-    importData.assetPath = assetPath;
-
-    ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
-
-    switch (type)
+    switch (ResourceUtils::GetTypeFromExtension(assetPath))
     {
     case ResourceType::Texture:
-        importData = ResourceImporter::Import(assetPath, importData);
-        break;
+    {
+        TextureImportData importData;
+        importData.assetPath = assetPath;
+        importData.uid = uid;
+        importData.type = ResourceType::Texture;
 
-    default:
+        importData = ResourceImporter::Import(assetPath, importData);
+
+        ResourceSaver::Save(importData);
+
+        CreateResource(importData);
         break;
     }
 
-    ResourceSaver::Save(importData);
+        // case ResourceType::Mesh:
+        //     importData = std::make_unique<MeshImportData>();
+        //     ResourceImporter::Import(assetPath, static_cast<MeshImportData&>(*importData));
+        //     break;
+    }
 
-    CreateResource(importData);
-
-    return importData.uid;
+    return uid;
 }
 
 std::shared_ptr<Resource> ModuleResource::Find(UID uid)
@@ -62,7 +90,7 @@ std::shared_ptr<Resource> ModuleResource::Find(UID uid)
     return nullptr;
 }
 
-std::shared_ptr<Resource> ModuleResource::CreateResource(TextureImportData importData)
+std::shared_ptr<Resource> ModuleResource::CreateResource(const ImportData &importData)
 {
     std::shared_ptr<Resource> resource = nullptr;
 
@@ -70,7 +98,7 @@ std::shared_ptr<Resource> ModuleResource::CreateResource(TextureImportData impor
     {
     case ResourceType::Texture:
     {
-        resource = std::make_shared<Texture>(importData);
+        resource = std::make_shared<Texture>(static_cast<const TextureImportData &>(importData));
         break;
     }
     case ResourceType::Mesh:
