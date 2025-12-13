@@ -376,6 +376,13 @@ std::shared_ptr<GameObject> ModuleScene::CreateQuad()
     return gameObject;
 }
 
+std::shared_ptr<GameObject> ModuleScene::CreateCamera()
+{
+    auto gameObject = CreateGameObjectWithName("Camera");
+    gameObject->CreateComponent(ComponentType::Camera);
+    return gameObject;
+}
+
 std::shared_ptr<GameObject> ModuleScene::CreateEmptyGameObject()
 {
     auto gameObject = CreateGameObjectWithName("GameObject");

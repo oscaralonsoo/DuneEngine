@@ -305,6 +305,13 @@ void HierarchyPanel::RenderGameObjectContextMenu(std::shared_ptr<GameObject> gam
                 ImGui::EndMenu();
             }
             
+            if (ImGui::MenuItem("Camera"))
+            {
+                editingObject = nullptr;
+                auto child = scene->CreateCamera();
+                child->SetParent(gameObject);
+            }
+            
             ImGui::EndMenu();
         }
         if (ImGui::MenuItem("Unparent"))
@@ -395,6 +402,11 @@ void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
                 scene->CreateTorus();
             }
             ImGui::EndMenu();
+        }
+        
+        if (ImGui::MenuItem("Camera"))
+        {
+            scene->CreateCamera();
         }
         
         ImGui::EndPopup();

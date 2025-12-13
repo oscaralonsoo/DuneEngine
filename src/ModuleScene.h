@@ -41,6 +41,7 @@ public:
     std::shared_ptr<GameObject> CreateTorus();
     std::shared_ptr<GameObject> CreateCapsule();
     std::shared_ptr<GameObject> CreateQuad();
+    std::shared_ptr<GameObject> CreateCamera();
     std::shared_ptr<GameObject> CreateGameObjectFromModel(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> CreateGameObjectFromPrefab(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent = nullptr);
