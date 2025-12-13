@@ -1,8 +1,3 @@
-// Gizmo.cpp (COMPLETO)
-// Requiere en Gizmo.h:
-// enum class GizmoAxis { None, X, Y, Z, Center, PlaneXY, PlaneXZ, PlaneYZ };
-// y miembro: glm::vec3 mTranslatePlaneN;
-
 #include "Gizmo.h"
 
 #include "Engine.h"
@@ -852,7 +847,16 @@ void Gizmo::Render()
 
     auto highlight = [&](GizmoAxis axis, glm::vec3 c)
     {
-        if (axis == mHoveredAxis || axis == mActiveAxis) c *= 1.5f;
+        // Si el eje está siendo arrastrado (activo), hacerlo más oscuro
+        if (axis == mActiveAxis && mDragging)
+        {
+            c *= 0.5f; // Más oscuro durante el drag
+        }
+        // Si solo está hover, hacerlo más brillante
+        else if (axis == mHoveredAxis)
+        {
+            c *= 1.5f; // Más brillante en hover
+        }
         return c;
     };
 
