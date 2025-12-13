@@ -174,7 +174,12 @@ void ScenePanel::RenderGameView()
 
         m_ViewController->ResizeFramebufferIfNeeded(framebuffer, width, height);
 
-        auto* renderer = engine.renderer.get();
+        // Render
+        auto* renderer = Engine::GetInstance().renderer.get();
+        if (renderer && renderer->editorCamera)
+        {
+            renderer->editorCamera->SetInputEnabled(false);
+        }
         if (renderer)
             renderer->RenderToFramebuffer(framebuffer, mainCamera);
     }
