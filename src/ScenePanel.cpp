@@ -141,7 +141,9 @@ void ScenePanel::RenderSceneView()
         ImVec2 mousePos = ImGui::GetMousePos();
         ImVec2 itemMin  = ImGui::GetItemRectMin();
 
-
+        mouseX = mousePos.x - itemMin.x;
+        mouseY = mousePos.y - itemMin.y;
+    }
 
     //Input blocked
     if (!sceneEditable)
@@ -150,22 +152,6 @@ void ScenePanel::RenderSceneView()
         return;
     }
 
-    //Selection
-    if (ImGui::IsItemClicked(0))
-    {
-        auto* scene = Engine::GetInstance().scene.get();
-        std::shared_ptr<GameObject> picked =
-            scene->GetRaycaster()->PickObject(
-                ImGui::GetMousePos().x - ImGui::GetItemRectMin().x,
-                ImGui::GetMousePos().y - ImGui::GetItemRectMin().y,
-                width, height,
-                scene->GetGameObjects());
-
-        scene->SetSelected(picked);
-    }
-
-    // Drag & Drop
-    float mouseX = -1.0f, mouseY = -1.0f;
     if (ImGui::IsItemHovered())
     {
         ImVec2 mousePos = ImGui::GetMousePos();
