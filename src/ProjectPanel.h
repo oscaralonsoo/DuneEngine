@@ -42,6 +42,7 @@ private:
 
     // Directory tree
     void RenderDirectoryTree(const std::filesystem::path& path, const std::filesystem::path& basePath);
+    bool HasSubdirectories(const std::filesystem::path& path);
 
     // Asset operations
     void RefreshAssets();
@@ -52,8 +53,6 @@ private:
     void RenderDeleteConfirmationModal();
     void RenderModalDialogs();
     void HandleExternalFileDrop(const std::filesystem::path& filePath);
-
-
 
     std::filesystem::path selectedFolder = "Assets";
     std::set<std::filesystem::path> selectedItems;

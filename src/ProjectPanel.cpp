@@ -116,6 +116,24 @@ void ProjectPanel::OnImGuiRender()
     renamedThisFrame.clear();
 }
 
+bool ProjectPanel::HasSubdirectories(const std::filesystem::path& path)
+{
+    try
+    {
+        for (const auto& entry : std::filesystem::directory_iterator(path))
+        {
+            if (entry.is_directory())
+                return true;
+        }
+    }
+    catch (...)
+    {
+        // If we can't read the directory, assume it has no subdirectories
+        return false;
+    }
+    return false;
+}
+
 void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path,
                                        const std::filesystem::path& basePath)
 {
@@ -134,10 +152,15 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path,
         if (entryPath == selectedFolder)
             flags |= ImGuiTreeNodeFlags_Selected;
 
+        // Si la carpeta no tiene subcarpetas, agregar flag Leaf para ocultar la flecha
+        if (!HasSubdirectories(entryPath))
+            flags |= ImGuiTreeNodeFlags_Leaf;
+
         GLuint textureID = GetIconOrThumbnail(entryPath);
         if (textureID != 0)
         {
-            ImGui::Image((ImTextureID)(intptr_t)textureID, ImVec2(16, 16));
+            // Voltear la textura verticalmente usando coordenadas UV
+            ImGui::Image((ImTextureID)(intptr_t)textureID, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0));
             ImGui::SameLine();
         }
 
@@ -624,7 +647,6 @@ void ProjectPanel::HandleExternalFileDrop(const std::filesystem::path& filePath)
     }
     catch (const std::filesystem::filesystem_error& e)
     {
-        // Log error or show message to user
     
     }
 }
