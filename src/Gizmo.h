@@ -26,6 +26,10 @@ public:
     void SetTranslateSnap(float s) { mTranslateSnap = s; }
     float GetTranslateSnap() const { return mTranslateSnap; }
 
+    void SetViewportSize(int w, int h) { mViewportW = w; mViewportH = h; }
+
+    float WorldPerPixelAt(const glm::vec3& worldPos) const;
+
 private:
     std::shared_ptr<GameObject> GetSelected() const;
     TransformComponent* GetSelectedTransform() const;
@@ -69,4 +73,7 @@ private:
     // Scale state
     glm::vec3 mScaleStartLocal{1.0f, 1.0f, 1.0f};
     float     mUniformScaleStartDist = 1.0f;
+
+    int mViewportW = 1280;
+    int mViewportH = 720;
 };

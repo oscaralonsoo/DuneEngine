@@ -18,6 +18,7 @@
 #include "ModuleWindow.h"
 #include "Framebuffer.h"
 #include "PrimitiveMesh.h"
+#include "Gizmo.h"
 
 bool ScenePanel::Start()
 {
@@ -82,11 +83,16 @@ void ScenePanel::RenderSceneView()
     ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
     ImGui::BeginChild("SceneView", contentRegion, true,
-                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
     ImVec2 sceneViewSize = ImGui::GetContentRegionAvail();
     uint32_t width  = (uint32_t)sceneViewSize.x;
     uint32_t height = (uint32_t)sceneViewSize.y;
+
+    auto& engine = Engine::GetInstance();
+
+    if (engine.gizmo)
+        engine.gizmo->SetViewportSize((int)sceneViewSize.x, (int)sceneViewSize.y);
 
     if (width > 0 && height > 0 &&
         (m_SceneFramebuffer->GetWidth() != width || m_SceneFramebuffer->GetHeight() != height))
@@ -94,47 +100,76 @@ void ScenePanel::RenderSceneView()
         m_SceneFramebuffer->Resize(width, height);
     }
 
-    auto* renderer = Engine::GetInstance().renderer.get();
+    // Render escena
+    auto* renderer = engine.renderer.get();
     if (renderer && renderer->editorCamera)
         renderer->RenderToFramebuffer(m_SceneFramebuffer, renderer->editorCamera);
 
-    ImGui::Image((ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
-                 sceneViewSize, ImVec2(0, 1), ImVec2(1, 0));
+    // Mostrar framebuffer
+    ImGui::Image(
+        (ImTextureID)(uintptr_t)m_SceneFramebuffer->GetColorAttachment(),
+        sceneViewSize,
+        ImVec2(0, 1),
+        ImVec2(1, 0)
+    );
 
-    // Handle selection on click
-    if (ImGui::IsItemClicked(0))
+    float mouseX = -1.0f;
+    float mouseY = -1.0f;
+
+    bool hovered = ImGui::IsItemHovered();
+
+    if (hovered && !GameTime::IsPlaying() && engine.gizmo)
     {
-        auto* scene = Engine::GetInstance().scene.get();
-        std::shared_ptr<GameObject> picked = scene->GetRaycaster()->PickObject(
-            ImGui::GetMousePos().x - ImGui::GetItemRectMin().x,
-            ImGui::GetMousePos().y - ImGui::GetItemRectMin().y,
-            width, height,
-            scene->GetGameObjects());
-        if (picked)
-        {
-            scene->SetSelected(picked);
-        }
-        else
-        {
-            scene->SetSelected(nullptr);
-        }
+        if (ImGui::IsKeyPressed(ImGuiKey_W)) engine.gizmo->SetMode(GizmoMode::Translate);
+        if (ImGui::IsKeyPressed(ImGuiKey_E)) engine.gizmo->SetMode(GizmoMode::Rotate);
+        if (ImGui::IsKeyPressed(ImGuiKey_R)) engine.gizmo->SetMode(GizmoMode::Scale);
+        if (ImGui::IsKeyPressed(ImGuiKey_Q)) engine.gizmo->SetMode(GizmoMode::None);
     }
 
-    // Calculate mouse position relative to the scene view for drag and drop
-    float mouseX = -1.0f, mouseY = -1.0f;
-    if (ImGui::IsItemHovered())
+    if (hovered)
     {
         ImVec2 mousePos = ImGui::GetMousePos();
-        ImVec2 itemMin = ImGui::GetItemRectMin();
+        ImVec2 itemMin  = ImGui::GetItemRectMin();
+
         mouseX = mousePos.x - itemMin.x;
         mouseY = mousePos.y - itemMin.y;
+
+        if (engine.gizmo)
+            engine.gizmo->Update(mouseX, mouseY);
     }
 
-    // Handle drag and drop for Scene View only
-    HandleSceneDragDrop(sceneViewSize, mouseX, mouseY);
+    // Click izquierdo
+    if (hovered && ImGui::IsMouseClicked(0))
+    {
+        bool consumedByGizmo = false;
+
+        if (engine.gizmo)
+            consumedByGizmo = engine.gizmo->OnMouseDown(mouseX, mouseY);
+
+        if (!consumedByGizmo)
+        {
+            // Picking normal SOLO si el gizmo no consume el click
+            auto* scene = engine.scene.get();
+            auto picked = scene->GetRaycaster()->PickObject(
+                mouseX, mouseY,
+                width, height,
+                scene->GetGameObjects()
+            );
+
+            scene->SetSelected(picked);
+        }
+    }
+
+    // Soltar ratón
+    if (ImGui::IsMouseReleased(0))
+    {
+        if (engine.gizmo)
+            engine.gizmo->OnMouseUp();
+    }
 
     ImGui::EndChild();
 }
+
 
 void ScenePanel::RenderGameView()
 {
@@ -234,6 +269,7 @@ void ScenePanel::RenderToolbarControls()
 
             m_SwitchToGameOnPlay = true;
             scene->SaveInitialSnapshot();
+            scene->SetSelected(nullptr);
             GameTime::Play();
         }
         else

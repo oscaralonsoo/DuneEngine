@@ -281,13 +281,6 @@ bool ModuleRenderer::Update()
         }
     }
 
-    if (!isPlaying)
-    {
-        auto* input = Engine::GetInstance().input.get();
-        SDL_Point mp = input->GetMousePosition();
-        Engine::GetInstance().gizmo->Update((float)mp.x, (float)mp.y);
-    }
-
     return true;
 }
 
@@ -315,7 +308,7 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
     ICamera* prevRenderCamera = renderCamera;
     renderCamera = camera;
 
-    // Ajustar viewport al tamaño del framebuffer
+    // Viewport del framebuffer
     camera->SetViewportSize((float)framebuffer->GetWidth(), (float)framebuffer->GetHeight());
     glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
 
@@ -323,7 +316,6 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
     glm::mat4 projection = camera->GetProjectionMatrix();
     mFrustum.Update(view, projection);
 
-    // Clear del framebuffer
     RendererAPI::SetClearColor({0.03f, 0.03f, 0.03f, 1.0f});
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -333,6 +325,7 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
+    // Render escena
     for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
         renderGameObject(go, renderCamera);
@@ -343,15 +336,29 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
     Renderer::TransparentPass();
     Renderer::SelectedPass();
 
-    framebuffer->Unbind();
+    if (!GameTime::IsPlaying() && camera == editorCamera)
+    {
+        for (const auto& box : mVisibleBoxes)
+        {
+            DebugDrawAABB(box, view, projection, glm::vec3(0, 1, 0));
+        }
 
+        auto* scene = Engine::GetInstance().scene.get();
+        Raycaster* rc = scene ? scene->GetRaycaster() : nullptr;
+        if (rc && rc->HasLastRay())
+        {
+            DebugDrawRay(rc->GetLastRay(), 100.0f, view, projection, glm::vec3(1, 1, 0));
+        }
+        if (Engine::GetInstance().gizmo)
+        Engine::GetInstance().gizmo->Render();
+    }
+
+    framebuffer->Unbind();
     renderCamera = prevRenderCamera;
-    
-    // Restaurar viewport a tamaño de ventana
+
+    // Restaurar viewport ventana
     int w, h;
-    SDL_GetWindowSizeInPixels(
-        Engine::GetInstance().window->GetWindow(),
-        &w, &h);
+    SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &w, &h);
     glViewport(0, 0, w, h);
 }
 

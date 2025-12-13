@@ -106,11 +106,6 @@ bool ModuleInput::PreUpdate()
                 auto& engine = Engine::GetInstance();
                 SDL_Point mp = GetMousePosition();
 
-                // Si el gizmo lo coge, NO hacemos picking de objetos
-                if (engine.gizmo && engine.gizmo->OnMouseDown((float)mp.x, (float)mp.y))
-                    break;
-            
-                
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
                 int width, height;
@@ -136,7 +131,6 @@ bool ModuleInput::PreUpdate()
             if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     auto& engine = Engine::GetInstance();
-                    if (engine.gizmo) engine.gizmo->OnMouseUp();
                 }
             mouseButtons[event.button.button - 1] = KEY_UP;
             break;
@@ -241,26 +235,23 @@ bool ModuleInput::PreUpdate()
 
     SDL_Window* win = Engine::GetInstance().window->GetWindow();
 
-    // Si ImGui quiere el ratón, no entramos en modo cámara
-    bool uiWantsMouse = ImGui::GetIO().WantCaptureMouse;
-
-    // RMB presionado
     bool rmb =
         mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_DOWN ||
         mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_REPEAT;
 
-    if (!uiWantsMouse && rmb && !rmbRelativeMode)
+    if (rmb && !rmbRelativeMode)
     {
-        SDL_SetWindowRelativeMouseMode(win, true);     // oculta cursor + movimiento relativo
-        SDL_SetWindowMouseGrab(win, true);  // captura el ratón
+        SDL_SetWindowRelativeMouseMode(win, true);   // oculta cursor + movimiento relativo
+        SDL_SetWindowMouseGrab(win, true);
         rmbRelativeMode = true;
     }
-    else if ((!rmb || uiWantsMouse) && rmbRelativeMode)
+    else if (!rmb && rmbRelativeMode)
     {
-        SDL_SetWindowRelativeMouseMode(win, false);   // vuelve el cursor
+        SDL_SetWindowRelativeMouseMode(win, false);  // muestra cursor
         SDL_SetWindowMouseGrab(win, false);
         rmbRelativeMode = false;
     }
+
 
     // Handle keyboard shortcuts
     HandleKeyboardShortcuts();
@@ -339,31 +330,6 @@ void ModuleInput::HandleKeyboardShortcuts()
             auto& engine = Engine::GetInstance();
             ModuleScene* scene = engine.scene.get();
             bool hasSelection = (scene && scene->GetSelected() != nullptr);
-
-            // Si no hay selección: forzar modo selección (None) y bloquear cambios
-            if (!hasSelection)
-            {
-                if (engine.gizmo)
-                    engine.gizmo->SetMode(GizmoMode::None);
-            }
-            else
-            {
-                // Con selección sí permitimos cambiar modo
-                if (engine.gizmo)
-                {
-                    if (GetKey(SDL_SCANCODE_Q) == KEY_DOWN)
-                        engine.gizmo->SetMode(GizmoMode::None);
-
-                    if (GetKey(SDL_SCANCODE_W) == KEY_DOWN)
-                        engine.gizmo->SetMode(GizmoMode::Translate);
-
-                    if (GetKey(SDL_SCANCODE_E) == KEY_DOWN)
-                        engine.gizmo->SetMode(GizmoMode::Rotate);
-
-                    if (GetKey(SDL_SCANCODE_R) == KEY_DOWN)
-                        engine.gizmo->SetMode(GizmoMode::Scale);
-                }
-            }
         }
     }
     // F11 to Toggle Fullscreen

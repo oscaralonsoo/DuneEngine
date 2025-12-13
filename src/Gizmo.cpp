@@ -26,10 +26,6 @@
 #include <cmath>
 #include <vector>
 
-// ------------------------------------------------------------
-// Forward declarations for local helpers (avoid "not found")
-// ------------------------------------------------------------
-static float WorldPerPixelAt(const glm::vec3& worldPos);
 static glm::vec3 SafeNormalize(const glm::vec3& v, const glm::vec3& fallback);
 
 static void PushTri(std::vector<glm::vec3>& out, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
@@ -173,7 +169,7 @@ static float DistPointToCircle(const glm::vec3& p, const glm::vec3& center, cons
     return std::abs(len - r);
 }
 
-static float WorldPerPixelAt(const glm::vec3& worldPos)
+float Gizmo::WorldPerPixelAt(const glm::vec3& worldPos) const
 {
     auto& eng = Engine::GetInstance();
     auto* cam = eng.renderer ? eng.renderer->renderCamera : nullptr;
@@ -184,12 +180,8 @@ static float WorldPerPixelAt(const glm::vec3& worldPos)
     glm::mat4 P = cam->GetProjectionMatrix();
     float tanHalfFovY = 1.0f / P[1][1];
 
-    int w = 1280, h = 720;
-    if (eng.window)
-    {
-        SDL_Window* sdlWin = eng.window->GetWindow();
-        if (sdlWin) SDL_GetWindowSizeInPixels(sdlWin, &w, &h);
-    }
+    // IMPORTANTÍSIMO: usar el viewport del SceneView (framebuffer), no la ventana SDL
+    int h = std::max(1, mViewportH);
 
     float worldScreenHeight = 2.0f * d * tanHalfFovY;
     return worldScreenHeight / (float)h;
@@ -363,7 +355,11 @@ GizmoAxis Gizmo::PickRotateAxis(float mouseX, float mouseY, const glm::vec3& ori
     auto* scene = Engine::GetInstance().scene.get();
     if (!scene) return GizmoAxis::None;
 
-    Ray ray = scene->GetRaycaster()->ScreenPointToRay(mouseX, mouseY);
+    auto* cam = Engine::GetInstance().renderer->renderCamera;
+    Ray ray = scene->GetRaycaster()->ScreenPointToRay(
+        mouseX, mouseY,
+        mViewportW, mViewportH
+    );
 
     float wpp    = WorldPerPixelAt(origin);
     float radius = 90.0f * wpp;
@@ -396,7 +392,11 @@ GizmoAxis Gizmo::PickAxis(float mouseX, float mouseY, const glm::vec3& origin, f
     auto* scene = Engine::GetInstance().scene.get();
     if (!scene) return GizmoAxis::None;
 
-    Ray ray = scene->GetRaycaster()->ScreenPointToRay(mouseX, mouseY);
+    auto* cam = Engine::GetInstance().renderer->renderCamera;
+    Ray ray = scene->GetRaycaster()->ScreenPointToRay(
+        mouseX, mouseY,
+        mViewportW, mViewportH
+    );
 
     // 1) Center pick
     {
@@ -479,7 +479,6 @@ void Gizmo::Update(float mouseX, float mouseY)
 {
     if (!GetSelectedTransform())
     {
-        mMode = GizmoMode::None;
         mHoveredAxis = GizmoAxis::None;
         mDragging = false;
         mActiveAxis = GizmoAxis::None;
@@ -512,7 +511,11 @@ void Gizmo::Update(float mouseX, float mouseY)
         if (!tc) return;
 
         auto* scene = Engine::GetInstance().scene.get();
-        Ray ray = scene->GetRaycaster()->ScreenPointToRay(mouseX, mouseY);
+        auto* cam = Engine::GetInstance().renderer->renderCamera;
+        Ray ray = scene->GetRaycaster()->ScreenPointToRay(
+            mouseX, mouseY,
+            mViewportW, mViewportH
+        );
 
         glm::vec3 planeP = mDragStartHitWS;
         glm::vec3 planeN = mTranslatePlaneN;
@@ -602,7 +605,11 @@ void Gizmo::Update(float mouseX, float mouseY)
         glm::vec3 origin = GetGizmoOriginWS();
 
         auto* scene = Engine::GetInstance().scene.get();
-        Ray ray = scene->GetRaycaster()->ScreenPointToRay(mouseX, mouseY);
+        auto* cam = Engine::GetInstance().renderer->renderCamera;
+        Ray ray = scene->GetRaycaster()->ScreenPointToRay(
+            mouseX, mouseY,
+            mViewportW, mViewportH
+        );
 
         glm::vec3 hit;
         if (!RayPlaneIntersection(ray.origin, ray.direction, origin, mRotatePlaneN, hit))
@@ -642,7 +649,11 @@ void Gizmo::Update(float mouseX, float mouseY)
         if (!tc) return;
 
         auto* scene = Engine::GetInstance().scene.get();
-        Ray ray = scene->GetRaycaster()->ScreenPointToRay(mouseX, mouseY);
+        auto* cam = Engine::GetInstance().renderer->renderCamera;
+        Ray ray = scene->GetRaycaster()->ScreenPointToRay(
+            mouseX, mouseY,
+            mViewportW, mViewportH
+        );
 
         glm::vec3 origin = GetGizmoOriginWS();
         glm::vec3 planeN = GetCameraForwardWS();
@@ -717,7 +728,11 @@ bool Gizmo::OnMouseDown(float mouseX, float mouseY)
     mActiveAxis = mHoveredAxis;
 
     auto* scene = Engine::GetInstance().scene.get();
-    Ray ray = scene->GetRaycaster()->ScreenPointToRay(mouseX, mouseY);
+    auto* cam = Engine::GetInstance().renderer->renderCamera;
+    Ray ray = scene->GetRaycaster()->ScreenPointToRay(
+        mouseX, mouseY,
+        mViewportW, mViewportH
+    );
 
     glm::vec3 origin = GetGizmoOriginWS();
 
