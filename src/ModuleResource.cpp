@@ -10,7 +10,6 @@
 
 bool ModuleResource::Awake()
 {
-    // Devil Init
     ilInit();
     ilEnable(IL_ORIGIN_SET);
     ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
@@ -44,7 +43,6 @@ std::shared_ptr<Resource> ModuleResource::RequestResource(std::filesystem::path 
     }
     else
     {
-        LOG_INFO("adios");
         return Find(ImportFile(assetPath));
     }
 }
@@ -69,11 +67,18 @@ UID ModuleResource::ImportFile(std::filesystem::path assetPath)
         CreateResource(importData);
         break;
     }
+    case ResourceType::Mesh:
+        // MeshImportData importData;
+        // importData.assetPath = assetPath;
+        // importData.uid = uid;
+        // importData.type = ResourceType::Mesh;
 
-        // case ResourceType::Mesh:
-        //     importData = std::make_unique<MeshImportData>();
-        //     ResourceImporter::Import(assetPath, static_cast<MeshImportData&>(*importData));
-        //     break;
+        // importData = ResourceImporter::Import(assetPath, importData);
+
+        // ResourceSaver::Save(importData);
+
+        // CreateResource(importData);
+        break;
     }
 
     return uid;

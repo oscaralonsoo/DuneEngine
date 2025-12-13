@@ -18,6 +18,11 @@ std::shared_ptr<Mesh> Renderer::sSkyboxCube;
 
 void Renderer::Init()
 {
+    // TEMPORARY: DevIL origin is changed here to correctly load skybox textures.
+    // This is a workaround and should be replaced in the future with a proper
+    // texture import/orientation handling system.
+    ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+
     std::vector<std::shared_ptr<Texture>> faces;
     std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
     faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/right.jpg")));
@@ -26,6 +31,10 @@ void Renderer::Init()
     faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/bottom.jpg")));
     faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/front.jpg")));
     faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/back.jpg")));
+
+    // TEMPORARY: Restore DevIL origin to default.
+    // This should be removed once texture orientation is handled properly.
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
 
     sCubemap = std::make_shared<Cubemap>(faces);
     sSkyboxShader = std::make_shared<Shader>("assets/shaders/SkyboxShader.glsl");
