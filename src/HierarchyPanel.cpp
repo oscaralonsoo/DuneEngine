@@ -249,12 +249,62 @@ void HierarchyPanel::RenderGameObjectContextMenu(std::shared_ptr<GameObject> gam
                 auto child = scene->CreateEmptyGameObject();
                 child->SetParent(gameObject);
             }
-            if (ImGui::MenuItem("Cube"))
+            
+            ImGui::Separator();
+            
+            if (ImGui::BeginMenu("3D Object"))
             {
-                editingObject = nullptr;
-                auto child = scene->CreateCube();
-                child->SetParent(gameObject);
+                if (ImGui::MenuItem("Cube"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateCube();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Sphere"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateSphere();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Capsule"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateCapsule();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Cylinder"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateCylinder();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Cone"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateCone();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Plane"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreatePlane();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Quad"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateQuad();
+                    child->SetParent(gameObject);
+                }
+                if (ImGui::MenuItem("Torus"))
+                {
+                    editingObject = nullptr;
+                    auto child = scene->CreateTorus();
+                    child->SetParent(gameObject);
+                }
+                ImGui::EndMenu();
             }
+            
             ImGui::EndMenu();
         }
         if (ImGui::MenuItem("Unparent"))
@@ -307,10 +357,46 @@ void HierarchyPanel::HandleHierarchyContextMenu(ModuleScene* scene)
         {
             scene->CreateEmptyGameObject();
         }
-        if (ImGui::MenuItem("Create Cube"))
+        
+        ImGui::Separator();
+        
+        if (ImGui::BeginMenu("3D Object"))
         {
-            scene->CreateCube();
+            if (ImGui::MenuItem("Cube"))
+            {
+                scene->CreateCube();
+            }
+            if (ImGui::MenuItem("Sphere"))
+            {
+                scene->CreateSphere();
+            }
+            if (ImGui::MenuItem("Capsule"))
+            {
+                scene->CreateCapsule();
+            }
+            if (ImGui::MenuItem("Cylinder"))
+            {
+                scene->CreateCylinder();
+            }
+            if (ImGui::MenuItem("Cone"))
+            {
+                scene->CreateCone();
+            }
+            if (ImGui::MenuItem("Plane"))
+            {
+                scene->CreatePlane();
+            }
+            if (ImGui::MenuItem("Quad"))
+            {
+                scene->CreateQuad();
+            }
+            if (ImGui::MenuItem("Torus"))
+            {
+                scene->CreateTorus();
+            }
+            ImGui::EndMenu();
         }
+        
         ImGui::EndPopup();
     }
 

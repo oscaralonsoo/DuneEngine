@@ -213,6 +213,12 @@ void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
     if (gameObject->GetParent())
     {
         pendingDelete.push_back(gameObject);
+        
+        // Clear selection if the object being deleted is selected
+        if (selected == gameObject)
+        {
+            selected = nullptr;
+        }
     }
     else
     {
@@ -223,12 +229,13 @@ void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
         for (auto& child : children)
         {
             pendingDelete.push_back(child);
+            
+            // Clear selection if any of the objects being deleted is selected
+            if (selected == child)
+            {
+                selected = nullptr;
+            }
         }
-    }
-    
-    if (selected == gameObject)
-    {
-        selected = nullptr;
     }
 }
 
@@ -294,6 +301,76 @@ std::shared_ptr<GameObject> ModuleScene::CreateCube()
     auto gameObject = CreateGameObjectWithName("Cube");
     gameObject->CreateComponent(ComponentType::Mesh);
     gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateSphere()
+{
+    auto gameObject = CreateGameObjectWithName("Sphere");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateSphere());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreatePlane()
+{
+    auto gameObject = CreateGameObjectWithName("Plane");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreatePlane());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCylinder()
+{
+    auto gameObject = CreateGameObjectWithName("Cylinder");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCylinder());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCone()
+{
+    auto gameObject = CreateGameObjectWithName("Cone");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCone());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateTorus()
+{
+    auto gameObject = CreateGameObjectWithName("Torus");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateTorus());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCapsule()
+{
+    auto gameObject = CreateGameObjectWithName("Capsule");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCapsule());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateQuad()
+{
+    auto gameObject = CreateGameObjectWithName("Quad");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateQuad());
     gameObject->CreateComponent(ComponentType::Material);
     gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
     return gameObject;

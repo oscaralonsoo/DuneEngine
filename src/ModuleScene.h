@@ -34,6 +34,13 @@ public:
     std::shared_ptr<GameObject> CreateGameObjectWithName(const std::string& name);
     std::shared_ptr<GameObject> CreateEmptyGameObject();
     std::shared_ptr<GameObject> CreateCube();
+    std::shared_ptr<GameObject> CreateSphere();
+    std::shared_ptr<GameObject> CreatePlane();
+    std::shared_ptr<GameObject> CreateCylinder();
+    std::shared_ptr<GameObject> CreateCone();
+    std::shared_ptr<GameObject> CreateTorus();
+    std::shared_ptr<GameObject> CreateCapsule();
+    std::shared_ptr<GameObject> CreateQuad();
     std::shared_ptr<GameObject> CreateGameObjectFromModel(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> CreateGameObjectFromPrefab(const std::filesystem::path& assetPath);
     std::shared_ptr<GameObject> DuplicateGameObject(std::shared_ptr<GameObject> original, std::shared_ptr<GameObject> parent = nullptr);
