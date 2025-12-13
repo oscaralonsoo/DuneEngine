@@ -74,6 +74,8 @@ private:
     std::map<std::filesystem::path, std::shared_ptr<Texture>> thumbnailTextures;
     // Icon textures for different resource types
     std::map<ResourceType, std::shared_ptr<Texture>> iconTextures;
+    // Dedicated folder icon texture
+    std::shared_ptr<Texture> folderIconTexture;
     static constexpr float kThumbnailSize = 64.0f;
     static constexpr float kItemSpacing = 8.0f;
 

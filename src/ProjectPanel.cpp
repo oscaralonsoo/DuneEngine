@@ -16,7 +16,7 @@ bool ProjectPanel::Start()
     std::filesystem::path placeholderIcon = "icons/folder.png";
     if (std::filesystem::exists(placeholderIcon))
     {
-        iconTextures[ResourceType::Unknown] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(placeholderIcon));
+        folderIconTexture = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(placeholderIcon));
     }
 
     return true;
@@ -292,6 +292,10 @@ void ProjectPanel::RenderContentView()
     // --- Render de items ---
     for (const auto& entry : std::filesystem::directory_iterator(selectedFolder))
     {
+        // Skip .meta files
+        if (entry.path().extension() == ".meta")
+            continue;
+
         RenderAssetItem(entry.path());
 
         if (ImGui::IsItemHovered())
@@ -407,27 +411,31 @@ std::string ProjectPanel::GetFileIcon(const std::filesystem::path& path)
 
 GLuint ProjectPanel::GetIconOrThumbnail(const std::filesystem::path& path)
 {
+    // Return folder icon for directories
     if (std::filesystem::is_directory(path))
     {
-        auto it = iconTextures.find(ResourceType::Unknown);
-        return (it != iconTextures.end()) ? it->second->GetID() : 0;
+        return folderIconTexture ? folderIconTexture->GetID() : 0;
     }
 
+    // Check if we already have a thumbnail cached
     auto thumbIt = thumbnailTextures.find(path);
     if (thumbIt != thumbnailTextures.end())
         return thumbIt->second->GetID();
 
+    // Get resource type for the file
     ResourceType type = ResourceUtils::GetTypeFromExtension(path);
+    
+    // For texture files, load and cache the actual texture as thumbnail
     if (type == ResourceType::Texture)
     {
         thumbnailTextures[path] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
         return thumbnailTextures[path]->GetID();
     }
-    else
-    {
-        auto iconIt = iconTextures.find(type);
-        return (iconIt != iconTextures.end()) ? iconIt->second->GetID() : 0;
-    }
+    
+    // For other file types, try to find a specific icon
+    // Note: Files with Unknown type will return 0 (no icon) instead of folder icon
+    auto iconIt = iconTextures.find(type);
+    return (iconIt != iconTextures.end()) ? iconIt->second->GetID() : 0;
 }
 
 
@@ -505,11 +513,58 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
 
     ImVec2 itemPos = ImGui::GetCursorPos();
 
+    // First, render the selectable area (invisible but handles interaction)
+    if (ImGui::Selectable(("##" + assetPath.string()).c_str(), isSelected,
+        ImGuiSelectableFlags_AllowDoubleClick,
+        ImVec2(kThumbnailSize, kThumbnailSize + 20.0f)))
+    {
+        if (ImGui::GetIO().KeyCtrl)
+        {
+            if (isSelected) selectedItems.erase(assetPath);
+            else selectedItems.insert(assetPath);
+        }
+        else
+        {
+            selectedItems.clear();
+            selectedItems.insert(assetPath);
+        }
+
+        if (ImGui::IsMouseDoubleClicked(0) && std::filesystem::is_directory(assetPath))
+        {
+            selectedFolder = assetPath;
+            selectedItems.clear();
+        }
+    }
+
+    // Drag & Drop
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+    {
+        std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();
+        ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
+        ImGui::Text("%s", assetPath.filename().string().c_str());
+        ImGui::EndDragDropSource();
+    }
+
+    // Now render the visual content on top
+    ImGui::SetCursorPos(itemPos);
+    
     GLuint textureID = GetIconOrThumbnail(assetPath);
     if (textureID != 0)
-        ImGui::Image((ImTextureID)(intptr_t)textureID, ImVec2(kThumbnailSize, kThumbnailSize));
+    {
+        if (std::filesystem::is_directory(assetPath))
+            ImGui::Image((ImTextureID)(intptr_t)textureID, ImVec2(kThumbnailSize, kThumbnailSize), ImVec2(0, 1), ImVec2(1, 0));
+        else
+            ImGui::Image((ImTextureID)(intptr_t)textureID, ImVec2(kThumbnailSize, kThumbnailSize));
+    }
     else
+    {
+        // Render text icon as non-interactive text instead of button
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
         ImGui::Button(GetFileIcon(assetPath).c_str(), ImVec2(kThumbnailSize, kThumbnailSize));
+        ImGui::PopStyleColor(3);
+    }
 
     // Handle renaming
     if (isEditing && assetPath == editingPath)
@@ -563,38 +618,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
     else
     {
         ImGui::TextWrapped(filename.c_str());
-    }
-
-    ImGui::SetCursorPos(itemPos);
-    if (ImGui::Selectable(("##" + assetPath.string()).c_str(), isSelected,
-        ImGuiSelectableFlags_AllowDoubleClick,
-        ImVec2(kThumbnailSize, kThumbnailSize + 20.0f)))
-    {
-        if (ImGui::GetIO().KeyCtrl)
-        {
-            if (isSelected) selectedItems.erase(assetPath);
-            else selectedItems.insert(assetPath);
-        }
-        else
-        {
-            selectedItems.clear();
-            selectedItems.insert(assetPath);
-        }
-
-        if (ImGui::IsMouseDoubleClicked(0) && std::filesystem::is_directory(assetPath))
-        {
-            selectedFolder = assetPath;
-            selectedItems.clear();
-        }
-    }
-
-    // Drag & Drop
-    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-    {
-        std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();
-        ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
-        ImGui::Text("%s", assetPath.filename().string().c_str());
-        ImGui::EndDragDropSource();
     }
 
     ImGui::NextColumn();
@@ -655,4 +678,5 @@ void ProjectPanel::CleanUp()
 {
     thumbnailTextures.clear();
     iconTextures.clear();
+    folderIconTexture.reset();
 }
