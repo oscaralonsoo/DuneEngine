@@ -78,45 +78,6 @@ void ProjectPanel::OnImGuiRender()
 
     RenderContent(nullptr);
 
-    // Popup CONTEXTUAL GLOBAL
-    if (ImGui::BeginPopup("ProjectContextMenu"))
-    {
-        if (activeContextTarget == ContextTarget::Item)
-        {
-            if (ImGui::MenuItem("Rename"))
-            {
-                isEditing = true;
-                justStartedEditing = true;
-                editingPath = contextPath;
-                std::string filename = contextPath.filename().string();
-                strncpy_s(editBuffer, sizeof(editBuffer), filename.c_str(), sizeof(editBuffer) - 1);
-                editBuffer[sizeof(editBuffer) - 1] = '\0';
-            }
-
-            if (ImGui::MenuItem("Delete"))
-            {
-                pendingDeletePaths = { contextPath };
-                showDeleteModal = true;
-            }
-        }
-        else if (activeContextTarget == ContextTarget::Background)
-        {
-            if (ImGui::MenuItem("Create Folder"))
-            {
-                std::filesystem::path newFolder = selectedFolder / "New Folder";
-                int i = 1;
-                while (std::filesystem::exists(newFolder))
-                    newFolder = selectedFolder / ("New Folder " + std::to_string(i++));
-
-                std::filesystem::create_directory(newFolder);
-                lastRefreshTime = std::chrono::steady_clock::now()
-                               - std::chrono::seconds(3);
-            }
-        }
-
-        ImGui::EndPopup();
-    }
-
     ImGui::End();
 
     RenderModalDialogs();
@@ -541,6 +502,35 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
             selectedFolder = assetPath;
             selectedItems.clear();
         }
+    }
+
+    // Context menu for this item
+    if (ImGui::BeginPopupContextItem())
+    {
+        // Ensure this item is selected
+        if (selectedItems.find(assetPath) == selectedItems.end())
+        {
+            selectedItems.clear();
+            selectedItems.insert(assetPath);
+        }
+
+        if (ImGui::MenuItem("Rename", nullptr, false, selectedItems.size() == 1))
+        {
+            isEditing = true;
+            justStartedEditing = true;
+            editingPath = assetPath;
+            std::string filename = assetPath.filename().string();
+            strncpy_s(editBuffer, sizeof(editBuffer), filename.c_str(), sizeof(editBuffer) - 1);
+            editBuffer[sizeof(editBuffer) - 1] = '\0';
+        }
+
+        if (ImGui::MenuItem("Delete"))
+        {
+            pendingDeletePaths = selectedItems;
+            showDeleteModal = true;
+        }
+
+        ImGui::EndPopup();
     }
 
     // Drag & Drop
