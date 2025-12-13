@@ -130,6 +130,13 @@ void ScenePanelUI::RenderSceneView(
     // Handle drag and drop
     if (onDragDrop)
     {
+        // Get current mouse position for drag & drop
+        if (hovered)
+        {
+            ImVec2 mousePos = ImGui::GetMousePos();
+            mouseX = mousePos.x - itemMin.x;
+            mouseY = mousePos.y - itemMin.y;
+        }
         onDragDrop(sceneViewSize, mouseX, mouseY);
     }
 

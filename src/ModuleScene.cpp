@@ -334,20 +334,22 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
 
             if (!validMeshes.empty())
             {
-                if (validMeshes.size() > 1)
+            if (validMeshes.size() > 1)
+            {
+                for (size_t i = 0; i < validMeshes.size(); ++i)
                 {
-                    for (size_t i = 0; i < validMeshes.size(); ++i)
-                    {
-                        auto childGo = CreateGameObject();
-                        std::string childName = gameObject->GetName() + "_" + std::to_string(i);
-                        childGo->SetName(GenerateUniqueName(childName));
-                        childGo->CreateComponent(ComponentType::Mesh);
-                        childGo->GetComponent<MeshComponent>()->SetMesh(validMeshes[i]);
-                        childGo->CreateComponent(ComponentType::Material);
-                        childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-                        childGo->SetParent(gameObject);
-                    }
+                    auto childGo = CreateGameObject();
+                    std::string childName = gameObject->GetName() + "_" + std::to_string(i);
+                    childGo->SetName(GenerateUniqueName(childName));
+                    childGo->CreateComponent(ComponentType::Mesh);
+                    childGo->GetComponent<MeshComponent>()->SetMesh(validMeshes[i]);
+                    childGo->CreateComponent(ComponentType::Material);
+                    childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+                    childGo->SetParent(gameObject);
+
+                    mGameObjects.push_back(childGo);
                 }
+            }
                 else
                 {
                     // Single valid mesh
@@ -359,7 +361,6 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
             }
             else
             {
-                // No valid meshes, use fallback
                 gameObject->CreateComponent(ComponentType::Mesh);
                 gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
                 gameObject->CreateComponent(ComponentType::Material);
@@ -368,7 +369,6 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
         }
         else
         {
-            // Model failed to load, use fallback
             gameObject->CreateComponent(ComponentType::Mesh);
             gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
             gameObject->CreateComponent(ComponentType::Material);
@@ -399,7 +399,7 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
     // Copy components
     for (auto& comp : original->GetComponents())
     {
-        if (comp->GetType() != ComponentType::Transform) //Created by Constructor
+        if (comp->GetType() != ComponentType::Transform)
         {
             duplicated->CreateComponent(comp->GetType());
         }
@@ -411,7 +411,6 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
     }
     // Set parent
     duplicated->SetParent(parent);
-    // If it's a root object, add to scene
     if (!duplicated->GetParent())
     {
         mGameObjects.push_back(duplicated);
@@ -461,7 +460,7 @@ void ModuleScene::RebuildQuadtree()
     if (!mQuadtree)
         return;
 
-    // Calcular AABB global de la escena (solo objetos con Mesh)
+    // Calcular AABB global de la escena
     AABB sceneBounds;
     bool hasAny = false;
 
@@ -488,7 +487,6 @@ void ModuleScene::RebuildQuadtree()
     // Resetear el árbol con estos límites
     mQuadtree->SetBounds(sceneBounds);
 
-    // Insertar todos los estáticos (aquí, todos los que tengan Mesh)
     for (const auto& go : mGameObjects)
     {
         AABB worldBox;

@@ -3,6 +3,7 @@
 #include "SceneInteractionHandler.h"
 #include "SceneAssetHandler.h"
 #include "ScenePanelUI.h"
+#include "Globals.h"
 #include "Engine.h"
 #include "ModuleScene.h"
 #include "ModuleRenderer.h"
@@ -12,6 +13,9 @@
 #include "GameObject.h"
 #include "GameTime.h"
 #include "Gizmo.h"
+#include "MeshComponent.h"
+#include "MaterialComponent.h"
+#include "TransformComponent.h"
 #include <imgui.h>
 
 ScenePanel::ScenePanel()
@@ -94,7 +98,29 @@ void ScenePanel::RenderSceneView()
         renderer->RenderToFramebuffer(framebuffer, renderer->editorCamera);
     }
 
-    // Render UI with callbacks for interactions
+    GameObject* hoveredObject = m_AssetHandler->GetHoveredObject();
+    bool isTextureDragging = m_AssetHandler->IsTextureDragging();
+    
+    if (hoveredObject && isTextureDragging)
+    {
+        auto* meshComp = hoveredObject->GetComponent<MeshComponent>();
+        auto* matComp = hoveredObject->GetComponent<MaterialComponent>();
+        auto* transformComp = hoveredObject->GetComponent<TransformComponent>();
+
+        if (meshComp && matComp && transformComp)
+        {
+            RenderObject ro;
+            ro.transform = transformComp->GetWorldTransform();
+            ro.mesh = meshComp->GetMesh();
+            ro.material = matComp->GetMaterial();
+            ro.selected = false;
+
+            Renderer::SubmitHovered(ro);
+            
+            Renderer::HoverPass();
+        }
+    }
+
     m_UI->RenderSceneView(
         framebuffer,
         [this, width, height](float mouseX, float mouseY, bool isClick) {

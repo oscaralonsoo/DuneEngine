@@ -10,7 +10,6 @@ TransformComponent::TransformComponent(GameObject* owner)
 
 void TransformComponent::UpdateWorldMatrix()
 {
-    // Usar los getters para no confundir IntelliSense
     const glm::vec3& pos = GetPosition();
     const glm::vec3& rot = GetRotation();
     const glm::vec3& scl = GetScale();
@@ -24,7 +23,7 @@ void TransformComponent::UpdateWorldMatrix()
     // Local matrix
     glm::mat4 localMatrix = translation * rotationZ * rotationY * rotationX * scaling;
 
-    // If has parent, multiply by parent's world matrix
+    // If has parent
     if (auto parent = GetOwner()->GetParent())
     {
         if (auto parentTransform = parent->GetComponent<TransformComponent>())

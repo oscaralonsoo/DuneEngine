@@ -335,6 +335,7 @@ void ModuleRenderer::RenderToFramebuffer(Framebuffer* framebuffer, ICamera* came
     Renderer::ForwardPass();
     Renderer::TransparentPass();
     Renderer::SelectedPass();
+    // Note: HoverPass() is called manually in ScenePanel.cpp when dragging textures
 
     if (!GameTime::IsPlaying() && camera == editorCamera)
     {
