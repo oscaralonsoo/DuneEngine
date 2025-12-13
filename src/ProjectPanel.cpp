@@ -2,6 +2,8 @@
 #include "Engine.h"
 #include "ResourceUtils.h"
 #include "Texture.h"
+#include "ModuleResource.h"
+
 #include <imgui.h>
 #include <algorithm>
 #include <filesystem>
@@ -14,7 +16,7 @@ bool ProjectPanel::Start()
     std::filesystem::path placeholderIcon = "icons/folder.png";
     if (std::filesystem::exists(placeholderIcon))
     {
-        iconTextures[ResourceType::Unknown] = std::make_unique<Texture>(placeholderIcon, true, true);
+        iconTextures[ResourceType::Unknown] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(placeholderIcon));
     }
 
     return true;
@@ -395,7 +397,7 @@ GLuint ProjectPanel::GetIconOrThumbnail(const std::filesystem::path& path)
     ResourceType type = ResourceUtils::GetTypeFromExtension(path);
     if (type == ResourceType::Texture)
     {
-        thumbnailTextures[path] = std::make_unique<Texture>(path, true);
+        thumbnailTextures[path] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
         return thumbnailTextures[path]->GetID();
     }
     else

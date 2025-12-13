@@ -5,10 +5,10 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-Model::Model(const std::filesystem::path &path) : Resource(ResourceType::Model)
-{
+// Model::Model(const std::filesystem::path &path) : Resource(ResourceType::Model)
+// {
     
-}
+// }
 
 Model::Model(const std::filesystem::path &path) : Resource(ResourceType::Model)
 {

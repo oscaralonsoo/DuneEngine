@@ -317,7 +317,7 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
 
     try
     {
-        auto model = Model::Load(assetPath);
+        auto model = std::make_shared<Model>(assetPath);
         if (model)
         {
             // Filter meshes that have vertices and indices

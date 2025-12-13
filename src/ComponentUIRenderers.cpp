@@ -7,6 +7,7 @@
 #include "Material.h"
 #include "Texture.h"
 #include "Engine.h"
+#include "ModuleResource.h"
 #include "ModuleInput.h"
 #include "FileDialogUtils.h"
 #include <imgui.h>
@@ -18,8 +19,8 @@ namespace ComponentUI
     // ============================================================================
     // TransformComponentUI
     // ============================================================================
-    
-    void TransformComponentUI::Render(TransformComponent* component, float panelWidth)
+
+    void TransformComponentUI::Render(TransformComponent *component, float panelWidth)
     {
         if (!component)
             return;
@@ -59,15 +60,15 @@ namespace ComponentUI
     // ============================================================================
     // MeshComponentUI
     // ============================================================================
-    
-    void MeshComponentUI::Render(MeshComponent* component, float panelWidth)
+
+    void MeshComponentUI::Render(MeshComponent *component, float panelWidth)
     {
         if (!component)
             return;
 
         if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            const auto& mesh = component->GetMesh();
+            const auto &mesh = component->GetMesh();
             if (mesh)
             {
                 ImGui::Text("Name: %s", mesh->GetName().c_str());
@@ -82,8 +83,8 @@ namespace ComponentUI
     // ============================================================================
     // MaterialComponentUI
     // ============================================================================
-    
-    void MaterialComponentUI::Render(MaterialComponent* component, float panelWidth)
+
+    void MaterialComponentUI::Render(MaterialComponent *component, float panelWidth)
     {
         if (!component)
             return;
@@ -91,7 +92,7 @@ namespace ComponentUI
         if (!ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
             return;
 
-        const auto& material = component->GetMaterial();
+        const auto &material = component->GetMaterial();
         if (!material)
         {
             ImGui::TextDisabled("No Material Assigned");
@@ -100,14 +101,14 @@ namespace ComponentUI
 
         ImGui::Text("Name: %s", material->GetName().c_str());
 
-        auto& props = material->GetProperties();
+        auto &props = material->GetProperties();
         ImGui::ColorEdit4("Color", &props.color.r);
         ImGui::SliderFloat("Alpha", &props.color.a, 0.0f, 1.0f);
 
         if (!ImGui::TreeNode("Textures"))
             return;
 
-        auto& texture = material->GetTextures();
+        auto &texture = material->GetTextures();
         auto input = Engine::GetInstance().input.get();
 
         DrawTextureSlot("Albedo", texture.albedo, input);
@@ -120,7 +121,7 @@ namespace ComponentUI
         ImGui::TreePop();
     }
 
-    void MaterialComponentUI::DrawTextureSlot(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+    void MaterialComponentUI::DrawTextureSlot(const char *name, std::shared_ptr<Texture> &texture, ModuleInput *input)
     {
         RenderSlotBorder(name, texture);
         HandleDragDrop(name, texture, input);
@@ -138,7 +139,7 @@ namespace ComponentUI
         ImGui::Spacing();
     }
 
-    void MaterialComponentUI::RenderSlotBorder(const char* name, std::shared_ptr<Texture>& texture)
+    void MaterialComponentUI::RenderSlotBorder(const char *name, std::shared_ptr<Texture> &texture)
     {
         ImGui::Text("%s", name);
 
@@ -153,8 +154,7 @@ namespace ComponentUI
         ImGui::GetWindowDrawList()->AddRect(
             pos,
             ImVec2(pos.x + slotSize.x, pos.y + slotSize.y),
-            borderColor
-        );
+            borderColor);
 
         // Draw texture preview inside the slot
         if (texture)
@@ -163,22 +163,21 @@ namespace ComponentUI
             ImGui::GetWindowDrawList()->AddImage(
                 (ImTextureID)(uintptr_t)id,
                 pos,
-                ImVec2(pos.x + slotSize.x, pos.y + slotSize.y)
-            );
+                ImVec2(pos.x + slotSize.x, pos.y + slotSize.y));
         }
     }
 
-    void MaterialComponentUI::HandleSlotClick(const char* name, std::shared_ptr<Texture>& texture)
+    void MaterialComponentUI::HandleSlotClick(const char *name, std::shared_ptr<Texture> &texture)
     {
         if (ImGui::IsItemClicked())
         {
             std::string path = FileDialogUtils::OpenImageFile();
             if (!path.empty())
-                texture = std::make_shared<Texture>(path.c_str());
+                texture = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
         }
     }
 
-    void MaterialComponentUI::RenderTexturePreview(const char* name, std::shared_ptr<Texture>& texture)
+    void MaterialComponentUI::RenderTexturePreview(const char *name, std::shared_ptr<Texture> &texture)
     {
         if (!texture)
             return;
@@ -190,38 +189,37 @@ namespace ComponentUI
         ImGui::GetWindowDrawList()->AddImage(
             (ImTextureID)(uintptr_t)id,
             pos,
-            ImVec2(pos.x + slotSize.x, pos.y + slotSize.y)
-        );
+            ImVec2(pos.x + slotSize.x, pos.y + slotSize.y));
 
         ImGui::SameLine();
         if (ImGui::Button(("X##" + std::string(name)).c_str()))
             texture = nullptr;
     }
 
-    void MaterialComponentUI::HandleDragDrop(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+    void MaterialComponentUI::HandleDragDrop(const char *name, std::shared_ptr<Texture> &texture, ModuleInput *input)
     {
         if (ImGui::BeginDragDropTarget())
         {
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+            if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
             {
-                const char* relativePath = (const char*)payload->Data;
+                const char *relativePath = (const char *)payload->Data;
                 if (relativePath && relativePath[0] != '\0')
                 {
                     std::filesystem::path fullPath = "Assets" / std::filesystem::path(relativePath);
-                    texture = std::make_shared<Texture>(fullPath);
+                    texture = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(fullPath));
                 }
             }
-            else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
+            else if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
             {
-                const char* path = (const char*)payload->Data;
+                const char *path = (const char *)payload->Data;
                 if (path && path[0] != '\0')
-                    texture = std::make_shared<Texture>(path);
+                texture = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
             }
             ImGui::EndDragDropTarget();
         }
     }
 
-    void MaterialComponentUI::HandleFileDrop(const char* name, std::shared_ptr<Texture>& texture, ModuleInput* input)
+    void MaterialComponentUI::HandleFileDrop(const char *name, std::shared_ptr<Texture> &texture, ModuleInput *input)
     {
         bool hovered = ImGui::IsItemHovered();
         if (input->WasFileDropped() && hovered)
@@ -229,7 +227,7 @@ namespace ComponentUI
             std::string path = input->GetDraggedFile();
             if (!path.empty())
             {
-                texture = std::make_shared<Texture>(path.c_str());
+                texture = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
                 input->ClearDropState();
                 input->ClearDraggedFile();
             }
@@ -239,8 +237,8 @@ namespace ComponentUI
     // ============================================================================
     // CameraComponentUI
     // ============================================================================
-    
-    void CameraComponentUI::Render(CameraComponent* component, float panelWidth)
+
+    void CameraComponentUI::Render(CameraComponent *component, float panelWidth)
     {
         if (!component)
             return;

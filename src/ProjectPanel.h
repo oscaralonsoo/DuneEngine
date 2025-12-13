@@ -72,9 +72,9 @@ private:
     std::map<std::filesystem::path, std::string> renamedThisFrame;
 
     // Thumbnails
-    std::map<std::filesystem::path, std::unique_ptr<Texture>> thumbnailTextures;
+    std::map<std::filesystem::path, std::shared_ptr<Texture>> thumbnailTextures;
     // Icon textures for different resource types
-    std::map<ResourceType, std::unique_ptr<Texture>> iconTextures;
+    std::map<ResourceType, std::shared_ptr<Texture>> iconTextures;
     static constexpr float kThumbnailSize = 64.0f;
     static constexpr float kItemSpacing = 8.0f;
 

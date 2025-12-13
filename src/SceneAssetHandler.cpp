@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "ModuleScene.h"
 #include "ModuleInput.h"
+#include "ModuleResource.h"
 #include "ResourceUtils.h"
 #include "GameObject.h"
 #include "MaterialComponent.h"
@@ -133,7 +134,7 @@ void SceneAssetHandler::ApplyTextureToObject(GameObject* object, const std::file
     if (!material)
         return;
 
-    material->SetTexture(TextureType::Albedo, std::make_shared<Texture>(texturePath));
+    material->SetTexture(TextureType::Albedo, std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(texturePath)));
 }
 
 void SceneAssetHandler::InstantiateModel(const std::filesystem::path& modelPath)
