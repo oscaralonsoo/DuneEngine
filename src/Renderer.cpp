@@ -1,5 +1,7 @@
+#include "Engine.h"
 #include "Renderer.h"
 #include "ModuleRenderer.h"
+#include "ModuleResource.h"
 #include "EditorCamera.h"
 #include "Engine.h"
 #include "RendererAPI.h"
@@ -19,12 +21,13 @@ void Renderer::Init()
     ilInit();
 
     std::vector<std::shared_ptr<Texture>> faces;
-    faces.push_back(std::make_shared<Texture>("Assets/skybox/right.jpg", true, true));
-    faces.push_back(std::make_shared<Texture>("Assets/skybox/left.jpg", true, true));
-    faces.push_back(std::make_shared<Texture>("Assets/skybox/top.jpg", true, true));
-    faces.push_back(std::make_shared<Texture>("Assets/skybox/bottom.jpg", true, true));
-    faces.push_back(std::make_shared<Texture>("Assets/skybox/front.jpg", true, true));
-    faces.push_back(std::make_shared<Texture>("Assets/skybox/back.jpg", true, true));
+    std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
+    faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/right.jpg")));
+    faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/left.jpg")));
+    faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/top.jpg")));
+    faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/bottom.jpg")));
+    faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/front.jpg")));
+    faces.push_back(std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource("Assets/skybox/back.jpg")));
 
     sCubemap = std::make_shared<Cubemap>(faces);
     sSkyboxShader = std::make_shared<Shader>("assets/shaders/SkyboxShader.glsl");
@@ -184,8 +187,7 @@ void Renderer::SelectedPass()
 
     for (auto &renderObject : sSelectedRenderQueue)
     {
-        glm::mat4 model = renderObject.transform;
-        glm::mat4 scaled = model * glm::scale(glm::mat4(1.0f), glm::vec3(1.05f));
+        glm::mat4 scaled = renderObject.transform * glm::scale(glm::mat4(1.0f), glm::vec3(1.05f));
         sSingleColorShader->SetMat4("model", scaled);
 
         glCullFace(GL_FRONT);

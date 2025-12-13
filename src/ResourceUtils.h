@@ -1,10 +1,13 @@
 #pragma once
+
+#include "Resource.h"
+#include "ResourceFormat.h"
+
 #include <string>
 #include <unordered_map>
 #include <filesystem>
 #include <algorithm>
-#include "Resource.h"
-#include "ResourceFormat.h"
+#include <fstream>
 
 class ResourceUtils
 {
@@ -98,5 +101,22 @@ public:
         default:
             return ResourceFormat::Binary;
         }
+    }
+
+    static UID GetUIDFromMeta(const std::filesystem::path &metaPath)
+    {
+        std::ifstream file(metaPath);
+
+        std::string line;
+        std::getline(file, line);
+
+        auto uidPos = line.find("uid=\"");
+
+        uidPos += 5;
+        auto endPos = line.find("\"", uidPos);
+
+        std::string uidStr = line.substr(uidPos, endPos - uidPos);
+
+        return UID(uidStr);
     }
 };

@@ -71,8 +71,8 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
     if (clicked)
     {
         std::string path = OpenFile();
-        if (!path.empty())
-            texture = std::make_shared<Texture>(path.c_str());
+        // if (!path.empty())
+        //     texture = std::make_shared<Texture>(path.c_str());
     }
 
     // Render texture preview
@@ -96,8 +96,8 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
         {
             const char* path = (const char*)payload->Data;
-            if (path && path[0] != '\0')
-                texture = std::make_shared<Texture>(path);
+            // if (path && path[0] != '\0')
+            //     texture = std::make_shared<Texture>(path);
         }
         ImGui::EndDragDropTarget();
     }
@@ -108,7 +108,7 @@ void MaterialComponent::DrawTextureSlot(const char* name, std::shared_ptr<Textur
         std::string path = input->GetDraggedFile();
         if (!path.empty())
         {
-            texture = std::make_shared<Texture>(path.c_str());
+            // texture = std::make_shared<Texture>(path.c_str());
             input->ClearDropState();
             input->ClearDraggedFile();
         }

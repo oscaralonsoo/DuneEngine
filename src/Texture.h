@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Resource.h"
+#include "TextureImportData.h"
+
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <filesystem>
@@ -57,11 +59,11 @@ class Texture : public Resource
 {
 public:
     Texture() = default;
-    Texture(const std::filesystem::path& path, bool srgb = true, bool invertY = false);
+    Texture(const TextureProperties &props, const void *pixelData);
+    Texture(const TextureImportData importData);
     ~Texture();
 
     void Bind(unsigned int slot) const;
-    void Resize(GLuint width, GLuint height);
     void Clear(const glm::vec4 &color);
 
     GLuint GetWidth() const { return mProperties.width; }
@@ -73,7 +75,6 @@ public:
     unsigned char *GetData() const { return mData; }
 
 private:
-    GLuint LoadFromFile(const std::filesystem::path &path);
     GLuint InitializeTexture(const void *pixels, GLuint width, GLuint height);
 
 private:

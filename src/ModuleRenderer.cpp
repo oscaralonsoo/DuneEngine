@@ -52,7 +52,6 @@ bool ModuleRenderer::Update()
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    // Enviar todos los objetos a las colas de render
     for (auto go : Engine::GetInstance().scene->GetGameObjects())
     {
         MaterialComponent* materialComp = go->GetComponent<MaterialComponent>();

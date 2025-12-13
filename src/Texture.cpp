@@ -1,12 +1,10 @@
 #include "Texture.h"
 #include "Globals.h"
+#include "ResourceLoader.h"
 
 #include <glad/glad.h>
 #include <cstdint>
-#include <IL/il.h>
 #include <filesystem>
-#include <fstream>
-#include <vector>
 #include <glm/glm.hpp>
 
 GLenum ToGLWrap(TextureWrap wrap)
@@ -108,12 +106,40 @@ GLenum ToGLFormat(ImageFormat format)
     return GL_RGBA;
 }
 
-Texture::Texture(const std::filesystem::path &path, bool srgb, bool invertY) : Resource(ResourceType::Texture)
+Texture::Texture(const TextureProperties &props, const void *pixelData)
 {
-    mProperties.srgb = srgb;
-    mInvertY = invertY;
+    mProperties = props;
+    mID = InitializeTexture(pixelData, props.width, props.height);
+}
 
-    mID = LoadFromFile(path);
+Texture::Texture(const TextureImportData importData)
+{
+    mProperties.width = static_cast<GLuint>(importData.width);
+    mProperties.height = static_cast<GLuint>(importData.height);
+    
+    switch (importData.channels)
+    {
+    case 1:
+        mProperties.format = ImageFormat::R8;
+        break;
+    case 2:
+        mProperties.format = ImageFormat::RG8;
+        break;
+    case 3:
+        mProperties.format = ImageFormat::RGB8;
+        break;
+    case 4:
+        mProperties.format = ImageFormat::RGBA8;
+        break;
+    default:
+        mProperties.format = ImageFormat::RGBA8;
+        break;
+    }
+
+    mData = new unsigned char[importData.width * importData.height * importData.channels];
+    std::memcpy(mData, importData.data.data(), importData.width * importData.height * importData.channels);
+
+    mID = InitializeTexture(mData, mProperties.width, mProperties.height);
 }
 
 Texture::~Texture()
@@ -128,63 +154,10 @@ void Texture::Bind(unsigned int slot) const
     glBindTexture(GL_TEXTURE_2D, mID);
 }
 
-void Texture::Resize(GLuint width, GLuint height)
-{
-    mProperties.width = width;
-    mProperties.height = height;
-
-    if (mID != 0)
-        glDeleteTextures(1, &mID);
-
-    mID = InitializeTexture(nullptr, width, height); // Reservar memoria vacía
-}
-
 void Texture::Clear(const glm::vec4 &color)
 {
     Bind(0);
     glClearTexImage(mID, 0, ToGLFormat(mProperties.format), GL_FLOAT, &color);
-}
-
-GLuint Texture::LoadFromFile(const std::filesystem::path &path)
-{
-    std::ifstream f(path, std::ios::binary);
-    if (!f)
-    {
-        return 0;
-    }
-
-    std::vector<unsigned char> buf((std::istreambuf_iterator<char>(f)),
-                                   std::istreambuf_iterator<char>());
-
-    ILuint img = 0;
-    ilGenImages(1, &img);
-    ilBindImage(img);
-
-    ilEnable(IL_ORIGIN_SET);
-    ilOriginFunc(mInvertY ? IL_ORIGIN_UPPER_LEFT : IL_ORIGIN_LOWER_LEFT);
-
-    if (!ilLoadL(IL_TYPE_UNKNOWN, buf.data(), static_cast<ILuint>(buf.size())))
-    {
-        ILenum err = ilGetError();
-        ilDeleteImages(1, &img);
-        return 0;
-    }
-
-    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-
-    /*
-    FIXME: REFACTORIZAR EL TAMAÑO DE BYTES POR PIXEL SEGÚN FORMATO
-    */
-
-    mProperties.width = ilGetInteger(IL_IMAGE_WIDTH);
-    mProperties.height = ilGetInteger(IL_IMAGE_HEIGHT);
-    mData = new unsigned char[mProperties.width * mProperties.height * 4];
-    memcpy(mData, ilGetData(), mProperties.width * mProperties.height * 4);
-
-    GLuint tex = InitializeTexture(mData, mProperties.width, mProperties.height);
-
-    ilDeleteImages(1, &img);
-    return tex;
 }
 
 GLuint Texture::InitializeTexture(const void *pixels, GLuint width, GLuint height)

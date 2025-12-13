@@ -20,7 +20,7 @@ public:
 
     const std::vector<std::shared_ptr<Mesh>> &GetMeshes() const { return mMeshes; };
 
-    void AddMesh(const std::shared_ptr<Mesh> mesh) {mMeshes.push_back(mesh); };
+    void AddMesh(const std::shared_ptr<Mesh> mesh) { mMeshes.push_back(mesh); };
 
     const std::string &GetNodeName() { return mNodeName; };
 
@@ -29,14 +29,13 @@ public:
 
     const glm::mat4 GetTransform() const { return mTransform; }
 
-    static std::shared_ptr<Model> Load(const std::filesystem::path &path);
-
 private:
     void ProcessNodeHierarchy(aiNode *node, const aiScene *scene);
     std::shared_ptr<Mesh> ProcessMesh(aiMesh *mesh, const aiScene *scene);
 
 private:
-    std::vector<std::shared_ptr<Mesh>> mMeshes;
+    std::filesystem::path mFilePath;
+    std::vector<std::shared_ptr<Mesh>>mMeshes;
     std::weak_ptr<Model> mParent;
     std::vector<std::shared_ptr<Model>> mChildren;
     std::string mNodeName;

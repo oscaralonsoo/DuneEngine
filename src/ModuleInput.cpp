@@ -8,6 +8,10 @@
 #include "RendererAPI.h"
 #include "MaterialComponent.h"
 #include "ResourceUtils.h"
+#include "ResourceImporter.h"
+#include "ModuleResource.h"
+#include "TextureImportData.h"
+
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <string.h>
@@ -110,7 +114,9 @@ bool ModuleInput::PreUpdate()
                 if (selected)
                 {
                     scene->SetSelected(selected);
-                } else {
+                }
+                else
+                {
                     scene->ResetSelecteds();
                 }
             }
@@ -136,7 +142,7 @@ bool ModuleInput::PreUpdate()
             SDL_GetWindowSizeInPixels(Engine::GetInstance().window.get()->GetWindow(), &w, &h);
 
             Engine::GetInstance().window.get()->SetSize(w, h); // Update size in ModuleWindow
-            RendererAPI::SetViewport(0, 0, w, h); // Update viewport
+            RendererAPI::SetViewport(0, 0, w, h);              // Update viewport
         }
         break;
 
@@ -148,6 +154,8 @@ bool ModuleInput::PreUpdate()
 
             if (type == ResourceType::Model)
             {
+                // ResourceImporter::Import(importData);
+
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
 
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
@@ -179,8 +187,12 @@ bool ModuleInput::PreUpdate()
                 if (!materialComp)
                     break;
 
-                std::shared_ptr<Texture> texture = std::make_shared<Texture>(file);
+                std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
+                std::shared_ptr<Resource> resource = resourceManager->RequestResource(file);
+                std::shared_ptr<Texture> texture = std::dynamic_pointer_cast<Texture>(resource);
                 materialComp->GetMaterial()->SetTexture(TextureType::Albedo, texture);
+
+                ;
             }
         }
         break;
@@ -213,7 +225,7 @@ SDL_Point ModuleInput::GetMouseMotion() const
 }
 
 // Handles file drop events
-void ModuleInput::HandleFileDrop(const SDL_Event& event)
+void ModuleInput::HandleFileDrop(const SDL_Event &event)
 {
     draggedFile = event.drop.data ? event.drop.data : "";
     fileDropped = true;

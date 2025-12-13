@@ -4,6 +4,7 @@
 #include "ModuleInput.h"
 #include "ModuleEditor.h"
 #include "ModuleRenderer.h"
+#include "ModuleResource.h"
 #include "ModuleTextures.h"
 #include "ModuleImGui.h"
 #include "ModuleScene.h"
@@ -15,6 +16,7 @@ Engine::Engine()
     window = std::make_shared<ModuleWindow>();
     input = std::make_shared<ModuleInput>();
     renderer = std::make_shared<ModuleRenderer>();
+    resourceManager = std::make_shared<ModuleResource>();
     imgui = std::make_shared<ModuleImGui>();
     editor = std::make_shared<ModuleEditor>();
     scene = std::make_shared<ModuleScene>();
@@ -22,6 +24,7 @@ Engine::Engine()
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(renderer));
+    AddModule(std::static_pointer_cast<Module>(resourceManager));
     AddModule(std::static_pointer_cast<Module>(imgui));
     AddModule(std::static_pointer_cast<Module>(editor));
     AddModule(std::static_pointer_cast<Module>(scene));
