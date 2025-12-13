@@ -12,7 +12,12 @@
 #include <map>
 #include <memory>
 #include <glad/glad.h>
-
+enum class ContextTarget
+{
+    None,
+    Item,
+    Background
+};
 class ProjectPanel : public EditorPanel
 {
 public:
@@ -33,7 +38,7 @@ public:
 private:
     // Content view rendering
     void RenderContentView();
-    void RenderAssetItem(const std::filesystem::path& assetPath, bool& rightClickedOnItem);
+    void RenderAssetItem(const std::filesystem::path &assetPath);
 
     // Directory tree
     void RenderDirectoryTree(const std::filesystem::path& path, const std::filesystem::path& basePath);
@@ -44,9 +49,11 @@ private:
     // Utilities
     std::string GetFileIcon(const std::filesystem::path& path);
     GLuint GetIconOrThumbnail(const std::filesystem::path& path);
-    void HandleContextMenu(const std::filesystem::path& path, bool isDirectory, bool& rightClickedOnItem);
     void RenderDeleteConfirmationModal();
     void RenderModalDialogs();
+    void HandleExternalFileDrop(const std::filesystem::path& filePath);
+
+
 
     std::filesystem::path selectedFolder = "Assets";
     std::set<std::filesystem::path> selectedItems;
@@ -59,6 +66,7 @@ private:
 
     // In-place editing
     bool isEditing = false;
+    bool justStartedEditing = false;
     std::filesystem::path editingPath;
     char editBuffer[256] = {0};
     std::map<std::filesystem::path, std::string> renamedThisFrame;
@@ -73,4 +81,8 @@ private:
     // Search functionality
     AssetSearch assetSearch;
     char searchBuffer[256] = {0};
+
+    
+    ContextTarget activeContextTarget = ContextTarget::None;
+    std::filesystem::path contextPath;
 };
