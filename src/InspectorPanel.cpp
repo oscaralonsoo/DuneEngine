@@ -5,7 +5,8 @@
 #include "TransformComponent.h"
 #include "MaterialComponent.h"
 #include "MeshComponent.h"
-#include "ModuleInput.h"
+#include "CameraComponent.h"
+#include "ComponentUIRenderers.h"
 #include <imgui.h>
 #include <algorithm>
 
@@ -37,11 +38,49 @@ void InspectorPanel::OnImGuiRender()
             }
             ImGui::Separator();
 
-            // Automatically detect and render all components
+            // Render all components using the new UI renderers
             const auto& components = selected->GetComponents();
+            float panelWidth = ImGui::GetContentRegionAvail().x;
+            
             for (const auto& component : components)
             {
-                component->OnInspectorRender(ImGui::GetContentRegionAvail().x);
+                // Use the appropriate UI renderer based on component type
+                switch (component->GetType())
+                {
+                    case ComponentType::Transform:
+                        ComponentUI::TransformComponentUI::Render(
+                            static_cast<TransformComponent*>(component.get()), 
+                            panelWidth
+                        );
+                        break;
+                    
+                    case ComponentType::Mesh:
+                        ComponentUI::MeshComponentUI::Render(
+                            static_cast<MeshComponent*>(component.get()), 
+                            panelWidth
+                        );
+                        break;
+                    
+                    case ComponentType::Material:
+                        ComponentUI::MaterialComponentUI::Render(
+                            static_cast<MaterialComponent*>(component.get()), 
+                            panelWidth
+                        );
+                        break;
+                    
+                    case ComponentType::Camera:
+                        ComponentUI::CameraComponentUI::Render(
+                            static_cast<CameraComponent*>(component.get()), 
+                            panelWidth
+                        );
+                        break;
+                    
+                    default:
+                        // For any other component types, call the base method if it exists
+                        component->OnInspectorRender(panelWidth);
+                        break;
+                }
+                
                 ImGui::Separator();
             }
         }

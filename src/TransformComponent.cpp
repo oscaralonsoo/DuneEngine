@@ -1,7 +1,6 @@
 #include "TransformComponent.h"
 #include "GameObject.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include "imgui.h"
 
 TransformComponent::TransformComponent(GameObject* owner)
     : Component(ComponentType::Transform, owner)
@@ -52,36 +51,3 @@ void TransformComponent::UpdateWorldMatrix()
     }
 }
 
-void TransformComponent::OnInspectorRender(float panelWidth)
-{
-    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        // Tomar los valores en variables LOCALES con otro nombre para no sombrear
-        glm::vec3 pos = GetPosition();
-        glm::vec3 rot = GetRotation();
-        glm::vec3 scl = GetScale();
-
-        ImGui::PushItemWidth(panelWidth * 0.95f);
-
-        if (ImGui::DragFloat3("Position", &pos.x, 0.1f))
-            SetPosition(pos);
-
-        if (ImGui::DragFloat3("Rotation", &rot.x, 0.1f))
-            SetRotation(rot);
-
-        if (ImGui::DragFloat3("Scale", &scl.x, 0.01f))
-        {
-            scl = glm::max(scl, glm::vec3(0.001f));
-            SetScale(scl);
-        }
-
-        if (ImGui::Button("Reset Transform"))
-        {
-            SetPosition(glm::vec3(0.0f));
-            SetRotation(glm::vec3(0.0f));
-            SetScale(glm::vec3(1.0f));
-        }
-
-        ImGui::PopItemWidth();
-    }
-}

@@ -20,8 +20,6 @@ public:
     const glm::mat4 &GetWorldTransform() const { return mWorldMatrix; }
     void SetWorldTransform(const glm::mat4 &t) { mWorldMatrix = t; }
 
-    void OnInspectorRender(float panelWidth) override;
-
 private:
     void UpdateWorldMatrix();
     glm::mat4 ComputeLocalMatrix() const;

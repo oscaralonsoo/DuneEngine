@@ -15,8 +15,6 @@ public:
     void SetMesh(const std::shared_ptr<Mesh> &mesh);
     const std::shared_ptr<Mesh> &GetMesh() const;
 
-    void OnInspectorRender(float panelWidth);
-
 private:
     std::shared_ptr<Mesh> mMesh;
 };

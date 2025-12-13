@@ -11,7 +11,6 @@ public:
     ~CameraComponent() = default;
 
     bool Update() override;
-    void OnInspectorRender(float panelWidth) override;
 
     // Acceso a parámetros de proyección
     float GetFOV() const             { return mCamera.GetFOV(); }
