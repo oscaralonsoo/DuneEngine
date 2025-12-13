@@ -25,7 +25,6 @@ public:
     Raycaster* GetRaycaster() const { return raycaster; }
     Quadtree* GetQuadtree() const { return mQuadtree.get(); }
     void SetSelected(std::shared_ptr<GameObject> go);
-    void ResetSelecteds();
     std::shared_ptr<GameObject> GetSelected() const { return selected; }
     void RemoveGameObject(std::shared_ptr<GameObject> go);
     void ProcessPendingDeletes();

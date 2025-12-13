@@ -122,14 +122,7 @@ bool ModuleInput::PreUpdate()
                     width, height,
                     scene->GetGameObjects());
 
-                if (selected)
-                {
-                    scene->SetSelected(selected);
-                }
-                else
-                {
-                    scene->ResetSelecteds();
-                }
+                scene->SetSelected(selected);
             }
             break;
 

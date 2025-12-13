@@ -191,23 +191,17 @@ const std::vector<std::shared_ptr<GameObject>> ModuleScene::GetGameObjects()
 
 void ModuleScene::SetSelected(std::shared_ptr<GameObject> gameObject)
 {
-    ResetSelecteds();
+    // Deselect
+    if (selected)
+    {
+        selected->SetSelected(false);
+    }
 
     selected = gameObject;
-    gameObject->SetSelected(true);
-}
-
-
-void ModuleScene::ResetSelecteds()
-{
-    selected = nullptr;
-
-    for (auto& gameObject : mGameObjects)
+    
+    if (gameObject)
     {
-        if (gameObject->IsSelected())
-        {
-            gameObject->SetSelected(false);
-        }
+        gameObject->SetSelected(true);
     }
 }
 
