@@ -400,7 +400,9 @@ std::shared_ptr<Mesh> PrimitiveMesh::CreateCylinder(float topRadius, float botto
     const std::shared_ptr<Mesh>& cylinderMesh = std::make_shared<Mesh>(data, indices);
     cylinderMesh->SetName("Cylinder");
 
-    AABB cylinderAABB(glm::vec3(-topRadius, -height * 0.5f, -topRadius), glm::vec3(topRadius, height * 0.5f, topRadius));
+    // Use the maximum radius for proper AABB
+    float maxRadius = std::max(topRadius, bottomRadius);
+    AABB cylinderAABB(glm::vec3(-maxRadius, -height * 0.5f, -maxRadius), glm::vec3(maxRadius, height * 0.5f, maxRadius));
     cylinderMesh->SetAABB(cylinderAABB);
 
     return cylinderMesh;
@@ -484,6 +486,7 @@ std::shared_ptr<Mesh> PrimitiveMesh::CreateCone(float radius, float height, int 
     const std::shared_ptr<Mesh>& coneMesh = std::make_shared<Mesh>(data, indices);
     coneMesh->SetName("Cone");
 
+    // Cone AABB should encompass base and apex properly
     AABB coneAABB(glm::vec3(-radius, 0.0f, -radius), glm::vec3(radius, height, radius));
     coneMesh->SetAABB(coneAABB);
 

@@ -261,6 +261,9 @@ void ModuleScene::ProcessPendingDeletes()
     }
 
     pendingDelete.clear();
+    
+    // Rebuild quadtree after deleting objects to remove stale references
+    RebuildQuadtree();
 }
 
 std::string ModuleScene::GenerateUniqueName(const std::string& baseName)

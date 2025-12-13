@@ -358,7 +358,7 @@ GizmoAxis Gizmo::PickRotateAxis(float mouseX, float mouseY, const glm::vec3& ori
 
     float wpp    = WorldPerPixelAt(origin);
     float radius = 90.0f * wpp;
-    float band   = 10.0f * wpp;
+    float band   = 12.0f * wpp;  // Increased tolerance for better picking
 
     GizmoAxis best = GizmoAxis::None;
     float bestD = 1e9f;
@@ -366,15 +366,29 @@ GizmoAxis Gizmo::PickRotateAxis(float mouseX, float mouseY, const glm::vec3& ori
     for (auto axis : {GizmoAxis::X, GizmoAxis::Y, GizmoAxis::Z})
     {
         glm::vec3 n = AxisDirWS(axis);
+        
+        // Ensure the normal is valid
+        if (glm::dot(n, n) < 1e-6f)
+            continue;
 
         glm::vec3 hit;
+        // Check if ray intersects the plane perpendicular to the rotation axis
         if (!RayPlaneIntersection(ray.origin, ray.direction, origin, n, hit))
             continue;
 
+        // Calculate distance from hit point to the circle
         float d = DistPointToCircle(hit, origin, n, radius);
-        if (d < band && d < bestD)
+        
+        // Prioritize circles that are more perpendicular to the camera view
+        glm::vec3 camDir = SafeNormalize(origin - GetCameraPosWS(), glm::vec3(0,0,-1));
+        float viewAlignment = std::abs(glm::dot(n, camDir));
+        
+        // Adjust distance based on view alignment (prefer circles facing the camera)
+        float adjustedD = d * (1.0f + viewAlignment * 0.5f);
+        
+        if (d < band && adjustedD < bestD)
         {
-            bestD = d;
+            bestD = adjustedD;
             best = axis;
         }
     }
