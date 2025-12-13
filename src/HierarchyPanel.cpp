@@ -12,7 +12,6 @@
 #include <filesystem>
 #include <string>
 
-// Checks if a GameObject is a descendant of another GameObject
 bool HierarchyPanel::IsDescendant(std::shared_ptr<GameObject> potentialDescendant, std::shared_ptr<GameObject> ancestor)
 {
     if (!potentialDescendant || !ancestor) return false;
@@ -70,10 +69,13 @@ void HierarchyPanel::OnImGuiRender()
 
 void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject, std::shared_ptr<GameObject> selected, ModuleScene* scene)
 {
-    // If editing this object, render the edit input instead of the tree node
+    // Push unique ID
+    ImGui::PushID(gameObject.get());
+
     if (editingObject == gameObject)
     {
         RenderTreeNode(gameObject, selected, scene);
+        ImGui::PopID();
         return;
     }
 
@@ -91,7 +93,7 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
     bool nodeOpen = ImGui::TreeNodeEx(gameObject->GetName().c_str(), flags);
     
 
-    // Handle drag/drop and other interactions that don't depend on editing
+    // Handle drag/drop 
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
     {
         ImGui::SetDragDropPayload("GAMEOBJECT_PAYLOAD", &gameObject, sizeof(std::shared_ptr<GameObject>));
@@ -155,7 +157,7 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
     {
         if (hasChildren)
         {
-            auto children = gameObject->GetChildren(); // Copy to avoid iterator invalidation
+            auto children = gameObject->GetChildren();
             for (auto& child : children)
             {
                 RenderGameObjectTree(child, selected, scene);
@@ -163,6 +165,8 @@ void HierarchyPanel::RenderGameObjectTree(std::shared_ptr<GameObject> gameObject
         }
         ImGui::TreePop();
     }
+
+    ImGui::PopID();
 }
 
 void HierarchyPanel::RenderTreeNode(std::shared_ptr<GameObject> gameObject, std::shared_ptr<GameObject> selected, ModuleScene* scene)
