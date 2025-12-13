@@ -1,14 +1,7 @@
 #pragma once
-
-enum class ComponentType
-{
-    Transform,
-    Mesh,
-    Material,
-    Camera
-};
-
-class GameObject;
+#include "GameObject.h"
+#include "ComponentTypes.h" 
+class GameObject; 
 
 class Component
 {
@@ -21,7 +14,13 @@ public:
     virtual void Enable();
     virtual void Disable();
 
+    ComponentType GetType() const { return mType; }
+
     virtual void OnInspectorRender(float panelWidth) {}
+
+    bool IsActive() const { return mActive; }
+
+    GameObject* GetOwner() const { return mOwner; }
 
 private:
     ComponentType mType;

@@ -2,11 +2,14 @@
 #include <string>
 #include <vector>
 #include "Component.h"
+#include "ComponentTypes.h"
 #include <memory>
 
-class Component;
+// Forward declaration
+class Component;  
+enum class ComponentType;  // forward declaration del enum
 
-class GameObject
+class GameObject : public std::enable_shared_from_this<GameObject>
 {
 public:
     GameObject();
@@ -33,10 +36,25 @@ public:
 
     const std::vector<std::unique_ptr<Component>>& GetComponents() const { return mComponents; }
 
+    // Parent-Child hierarchy
+    void SetParent(std::shared_ptr<GameObject> parent);
+    std::shared_ptr<GameObject> GetParent() const { return mParent.lock(); }
+    void AddChild(std::shared_ptr<GameObject> child);
+    void RemoveChild(std::shared_ptr<GameObject> child);
+    const std::vector<std::shared_ptr<GameObject>>& GetChildren() const { return mChildren; }
+
+    virtual void OnChildRemoved(std::shared_ptr<GameObject> removedChild) {}
+
+    std::vector<std::shared_ptr<GameObject>> GetAllDescendants() const;
+    bool Update();
+
 private:
     bool mActive = true;
     std::string mName;
     std::vector<std::unique_ptr<Component>> mComponents;
-
     bool mSelected = false;
+
+    // Parent-Child hierarchy
+    std::weak_ptr<GameObject> mParent;
+    std::vector<std::shared_ptr<GameObject>> mChildren;
 };

@@ -2,7 +2,6 @@
 
 #include "Component.h"
 #include <glm/glm.hpp>
-#include "GameObject.h"
 
 class TransformComponent : public Component
 {
@@ -21,10 +20,10 @@ public:
     const glm::mat4 &GetWorldTransform() const { return mWorldMatrix; }
     void SetWorldTransform(const glm::mat4 &t) { mWorldMatrix = t; }
 
-    void OnInspectorRender(float panelWidth) override;
-
 private:
     void UpdateWorldMatrix();
+    glm::mat4 ComputeLocalMatrix() const;
+
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 rotation{0.0f, 0.0f, 0.0f};
     glm::vec3 scale{1.0f, 1.0f, 1.0f};

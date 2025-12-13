@@ -4,7 +4,8 @@
 #include "Mesh.h"
 #include "EditorCamera.h"
 #include "Texture.h"
-
+#include "Camera.h"
+#include "GameObject.h"
 #include <vector>
 #include <IL/il.h>
 #include <glm/glm.hpp>
@@ -13,7 +14,8 @@
 #include <SDL3/SDL.h>
 #include "Shader.h"
 #include <glad/glad.h>
-
+#include "Frustum.h"
+#include "Framebuffer.h"
 struct CameraData
 {
 	glm::mat4 projection = glm::mat4(1.0f);
@@ -35,10 +37,17 @@ public:
 
 	bool CleanUp();
 
-	EditorCamera *renderCamera = nullptr; //FIXME -> Move to other class
+    ICamera*     renderCamera = nullptr;
+    EditorCamera* editorCamera = nullptr;
+
+    void RenderToFramebuffer(Framebuffer* framebuffer, ICamera* camera);
 
 private:
+    void renderGameObject(const std::shared_ptr<GameObject>& go, ICamera* camera);
+
 	std::shared_ptr<Shader> shader = nullptr;
 	std::shared_ptr<Texture> texture;
 	glm::mat4 model, view, projection;
+	Frustum mFrustum;
+	std::vector<AABB> mVisibleBoxes;
 };

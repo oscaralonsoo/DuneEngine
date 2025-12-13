@@ -17,7 +17,7 @@ Model::Model(const std::filesystem::path &path) : Resource(ResourceType::Model)
 
 void Model::LoadFromFile(const std::filesystem::path &path)
 {
-    mFilePath = path;
+    mFilePath = std::filesystem::absolute(path);
 
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(mFilePath.string(),
@@ -25,6 +25,11 @@ void Model::LoadFromFile(const std::filesystem::path &path)
                                                  aiProcess_GenSmoothNormals |
                                                  aiProcess_CalcTangentSpace |
                                                  aiProcess_GenBoundingBoxes);
+
+    if (!scene)
+    {
+        throw std::runtime_error("Failed to load model: invalid or unsupported file");
+    }
 
     mName = mFilePath.filename().string();
 

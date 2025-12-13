@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Camera.h"
+#include "Camera.h"   
 #include "MeshComponent.h"
 #include "Mesh.h"
 #include "GameObject.h"
@@ -15,6 +15,8 @@ struct Ray
     glm::vec3 origin;
     glm::vec3 direction;
 
+    Ray() = default;
+
     Ray(const glm::vec3 &o, const glm::vec3 &d)
         : origin(o), direction(d) {}
 };
@@ -25,15 +27,17 @@ public:
     Raycaster();
     ~Raycaster() = default;
 
-    Ray ScreenPointToRay(float mouseX, float mouseY) const;
+    Ray ScreenPointToRay(float mouseX, float mouseY, int width, int height) const;
 
-    std::shared_ptr<GameObject> PickObject(float mouseX, float mouseY, const std::vector<std::shared_ptr<GameObject>> objects) const;
+    bool HasLastRay() const { return mHasLastRay; }
+    Ray  GetLastRay() const { return mLastRay; }
+
+    std::shared_ptr<GameObject> PickObject(float mouseX, float mouseY, int width, int height, const std::vector<std::shared_ptr<GameObject>> objects) const;
 
 private:
     static bool RayIntersectsAABB(const Ray &ray, const AABB &box, float *tMinOut = nullptr);
     static AABB TransformAABB(const AABB &aabb, const glm::mat4 &transform);
 
-private:
-    Camera *camera;
-    int screenWidth, screenHeight;
+    mutable bool mHasLastRay = false;
+    mutable Ray  mLastRay;
 };

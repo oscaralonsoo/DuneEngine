@@ -15,6 +15,8 @@ EditorCamera::EditorCamera(float fov, float aspectRatio, float nearClip, float f
 
 void EditorCamera::Update(/*float dt*/)
 {
+    if (!m_InputEnabled)
+        return;
     ModuleInput *input = Engine::GetInstance().input.get();
 
     SDL_Point mousePos = input->GetMousePosition();

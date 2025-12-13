@@ -76,15 +76,19 @@ public:
     void ClearDropState() { fileDropped = false; dropPosition = {0, 0}; }
 
 private:
+    void HandleKeyboardShortcuts();
+
+private:
     void HandleFileDrop(const SDL_Event& event);
     bool windowEvents[WE_COUNT];
     KeyState *keyboard;
     KeyState mouseButtons[NUM_MOUSE_BUTTONS];
-    int mouseMotionX;
-    int mouseMotionY;
-    int mouseX;
-    int mouseY;
+    float mouseMotionX;
+    float mouseMotionY;
+    float mouseX;
+    float mouseY;
     std::string draggedFile;
     bool fileDropped;
     SDL_Point dropPosition;
+    bool rmbRelativeMode = false;
 };

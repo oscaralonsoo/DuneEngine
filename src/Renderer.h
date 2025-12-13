@@ -20,14 +20,18 @@ public:
     static void ForwardPass(/*const std::shared_ptr<RenderTarget>& target*/);
     static void TransparentPass(/*const std::shared_ptr<RenderTarget>& target*/);
     static void SelectedPass(/*const std::shared_ptr<RenderTarget>& target*/);
+    static void HoverPass(/*const std::shared_ptr<RenderTarget>& target*/);
     static void SkyboxPass(/*const std::shared_ptr<RenderTarget>& target*/);
     static void Submit(const RenderObject &renderObject);
+    static void SubmitHovered(const RenderObject &renderObject);
     static void ResetRenderState();
+    static std::shared_ptr<Shader> GetSingleColorShader() { return sSingleColorShader; }
 
 private:
     static std::vector<RenderObject> sOpaqueRenderQueue;
     static std::vector<RenderObject> sTransparentRenderQueue;
     static std::vector<RenderObject> sSelectedRenderQueue;
+    static std::vector<RenderObject> sHoveredRenderQueue;
 
     static  std::shared_ptr<Mesh> sSkyboxCube;
     static std::shared_ptr<Shader> sSkyboxShader;

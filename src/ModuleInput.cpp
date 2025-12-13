@@ -16,6 +16,10 @@
 #include <imgui_impl_sdl3.h>
 #include <string.h>
 #include <filesystem>
+#include "HierarchyPanel.h"
+#include "Gizmo.h"
+#include <SDL3/SDL_mouse.h>
+#include "GameTime.h"
 
 #define MAX_KEYS 300
 
@@ -40,13 +44,8 @@ bool ModuleInput::Awake()
 {
     LOG_INFO("Init SDL input event system");
     bool ret = true;
-    SDL_Init(0);
 
-    if (SDL_InitSubSystem(SDL_INIT_EVENTS) < 0)
-    {
-        LOG_ERROR("SDL_EVENTS could not initialize! SDL_Error: %s\n", SDL_GetError());
-        ret = false;
-    }
+
     return ret;
 }
 
@@ -106,11 +105,23 @@ bool ModuleInput::PreUpdate()
             mouseButtons[event.button.button - 1] = KEY_DOWN;
 
             // Handle object picking on left mouse button click
-            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse)
+            if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse && !GameTime::IsPlaying())
             {
+                auto& engine = Engine::GetInstance();
+                SDL_Point mp = GetMousePosition();
+
                 ModuleScene *scene = Engine::GetInstance().scene.get();
 
-                std::shared_ptr<GameObject> selected = scene->GetRaycaster()->PickObject(mouseX, mouseY, scene->GetGameObjects());
+                int width, height;
+                SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &width, &height);
+
+                std::shared_ptr<GameObject> selected =
+                scene->GetRaycaster()->PickObject(
+                    static_cast<float>(mouseX),
+                    static_cast<float>(mouseY),
+                    width, height,
+                    scene->GetGameObjects());
+
                 if (selected)
                 {
                     scene->SetSelected(selected);
@@ -123,16 +134,20 @@ bool ModuleInput::PreUpdate()
             break;
 
         case SDL_EVENT_MOUSE_BUTTON_UP:
+            if (event.button.button == SDL_BUTTON_LEFT)
+                {
+                    auto& engine = Engine::GetInstance();
+                }
             mouseButtons[event.button.button - 1] = KEY_UP;
             break;
 
         case SDL_EVENT_MOUSE_MOTION:
         {
             int scale = Engine::GetInstance().window.get()->GetScale();
-            mouseMotionX = event.motion.xrel / scale;
-            mouseMotionY = event.motion.yrel / scale;
-            mouseX = event.motion.x / scale;
-            mouseY = event.motion.y / scale;
+            mouseMotionX = event.motion.xrel / static_cast<float>(scale);
+            mouseMotionY = event.motion.yrel / static_cast<float>(scale);
+            mouseX       = event.motion.x    / static_cast<float>(scale);
+            mouseY       = event.motion.y    / static_cast<float>(scale);
         }
         break;
 
@@ -155,47 +170,99 @@ bool ModuleInput::PreUpdate()
             if (type == ResourceType::Model)
             {
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
+                std::string baseName = std::filesystem::path(file).filename().stem().string();
+
+                // Create parent
+                std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObjectWithName(baseName);
+
+                auto* scene = Engine::GetInstance().scene.get();
 
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
                 {
-                    std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-                    go->SetName(ResourceUtils::ToString(ResourceType::Model));
+                    std::shared_ptr<GameObject> childGameObject = scene->CreateGameObject();
+                    if (model->GetMeshes().size() > 1)
+                    {
+                        childGameObject->SetName(baseName + "_" + std::to_string(i));
+                    }
+                    else
+                    {
+                        childGameObject->SetName(baseName);
+                    }
 
                     auto &mesh = model->GetMeshes()[i];
 
-                    go->CreateComponent(ComponentType::Mesh);
-                    MeshComponent *meshComp = go->GetComponent<MeshComponent>();
+                    childGameObject->CreateComponent(ComponentType::Transform);
+                    childGameObject->CreateComponent(ComponentType::Mesh);
+                    MeshComponent *meshComp = childGameObject->GetComponent<MeshComponent>();
                     meshComp->SetMesh(mesh);
 
-                    go->CreateComponent(ComponentType::Material);
-                    MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
-                    materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+                    childGameObject->CreateComponent(ComponentType::Material);
+                    MaterialComponent *materialComponent = childGameObject->GetComponent<MaterialComponent>();
+                    materialComponent->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+
+                    // Set parent-child relation
+                    childGameObject->SetParent(parentGameObject);
+
+                    scene->AddGameObject(childGameObject);
                 }
+
+                Engine::GetInstance().scene->RebuildQuadtree();
             }
             else if (type == ResourceType::Texture)
             {
                 ModuleScene *scene = Engine::GetInstance().scene.get();
-                std::shared_ptr<GameObject> selected = scene->GetRaycaster()->PickObject(event.drop.x, event.drop.y, scene->GetGameObjects());
+
+                int width, height;
+                SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &width, &height);
+
+                std::shared_ptr<GameObject> selected =
+                scene->GetRaycaster()->PickObject(
+                    static_cast<float>(event.drop.x),
+                    static_cast<float>(event.drop.y),
+                    width, height,
+                    scene->GetGameObjects());
+
                 scene->SetSelected(selected);
 
                 if (!selected)
                     break;
 
-                MaterialComponent *materialComp = selected->GetComponent<MaterialComponent>();
-                if (!materialComp)
+                MaterialComponent *materialComponent = selected->GetComponent<MaterialComponent>();
+                if (!materialComponent)
                     break;
 
                 std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
                 std::shared_ptr<Resource> resource = resourceManager->RequestResource(file);
                 std::shared_ptr<Texture> texture = std::dynamic_pointer_cast<Texture>(resource);
-                materialComp->GetMaterial()->SetTexture(TextureType::Albedo, texture);
-
-                ;
+                materialComponent->GetMaterial()->SetTexture(TextureType::Albedo, texture);
             }
         }
         break;
         }
     }
+
+    SDL_Window* win = Engine::GetInstance().window->GetWindow();
+
+    bool rmb =
+        mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_DOWN ||
+        mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_REPEAT;
+
+    if (rmb && !rmbRelativeMode)
+    {
+        SDL_SetWindowRelativeMouseMode(win, true);   // oculta cursor + movimiento relativo
+        SDL_SetWindowMouseGrab(win, true);
+        rmbRelativeMode = true;
+    }
+    else if (!rmb && rmbRelativeMode)
+    {
+        SDL_SetWindowRelativeMouseMode(win, false);  // muestra cursor
+        SDL_SetWindowMouseGrab(win, false);
+        rmbRelativeMode = false;
+    }
+
+
+    // Handle keyboard shortcuts
+    HandleKeyboardShortcuts();
 
     return true;
 }
@@ -203,7 +270,6 @@ bool ModuleInput::PreUpdate()
 bool ModuleInput::CleanUp()
 {
     LOG_INFO("Quitting SDL event subsystem");
-    SDL_QuitSubSystem(SDL_INIT_EVENTS);
     return true;
 }
 
@@ -214,25 +280,84 @@ bool ModuleInput::GetWindowEvent(EventWindow ev) const
 
 SDL_Point ModuleInput::GetMousePosition() const
 {
-    return {mouseX, mouseY};
+    SDL_Point p;
+    p.x = static_cast<int>(mouseX);
+    p.y = static_cast<int>(mouseY);
+    return p;
 }
 
 SDL_Point ModuleInput::GetMouseMotion() const
 {
-    return {mouseMotionX, mouseMotionY};
+    SDL_Point p;
+    p.x = static_cast<int>(mouseMotionX);
+    p.y = static_cast<int>(mouseMotionY);
+    return p;
 }
 
-// Handles file drop events
-void ModuleInput::HandleFileDrop(const SDL_Event &event)
+void ModuleInput::HandleKeyboardShortcuts()
+{
+    // Ctrl+D to Duplicate
+    if (GetKey(SDL_SCANCODE_D) == KEY_DOWN && GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT)
+    {
+        ModuleScene* scene = Engine::GetInstance().scene.get();
+        if (scene)
+        {
+            std::shared_ptr<GameObject> selected = scene->GetSelected();
+            if (selected)
+            {
+                // Duplicate the GameObject
+                auto duplicated = scene->CreateGameObject();
+                duplicated->SetName(scene->GenerateUniqueName(selected->GetName()));
+
+                for (auto& comp : selected->GetComponents())
+                {
+                    duplicated->CreateComponent(comp->GetType());
+                }
+                for (auto& child : selected->GetChildren())
+                {
+                    scene->DuplicateGameObject(child, duplicated);
+                }
+                // Set parent if selected has one
+                if (auto parent = selected->GetParent())
+                {
+                    duplicated->SetParent(parent);
+                }
+            }
+        }
+    }
+
+    if (!ImGui::GetIO().WantCaptureKeyboard)
+    {
+        // Bloquear mientras RMB está siendo usado para mover cámara
+        bool rmbDown =
+            GetMouseButtonDown(3) == KEY_DOWN ||
+            GetMouseButtonDown(3) == KEY_REPEAT;
+
+        if (!rmbDown)
+        {
+            auto& engine = Engine::GetInstance();
+            ModuleScene* scene = engine.scene.get();
+            bool hasSelection = (scene && scene->GetSelected() != nullptr);
+        }
+    }
+    // F11 to Toggle Fullscreen
+    if (GetKey(SDL_SCANCODE_F11) == KEY_DOWN)
+    {
+        Engine::GetInstance().window.get()->ToggleFullscreen();
+    }
+}
+
+void ModuleInput::HandleFileDrop(const SDL_Event& event)
 {
     draggedFile = event.drop.data ? event.drop.data : "";
     fileDropped = true;
-    dropPosition = {mouseX, mouseY};
+    dropPosition.x = static_cast<int>(mouseX);
+    dropPosition.y = static_cast<int>(mouseY);
 
     if (ResourceUtils::GetTypeFromExtension(draggedFile) == ResourceType::Model)
     {
-        std::shared_ptr<GameObject> go = Engine::GetInstance().scene.get()->CreateGameObject();
-        go->SetName(std::filesystem::path(draggedFile).filename().stem().string());
+        std::shared_ptr<GameObject> gameObject = Engine::GetInstance().scene.get()->CreateGameObject();
+        gameObject->SetName(std::filesystem::path(draggedFile).filename().stem().string());
 
         std::shared_ptr<Model> model = std::make_shared<Model>(draggedFile);
 
@@ -240,13 +365,17 @@ void ModuleInput::HandleFileDrop(const SDL_Event &event)
         {
             auto &mesh = model->GetMeshes()[i];
 
-            go->CreateComponent(ComponentType::Mesh);
-            MeshComponent *meshComp = go->GetComponent<MeshComponent>();
-            meshComp->SetMesh(mesh);
+            gameObject->CreateComponent(ComponentType::Mesh);
+            MeshComponent *meshComponent = gameObject->GetComponent<MeshComponent>();
+            meshComponent->SetMesh(mesh);
 
-            go->CreateComponent(ComponentType::Material);
-            MaterialComponent *materialComp = go->GetComponent<MaterialComponent>();
-            materialComp->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+            gameObject->CreateComponent(ComponentType::Material);
+            MaterialComponent *materialComponent = gameObject->GetComponent<MaterialComponent>();
+            materialComponent->SetMaterial(std::make_shared<Material>(ResourceType::Material));
         }
     }
+
+    Engine::GetInstance().scene->RebuildQuadtree();
 }
+
+

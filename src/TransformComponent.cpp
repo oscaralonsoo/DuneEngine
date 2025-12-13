@@ -1,7 +1,6 @@
 #include "TransformComponent.h"
 #include "GameObject.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include "imgui.h"
 
 TransformComponent::TransformComponent(GameObject* owner)
     : Component(ComponentType::Transform, owner)
@@ -11,7 +10,6 @@ TransformComponent::TransformComponent(GameObject* owner)
 
 void TransformComponent::UpdateWorldMatrix()
 {
-    // Usar los getters para no confundir IntelliSense
     const glm::vec3& pos = GetPosition();
     const glm::vec3& rot = GetRotation();
     const glm::vec3& scl = GetScale();
@@ -22,40 +20,33 @@ void TransformComponent::UpdateWorldMatrix()
     glm::mat4 rotationZ   = glm::rotate(glm::mat4(1.0f), glm::radians(rot.z), glm::vec3(0, 0, 1));
     glm::mat4 scaling     = glm::scale(glm::mat4(1.0f), scl);
 
-    // ✅ Orden TRS correcto:
-    mWorldMatrix = translation * rotationZ * rotationY * rotationX * scaling;
-}
+    // Local matrix
+    glm::mat4 localMatrix = translation * rotationZ * rotationY * rotationX * scaling;
 
-void TransformComponent::OnInspectorRender(float panelWidth)
-{
-    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    // If has parent
+    if (auto parent = GetOwner()->GetParent())
     {
-        // Tomar los valores en variables LOCALES con otro nombre para no sombrear
-        glm::vec3 pos = GetPosition();
-        glm::vec3 rot = GetRotation();
-        glm::vec3 scl = GetScale();
-
-        ImGui::PushItemWidth(panelWidth * 0.95f);
-
-        if (ImGui::DragFloat3("Position", &pos.x, 0.1f))
-            SetPosition(pos);
-
-        if (ImGui::DragFloat3("Rotation", &rot.x, 0.1f))
-            SetRotation(rot);
-
-        if (ImGui::DragFloat3("Scale", &scl.x, 0.01f))
+        if (auto parentTransform = parent->GetComponent<TransformComponent>())
         {
-            scl = glm::max(scl, glm::vec3(0.001f));
-            SetScale(scl);
+            mWorldMatrix = parentTransform->GetWorldTransform() * localMatrix;
         }
-
-        if (ImGui::Button("Reset Transform"))
+        else
         {
-            SetPosition(glm::vec3(0.0f));
-            SetRotation(glm::vec3(0.0f));
-            SetScale(glm::vec3(1.0f));
+            mWorldMatrix = localMatrix;
         }
+    }
+    else
+    {
+        mWorldMatrix = localMatrix;
+    }
 
-        ImGui::PopItemWidth();
+    // Update children
+    for (auto& child : GetOwner()->GetChildren())
+    {
+        if (auto childTransform = child->GetComponent<TransformComponent>())
+        {
+            childTransform->UpdateWorldMatrix();
+        }
     }
 }
+
