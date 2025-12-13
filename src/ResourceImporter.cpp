@@ -1,6 +1,9 @@
 #include "ResourceImporter.h"
-#include "IL/il.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include "IL/il.h"
 #include <fstream>
 
 TextureImportData ResourceImporter::Import(const std::filesystem::path &path, TextureImportData importData)
@@ -33,5 +36,20 @@ TextureImportData ResourceImporter::Import(const std::filesystem::path &path, Te
 
     ilDeleteImages(1, &img);
 
+    return importData;
+}
+
+MeshImportData ResourceImporter::Import(const std::filesystem::path &path, MeshImportData importData)
+{
+    // Assimp::Importer importer;
+    // const aiScene *scene = importer.ReadFile(path.string(),
+    //                                          aiProcess_Triangulate |
+    //                                              aiProcess_GenSmoothNormals |
+    //                                              aiProcess_CalcTangentSpace |
+    //                                              aiProcess_GenBoundingBoxes);
+
+    // importData.name = path.filename().string();
+
+    // ProcessNodeHierarchy(scene->mRootNode, scene);
     return importData;
 }

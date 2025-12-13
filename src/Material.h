@@ -33,7 +33,6 @@ struct MaterialRenderSettings
         Multiply
     } blendMode = BlendMode::Mix;
 
-    // Culling
     enum CullMode
     {
         Front = 0,

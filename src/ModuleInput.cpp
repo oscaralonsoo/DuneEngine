@@ -154,8 +154,6 @@ bool ModuleInput::PreUpdate()
 
             if (type == ResourceType::Model)
             {
-                // ResourceImporter::Import(importData);
-
                 std::shared_ptr<Model> model = std::make_shared<Model>(file);
 
                 for (size_t i = 0; i < model->GetMeshes().size(); ++i)
