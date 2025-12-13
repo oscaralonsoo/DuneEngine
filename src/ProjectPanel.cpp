@@ -19,6 +19,13 @@ bool ProjectPanel::Start()
         folderIconTexture = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(placeholderIcon));
     }
 
+    // Load model icon
+    std::filesystem::path modelIcon = "icons/model.png";
+    if (std::filesystem::exists(modelIcon))
+    {
+        iconTextures[ResourceType::Model] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(modelIcon));
+    }
+
     return true;
 }
 
@@ -545,7 +552,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
         ImGui::EndDragDropSource();
     }
 
-    // Now render the visual content on top
     ImGui::SetCursorPos(itemPos);
     
     GLuint textureID = GetIconOrThumbnail(assetPath);
@@ -558,7 +564,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
     }
     else
     {
-        // Render text icon as non-interactive text instead of button
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
@@ -569,7 +574,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
     // Handle renaming
     if (isEditing && assetPath == editingPath)
     {
-        // Copy current name to buffer if just started editing
         if (justStartedEditing)
         {
             strcpy(editBuffer, filename.c_str());
