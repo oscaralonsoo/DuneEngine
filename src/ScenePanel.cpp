@@ -22,7 +22,6 @@
 
 bool ScenePanel::Start()
 {
-    // Framebuffers independientes para Scene y Game
     m_SceneFramebuffer = new Framebuffer(800, 600);
     m_GameFramebuffer  = new Framebuffer(800, 600);
     return true;
@@ -31,55 +30,62 @@ bool ScenePanel::Start()
 void ScenePanel::OnImGuiRender()
 {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoScrollbar;
-
+    ImGuiWindowFlags_NoCollapse |
+    ImGuiWindowFlags_NoScrollbar;
+    
     ImGui::Begin("Scene", nullptr, flags);
-
+    
     RenderToolbarControls();
     ImGui::Separator();
-
+    
     bool isPlaying = GameTime::IsPlaying();
-
-    if (m_SwitchToGameOnPlay && isPlaying)
-    {
-        m_CurrentView = ViewType::Game;
-        m_SwitchToGameOnPlay = false; // solo una vez
-    }
-
+    
     if (ImGui::BeginTabBar("ViewTabs"))
     {
-        // --- Scene Tab ---
-        ImGui::BeginDisabled(isPlaying); // bloqueada durante Play
-        if (ImGui::BeginTabItem("Scene"))
+        //-------Scene Tab--------
+        ImGuiTabItemFlags sceneFlags = 0;
+        
+        if (m_ForceRestoreView && m_CurrentView == ViewType::Scene)
+        sceneFlags |= ImGuiTabItemFlags_SetSelected;
+        
+        ImGui::BeginDisabled(isPlaying);
+        if (ImGui::BeginTabItem("Scene", nullptr, sceneFlags))
         {
-            m_CurrentView = ViewType::Scene; 
             RenderSceneView();
+            
+            if (!isPlaying && ImGui::IsItemActivated())
+            m_CurrentView = ViewType::Scene;
+            
             ImGui::EndTabItem();
         }
         ImGui::EndDisabled();
-
-        // --- Game Tab ---
-        ImGuiTabItemFlags gameTabFlags = 0;
-        if (isPlaying)
-            gameTabFlags |= ImGuiTabItemFlags_SetSelected; 
-
-        if (ImGui::BeginTabItem("Game", nullptr, gameTabFlags))
+        
+        //--------Game Tab--------
+        ImGuiTabItemFlags gameFlags = 0;
+        
+        if (isPlaying || (m_ForceRestoreView && m_CurrentView == ViewType::Game))
+        gameFlags |= ImGuiTabItemFlags_SetSelected;
+        
+        if (ImGui::BeginTabItem("Game", nullptr, gameFlags))
         {
-            m_CurrentView = ViewType::Game; 
             RenderGameView();
+            
+            if (ImGui::IsItemActivated())
+            m_CurrentView = ViewType::Game;
+            
             ImGui::EndTabItem();
         }
-
+        
         ImGui::EndTabBar();
+        
+        m_ForceRestoreView = false;
     }
-
     ImGui::End();
 }
-
-
 void ScenePanel::RenderSceneView()
 {
+    const bool sceneEditable = IsSceneEditable();
+
     ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
     ImGui::BeginChild("SceneView", contentRegion, true,
@@ -95,7 +101,8 @@ void ScenePanel::RenderSceneView()
         engine.gizmo->SetViewportSize((int)sceneViewSize.x, (int)sceneViewSize.y);
 
     if (width > 0 && height > 0 &&
-        (m_SceneFramebuffer->GetWidth() != width || m_SceneFramebuffer->GetHeight() != height))
+        (m_SceneFramebuffer->GetWidth() != width ||
+         m_SceneFramebuffer->GetHeight() != height))
     {
         m_SceneFramebuffer->Resize(width, height);
     }
@@ -103,7 +110,10 @@ void ScenePanel::RenderSceneView()
     // Render escena
     auto* renderer = engine.renderer.get();
     if (renderer && renderer->editorCamera)
+    {
+        renderer->editorCamera->SetInputEnabled(sceneEditable);
         renderer->RenderToFramebuffer(m_SceneFramebuffer, renderer->editorCamera);
+    }
 
     // Mostrar framebuffer
     ImGui::Image(
@@ -131,6 +141,35 @@ void ScenePanel::RenderSceneView()
         ImVec2 mousePos = ImGui::GetMousePos();
         ImVec2 itemMin  = ImGui::GetItemRectMin();
 
+
+
+    //Input blocked
+    if (!sceneEditable)
+    {
+        ImGui::EndChild();
+        return;
+    }
+
+    //Selection
+    if (ImGui::IsItemClicked(0))
+    {
+        auto* scene = Engine::GetInstance().scene.get();
+        std::shared_ptr<GameObject> picked =
+            scene->GetRaycaster()->PickObject(
+                ImGui::GetMousePos().x - ImGui::GetItemRectMin().x,
+                ImGui::GetMousePos().y - ImGui::GetItemRectMin().y,
+                width, height,
+                scene->GetGameObjects());
+
+        scene->SetSelected(picked);
+    }
+
+    // Drag & Drop
+    float mouseX = -1.0f, mouseY = -1.0f;
+    if (ImGui::IsItemHovered())
+    {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        ImVec2 itemMin  = ImGui::GetItemRectMin();
         mouseX = mousePos.x - itemMin.x;
         mouseY = mousePos.y - itemMin.y;
 
@@ -166,6 +205,7 @@ void ScenePanel::RenderSceneView()
         if (engine.gizmo)
             engine.gizmo->OnMouseUp();
     }
+    HandleSceneDragDrop(sceneViewSize, mouseX, mouseY);
 
     ImGui::EndChild();
 }
@@ -264,10 +304,12 @@ void ScenePanel::RenderToolbarControls()
     {
         if (!isPlaying)
         {
-            // Guardamos la tab actual antes de Play
+            // Guardar la vista actual
             m_LastViewBeforePlay = m_CurrentView;
 
-            m_SwitchToGameOnPlay = true;
+            // Forzar Game View
+            m_CurrentView = ViewType::Game;
+
             scene->SaveInitialSnapshot();
             scene->SetSelected(nullptr);
             GameTime::Play();
@@ -276,9 +318,9 @@ void ScenePanel::RenderToolbarControls()
         {
             GameTime::Stop();
             scene->RestoreSnapshot();
-
-            // Restaurar tab anterior
+            
             m_CurrentView = m_LastViewBeforePlay;
+            m_ForceRestoreView = true; // ← CLAVE
         }
     }
 
@@ -404,7 +446,11 @@ void ScenePanel::HandleAssetDrop(const std::filesystem::path& assetPath, float m
             return;
     }
 }
-
+bool ScenePanel::IsSceneEditable() const
+{
+    return !GameTime::IsPlaying() &&
+           m_CurrentView == ViewType::Scene;
+}
 void ScenePanel::CleanUp()
 {
     if (m_SceneFramebuffer)

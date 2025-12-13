@@ -35,7 +35,8 @@ public:
 
     CameraState GetState() const { return mCurrentState; }
     glm::quat GetOrientation() const;
-
+    void SetInputEnabled(bool enabled) { m_InputEnabled = enabled; }
+    void ProcessInput() {if (!m_InputEnabled) return;}
     float GetFlySpeed() const { return mCurrentSpeed; }
     float GetOrbitZoom() const { return mDistance; }
 
@@ -63,4 +64,5 @@ private:
     glm::vec2 mInitialMousePosition{0.0f, 0.0f};
 
     CameraState mCurrentState = CameraState::NONE;
+    bool m_InputEnabled = true;
 };

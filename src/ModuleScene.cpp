@@ -16,97 +16,81 @@
 
 namespace
 {
-    std::shared_ptr<GameObject> CloneGameObject(const std::shared_ptr<GameObject>& src)
-    {
-        auto dst = std::make_shared<GameObject>();
-        dst->SetName(src->GetName());
-        dst->SetSelected(false); // nunca arrancamos con selección
-
-        // --- Transform ---
-        if (auto* srcTransform = src->GetComponent<TransformComponent>())
+    std::shared_ptr<GameObject> CloneGameObjectRecursive(
+        const std::shared_ptr<GameObject>& src,
+        std::shared_ptr<GameObject> parent = nullptr)
         {
-            // Reutilizar el Transform que GameObject ya crea en su constructor
-            auto* dstTransform = dst->GetComponent<TransformComponent>();
-
-            // Por si algún día tienes GameObjects sin Transform, aseguramos
-            if (!dstTransform)
+            auto dst = std::make_shared<GameObject>();
+            dst->SetName(src->GetName());
+            dst->SetSelected(false);
+            
+            // --- Transform ---
+            if (auto* srcTransform = src->GetComponent<TransformComponent>())
             {
-                auto& dstTransformComp = dst->CreateComponent(ComponentType::Transform);
-                dstTransform = dynamic_cast<TransformComponent*>(&dstTransformComp);
+                auto* dstTransform = dst->GetComponent<TransformComponent>();
+                if (dstTransform)
+                {
+                    dstTransform->SetPosition(srcTransform->GetPosition());
+                    dstTransform->SetRotation(srcTransform->GetRotation());
+                    dstTransform->SetScale(srcTransform->GetScale());
+                }
             }
-
-            if (dstTransform)
+            
+            // --- Mesh ---
+            if (auto* srcMesh = src->GetComponent<MeshComponent>())
             {
-                dstTransform->SetPosition(srcTransform->GetPosition());
-                dstTransform->SetRotation(srcTransform->GetRotation());
-                dstTransform->SetScale(srcTransform->GetScale());
+                auto& comp = dst->CreateComponent(ComponentType::Mesh);
+                static_cast<MeshComponent&>(comp).SetMesh(srcMesh->GetMesh());
             }
-        }
-
-        // --- Mesh ---
-        if (auto* srcMesh = src->GetComponent<MeshComponent>())
-        {
-            auto& dstMeshComp = dst->CreateComponent(ComponentType::Mesh);
-            auto* dstMesh = dynamic_cast<MeshComponent*>(&dstMeshComp);
-            if (dstMesh)
+            
+            // --- Material ---
+            if (auto* srcMat = src->GetComponent<MaterialComponent>())
             {
-                dstMesh->SetMesh(srcMesh->GetMesh());
-            }
-        }
-
-        // --- Material ---
-        // --- Material ---
-        if (auto* srcMat = src->GetComponent<MaterialComponent>())
-        {
-            auto& dstMatComp = dst->CreateComponent(ComponentType::Material);
-            auto* dstMat = dynamic_cast<MaterialComponent*>(&dstMatComp);
-            if (dstMat)
-            {
-                std::shared_ptr<Material> srcMaterial = srcMat->GetMaterial();
+                auto& comp = dst->CreateComponent(ComponentType::Material);
+                auto* dstMat = static_cast<MaterialComponent*>(&comp);
+                
+                auto srcMaterial = srcMat->GetMaterial();
                 if (srcMaterial)
                 {
-                    // Crear un material nuevo
                     auto clonedMaterial = std::make_shared<Material>(ResourceType::Material);
-
-                    // Copiar shader
                     clonedMaterial->SetShader(srcMaterial->GetShader());
-
-                    // Copiar propiedades PBR
-                    clonedMaterial->GetProperties()      = srcMaterial->GetProperties();
-
-                    // Copiar texturas
-                    clonedMaterial->GetTextures()        = srcMaterial->GetTextures();
-
-                    // Copiar render settings (culling, blend, etc.)
-                    clonedMaterial->GetRenderSettings()  = srcMaterial->GetRenderSettings();
-
-                    // Asignar el material clonado al componente destino
+                    clonedMaterial->GetProperties()     = srcMaterial->GetProperties();
+                    clonedMaterial->GetTextures()       = srcMaterial->GetTextures();
+                    clonedMaterial->GetRenderSettings() = srcMaterial->GetRenderSettings();
                     dstMat->SetMaterial(clonedMaterial);
                 }
             }
-        }
-
-        if (auto* srcCam = src->GetComponent<CameraComponent>())
-        {
-            auto& dstCamComp = dst->CreateComponent(ComponentType::Camera);
-            auto* dstCam = dynamic_cast<CameraComponent*>(&dstCamComp);
-            if (dstCam)
+            
+            // --- Camera ---
+            if (auto* srcCam = src->GetComponent<CameraComponent>())
             {
+                auto& comp = dst->CreateComponent(ComponentType::Camera);
+                auto* dstCam = static_cast<CameraComponent*>(&comp);
                 dstCam->SetFOV(srcCam->GetFOV());
                 dstCam->SetNearClip(srcCam->GetNearClip());
                 dstCam->SetFarClip(srcCam->GetFarClip());
             }
+            
+            // Parent
+            if (parent)
+            dst->SetParent(parent);
+            
+            // --- CLONAR HIJOS ---
+            for (auto& child : src->GetChildren())
+            {
+                CloneGameObjectRecursive(child, dst);
+            }
+            
+            return dst;
         }
-
-        return dst;
-    }
-
-    bool ComputeWorldAABB(const std::shared_ptr<GameObject>& go, AABB& outBox)
-    {
-        MeshComponent* meshComp = go->GetComponent<MeshComponent>();
-        if (!meshComp)
+        
+        
+        bool ComputeWorldAABB(const std::shared_ptr<GameObject>& go, AABB& outBox)
+        {
+            MeshComponent* meshComp = go->GetComponent<MeshComponent>();
+            if (!meshComp)
             return false;
-
+            
         std::shared_ptr<Mesh> mesh = meshComp->GetMesh();
         if (!mesh)
             return false;
@@ -438,11 +422,13 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
 void ModuleScene::SaveInitialSnapshot()
 {
     mInitialSnapshot.clear();
-    mInitialSnapshot.reserve(mGameObjects.size());
 
     for (const auto& go : mGameObjects)
     {
-        mInitialSnapshot.push_back(CloneGameObject(go));
+        if (!go->GetParent())
+        {
+            mInitialSnapshot.push_back(CloneGameObjectRecursive(go));
+        }
     }
 
     mHasSnapshot = true;
@@ -453,19 +439,22 @@ void ModuleScene::RestoreSnapshot()
     if (!mHasSnapshot)
         return;
 
-    // Limpiar selección
     selected = nullptr;
-
-    // Sustituimos la escena actual por el snapshot
     mGameObjects.clear();
 
-    for (const auto& savedGo : mInitialSnapshot)
+    for (const auto& root : mInitialSnapshot)
     {
-        mGameObjects.push_back(CloneGameObject(savedGo));
+        auto clonedRoot = CloneGameObjectRecursive(root);
+        mGameObjects.push_back(clonedRoot);
+
+        auto descendants = clonedRoot->GetAllDescendants();
+        for (auto& child : descendants)
+            mGameObjects.push_back(child);
     }
 
     RebuildQuadtree();
 }
+
 
 void ModuleScene::RebuildQuadtree()
 {
