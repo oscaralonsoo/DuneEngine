@@ -388,19 +388,60 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
 {
     auto duplicated = CreateGameObject();
     duplicated->SetName(GenerateUniqueName(original->GetName()));
-    // Copy components
-    for (auto& comp : original->GetComponents())
+    
+    // --- Copy Transform ---
+    if (auto* srcTransform = original->GetComponent<TransformComponent>())
     {
-        if (comp->GetType() != ComponentType::Transform)
+        auto* dstTransform = duplicated->GetComponent<TransformComponent>();
+        if (dstTransform)
         {
-            duplicated->CreateComponent(comp->GetType());
+            dstTransform->SetPosition(srcTransform->GetPosition());
+            dstTransform->SetRotation(srcTransform->GetRotation());
+            dstTransform->SetScale(srcTransform->GetScale());
         }
     }
+    
+    // --- Copy Mesh ---
+    if (auto* srcMesh = original->GetComponent<MeshComponent>())
+    {
+        auto& comp = duplicated->CreateComponent(ComponentType::Mesh);
+        static_cast<MeshComponent&>(comp).SetMesh(srcMesh->GetMesh());
+    }
+    
+    // --- Copy Material ---
+    if (auto* srcMat = original->GetComponent<MaterialComponent>())
+    {
+        auto& comp = duplicated->CreateComponent(ComponentType::Material);
+        auto* dstMat = static_cast<MaterialComponent*>(&comp);
+        
+        auto srcMaterial = srcMat->GetMaterial();
+        if (srcMaterial)
+        {
+            auto clonedMaterial = std::make_shared<Material>(ResourceType::Material);
+            clonedMaterial->SetShader(srcMaterial->GetShader());
+            clonedMaterial->GetProperties()     = srcMaterial->GetProperties();
+            clonedMaterial->GetTextures()       = srcMaterial->GetTextures();
+            clonedMaterial->GetRenderSettings() = srcMaterial->GetRenderSettings();
+            dstMat->SetMaterial(clonedMaterial);
+        }
+    }
+    
+    // --- Copy Camera ---
+    if (auto* srcCam = original->GetComponent<CameraComponent>())
+    {
+        auto& comp = duplicated->CreateComponent(ComponentType::Camera);
+        auto* dstCam = static_cast<CameraComponent*>(&comp);
+        dstCam->SetFOV(srcCam->GetFOV());
+        dstCam->SetNearClip(srcCam->GetNearClip());
+        dstCam->SetFarClip(srcCam->GetFarClip());
+    }
+    
     // Copy children recursively
     for (auto& child : original->GetChildren())
     {
         DuplicateGameObject(child, duplicated);
     }
+    
     // Set parent
     duplicated->SetParent(parent);
     if (!duplicated->GetParent())
