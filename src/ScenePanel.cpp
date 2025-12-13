@@ -256,6 +256,10 @@ void ScenePanel::RenderGameView()
 
         // Render
         auto* renderer = Engine::GetInstance().renderer.get();
+        if (renderer && renderer->editorCamera)
+        {
+            renderer->editorCamera->SetInputEnabled(false);
+        }
         if (renderer)
             renderer->RenderToFramebuffer(m_GameFramebuffer, mainCamera);
 
