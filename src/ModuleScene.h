@@ -53,6 +53,9 @@ public:
     void RestoreSnapshot();
 
     void RebuildQuadtree();
+
+    void SaveScene(const std::string& path);
+    void LoadScene(const std::string& path);
 private:
     std::shared_ptr<GameObject> root;
     std::shared_ptr<GameObject> test;

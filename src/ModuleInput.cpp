@@ -318,6 +318,27 @@ void ModuleInput::HandleKeyboardShortcuts()
             }
         }
     }
+    if (GetKey(SDL_SCANCODE_F5) == KEY_DOWN)
+    {
+        ModuleScene* scene = Engine::GetInstance().scene.get();
+        if (scene)
+        {
+            scene->SaveScene("Assets/Scenes/TestScene.scene");
+            LOG_INFO("Scene saved");
+        }
+    }
+
+    // F9 -> Load Scene
+    if (GetKey(SDL_SCANCODE_F9) == KEY_DOWN)
+    {
+        ModuleScene* scene = Engine::GetInstance().scene.get();
+        if (scene)
+        {
+            scene->LoadScene("Assets/Scenes/TestScene.scene");
+            LOG_INFO("Scene loaded");
+        }
+    }
+
 
     if (!ImGui::GetIO().WantCaptureKeyboard)
     {
