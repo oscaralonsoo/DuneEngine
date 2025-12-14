@@ -21,12 +21,16 @@ public:
     static constexpr float kMinCenterWidth = 180.0f; 
 
     bool Start() override;
+
     void SetupWindow(ImGuiViewport* viewport, float& panelWidth);
+
     void RenderContent(ModuleScene* scene, std::shared_ptr<GameObject> selected);
-    void OnImGuiRender() override;
+
+    void OnImGuiRender() override; //Render the panel
+
     void CleanUp() override;
 
-    // Context menu rendering (called by HierarchyNodeRenderer)
+    // Context menu rendering
     void RenderNodeContextMenu(std::shared_ptr<GameObject> gameObject, ModuleScene* scene);
     void RenderBackgroundContextMenu(ModuleScene* scene);
 

@@ -16,7 +16,7 @@ public:
 
     bool Start() override;
 
-    void OnImGuiRender() override;
+    void OnImGuiRender() override;     // Render the panel UI
 
     void CleanUp() override;
 
