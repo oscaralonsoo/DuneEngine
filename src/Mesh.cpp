@@ -121,3 +121,10 @@ void Mesh::LoadFromImportData(const MeshImportData& data)
 
     *this = Mesh(mVertices, mIndices);
 }
+
+size_t Mesh::GetMemorySize() const
+{
+    size_t vertexMemory = mVertices.size() * sizeof(Vertex);
+    size_t indexMemory = mIndices.size() * sizeof(uint32_t);
+    return vertexMemory + indexMemory;
+}

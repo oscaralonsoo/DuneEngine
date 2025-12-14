@@ -35,6 +35,9 @@ public:
     void OnImGuiRender() override;
     void CleanUp() override;
 
+    // Selection management
+    void ClearSelection();
+
 private:
     // Content view rendering
     void RenderContentView();

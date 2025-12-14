@@ -121,3 +121,24 @@ std::shared_ptr<Mesh> Model::ProcessMesh(aiMesh *mesh, const aiScene *scene)
 
     return meshPtr;
 }
+
+size_t Model::GetMemorySize() const
+{
+    size_t totalSize = sizeof(Model);
+    
+    // Add memory from all meshes
+    for (const auto& mesh : mMeshes)
+    {
+        if (mesh)
+            totalSize += mesh->GetMemorySize();
+    }
+    
+    // Add memory from children models
+    for (const auto& child : mChildren)
+    {
+        if (child)
+            totalSize += child->GetMemorySize();
+    }
+    
+    return totalSize;
+}

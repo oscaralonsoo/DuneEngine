@@ -29,6 +29,9 @@ public:
 
     const glm::mat4 GetTransform() const { return mTransform; }
 
+    // Override to calculate model memory size
+    size_t GetMemorySize() const override;
+
 private:
     void ProcessNodeHierarchy(aiNode *node, const aiScene *scene);
     std::shared_ptr<Mesh> ProcessMesh(aiMesh *mesh, const aiScene *scene);

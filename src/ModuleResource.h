@@ -17,6 +17,9 @@ public:
     std::shared_ptr<Resource> Find(UID uid);
     std::shared_ptr<Resource> RequestResource(std::filesystem::path);
 
+    // Get the number of GameObjects using a specific resource
+    int GetResourceUsageCount(UID resourceUID) const;
+
 private:
     std::shared_ptr<Resource> CreateResource(const ImportData &importData);
 

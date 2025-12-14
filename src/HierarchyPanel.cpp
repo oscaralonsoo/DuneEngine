@@ -1,6 +1,9 @@
 #include "HierarchyPanel.h"
 #include "Engine.h"
 #include "ModuleScene.h"
+#include "ModuleEditor.h"
+#include "InspectorPanel.h"
+#include "ProjectPanel.h"
 #include "GameObject.h"
 #include <imgui.h>
 
@@ -86,6 +89,16 @@ void HierarchyPanel::HandleBackgroundInteraction(ModuleScene* scene)
     if (ImGui::IsItemClicked() && scene->GetSelected())
     {
         scene->SetSelected(nullptr);
+        
+        if (auto* inspector = Engine::GetInstance().editor->GetPanel<InspectorPanel>())
+        {
+            inspector->ClearSelectedResource();
+        }
+        
+        if (auto* projectPanel = Engine::GetInstance().editor->GetPanel<ProjectPanel>())
+        {
+            projectPanel->ClearSelection();
+        }
     }
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1))

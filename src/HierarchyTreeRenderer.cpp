@@ -4,6 +4,9 @@
 #include "HierarchyDragDrop.h"
 #include "HierarchyPanel.h"
 #include "Engine.h"
+#include "ModuleEditor.h"
+#include "InspectorPanel.h"
+#include "ProjectPanel.h"
 #include <imgui.h>
 #include <algorithm>
 #include <cstring>
@@ -68,6 +71,16 @@ void HierarchyTreeRenderer::HandleNodeInteraction(std::shared_ptr<GameObject> ga
     if (ImGui::IsItemClicked())
     {
         Engine::GetInstance().scene->SetSelected(gameObject);
+        
+        if (auto* inspector = Engine::GetInstance().editor->GetPanel<InspectorPanel>())
+        {
+            inspector->ClearSelectedResource();
+        }
+        
+        if (auto* projectPanel = Engine::GetInstance().editor->GetPanel<ProjectPanel>())
+        {
+            projectPanel->ClearSelection();
+        }
     }
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))

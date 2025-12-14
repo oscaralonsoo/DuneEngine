@@ -35,6 +35,9 @@ public:
 
     void LoadFromImportData(const MeshImportData& data);
 
+    // Override to calculate mesh memory size
+    size_t GetMemorySize() const override;
+
 private:
     std::shared_ptr<VertexArray> mVertexArray;
     std::shared_ptr<VertexBuffer> mVertexBuffer;
