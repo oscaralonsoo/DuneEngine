@@ -379,29 +379,22 @@ std::string ProjectPanel::GetFileIcon(const std::filesystem::path& path)
 
 GLuint ProjectPanel::GetIconOrThumbnail(const std::filesystem::path& path)
 {
-    // Return folder icon for directories
     if (std::filesystem::is_directory(path))
     {
         return folderIconTexture ? folderIconTexture->GetID() : 0;
     }
 
-    // Check if we already have a thumbnail cached
     auto thumbIt = thumbnailTextures.find(path);
     if (thumbIt != thumbnailTextures.end())
         return thumbIt->second->GetID();
 
-    // Get resource type for the file
     ResourceType type = ResourceUtils::GetTypeFromExtension(path);
     
-    // For texture files, load and cache the actual texture as thumbnail
     if (type == ResourceType::Texture)
     {
         thumbnailTextures[path] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
         return thumbnailTextures[path]->GetID();
     }
-    
-    // For other file types, try to find a specific icon
-    // Note: Files with Unknown type will return 0 (no icon) instead of folder icon
     auto iconIt = iconTextures.find(type);
     return (iconIt != iconTextures.end()) ? iconIt->second->GetID() : 0;
 }
@@ -437,7 +430,6 @@ void ProjectPanel::RenderDeleteConfirmationModal()
                     for (const auto& path : pendingDeletePaths)
                     {
                         std::filesystem::remove_all(path);
-                        // Remove from selection if deleted
                         selectedItems.erase(path);
                         if (selectedFolder == path || !std::filesystem::exists(selectedFolder))
                         {
@@ -481,7 +473,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
 
     ImVec2 itemPos = ImGui::GetCursorPos();
 
-    // First, render the selectable area (invisible but handles interaction)
     if (ImGui::Selectable(("##" + assetPath.string()).c_str(), isSelected,
         ImGuiSelectableFlags_AllowDoubleClick,
         ImVec2(kThumbnailSize, kThumbnailSize + 20.0f)))
@@ -507,7 +498,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
     // Context menu for this item
     if (ImGui::BeginPopupContextItem())
     {
-        // Ensure this item is selected
         if (selectedItems.find(assetPath) == selectedItems.end())
         {
             selectedItems.clear();
@@ -531,15 +521,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
         }
 
         ImGui::EndPopup();
-    }
-
-    // Drag & Drop
-    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-    {
-        std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();
-        ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
-        ImGui::Text("%s", assetPath.filename().string().c_str());
-        ImGui::EndDragDropSource();
     }
 
     ImGui::SetCursorPos(itemPos);
@@ -603,7 +584,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
             isEditing = false;
         }
         
-        // End editing if item is deactivated
         if (ImGui::IsItemDeactivated())
         {
             isEditing = false;
@@ -612,6 +592,15 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
     else
     {
         ImGui::TextWrapped(filename.c_str());
+        
+        // Drag & Drop
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        {
+            std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();
+            ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
+            ImGui::Text("%s", assetPath.filename().string().c_str());
+            ImGui::EndDragDropSource();
+        }
     }
 
     ImGui::NextColumn();
@@ -626,12 +615,10 @@ void ProjectPanel::HandleExternalFileDrop(const std::filesystem::path& filePath)
     std::filesystem::path destPath;
     if (std::filesystem::is_directory(filePath))
     {
-        // For directories, copy to selected folder
         destPath = selectedFolder / filePath.filename();
     }
     else
     {
-        // For files, copy to selected folder
         destPath = selectedFolder / filePath.filename();
     }
 
@@ -650,16 +637,13 @@ void ProjectPanel::HandleExternalFileDrop(const std::filesystem::path& filePath)
     {
         if (std::filesystem::is_directory(filePath))
         {
-            // Copy directory recursively
             std::filesystem::copy(filePath, destPath, std::filesystem::copy_options::recursive);
         }
         else
         {
-            // Copy single file
             std::filesystem::copy_file(filePath, destPath);
         }
 
-        // Refresh assets
         lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
     }
     catch (const std::filesystem::filesystem_error& e)

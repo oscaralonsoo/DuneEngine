@@ -95,6 +95,37 @@ std::vector<std::shared_ptr<GameObject>> GameObject::GetAllDescendants() const
 
     return descendants;
 }
+
+void GameObject::InsertChildAt(std::shared_ptr<GameObject> child, size_t index)
+{
+    if (!child) return;
+
+    // Remove from current parent if it has one
+    if (auto currentParent = child->mParent.lock())
+    {
+        currentParent->RemoveChild(child);
+    }
+
+    // Clamp index to valid range
+    if (index > mChildren.size())
+    {
+        index = mChildren.size();
+    }
+
+    // Insert at the specified position
+    mChildren.insert(mChildren.begin() + index, child);
+    child->mParent = shared_from_this();
+}
+
+size_t GameObject::GetChildIndex(std::shared_ptr<GameObject> child) const
+{
+    auto it = std::find(mChildren.begin(), mChildren.end(), child);
+    if (it != mChildren.end())
+    {
+        return std::distance(mChildren.begin(), it);
+    }
+    return static_cast<size_t>(-1);
+}
 bool GameObject::Update()
 {
     if (!mActive)
