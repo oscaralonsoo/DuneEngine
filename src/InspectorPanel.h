@@ -8,23 +8,31 @@
 
 class InspectorPanel : public EditorPanel
 {
-    public:
-        InspectorPanel()
-        {}
+public:
+    InspectorPanel() = default;
 
-        bool Start() override;
-        void OnImGuiRender() override;
-        void CleanUp() override;
+    bool Start() override;
 
-        // Resource selection
-        void SetSelectedResource(std::shared_ptr<Resource> resource, const std::filesystem::path& assetPath);
-        void ClearSelectedResource();
+    void OnImGuiRender() override;     // Render the panel UI
 
-    private:
-        void RenderComponent(Component* component, float panelWidth);
-        void RenderResourceDetails();
+    void CleanUp() override; //Clean up resources
 
-        // Selected resource
-        std::shared_ptr<Resource> mSelectedResource;
-        std::filesystem::path mSelectedResourcePath;
+    // Set the currently selected resource
+    void SetSelectedResource(std::shared_ptr<Resource> resource, const std::filesystem::path& assetPath);
+
+    // Clear the selected resource
+    void ClearSelectedResource();
+
+private:
+    // Render a single component (Transform, Mesh, Material, etc.)
+    void RenderComponent(Component* component, float panelWidth);
+
+    // Render details of the selected resource
+    void RenderResourceDetails();
+
+    // Currently selected resource
+    std::shared_ptr<Resource> mSelectedResource;
+
+    // Path to the selected resource
+    std::filesystem::path mSelectedResourcePath;
 };

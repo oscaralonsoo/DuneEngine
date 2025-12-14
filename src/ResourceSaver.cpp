@@ -67,8 +67,6 @@ std::ostream &operator<<(std::ostream &os, const TextureImportData &texture)
 std::ostream &operator<<(std::ostream &os, const MeshImportData &data)
 {
     uint32_t vertexCount = static_cast<uint32_t>(data.vertices.size());
-    SDL_Log("Saving Mesh: vertices=%u, indices=%u", vertexCount, static_cast<uint32_t>(data.indices.size()));
-
     os.write(reinterpret_cast<const char *>(&vertexCount), sizeof(uint32_t));
 
     for (const auto &v : data.vertices)
@@ -83,6 +81,9 @@ std::ostream &operator<<(std::ostream &os, const MeshImportData &data)
     uint32_t indexCount = static_cast<uint32_t>(data.indices.size());
     os.write(reinterpret_cast<const char *>(&indexCount), sizeof(uint32_t));
     os.write(reinterpret_cast<const char *>(data.indices.data()), sizeof(uint32_t) * indexCount);
+
+    os.write(reinterpret_cast<const char *>(&data.aabb.min), sizeof(glm::vec3));
+    os.write(reinterpret_cast<const char *>(&data.aabb.max), sizeof(glm::vec3));
 
     return os;
 }

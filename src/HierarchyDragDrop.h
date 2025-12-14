@@ -6,9 +6,11 @@
 class GameObject;
 class ModuleScene;
 
+// Handles drag & drop logic in the hierarchy panel
 class HierarchyDragDrop
 {
 public:
+    // Struct representing a pending parent change for a GameObject
     struct PendingParentChange
     {
         std::shared_ptr<GameObject> gameObject;
@@ -56,5 +58,6 @@ private:
     // Handle external file payload drop
     void HandleFileDrop(const char* files, std::shared_ptr<GameObject> parent, ModuleScene* scene);
 
+    // Pending parent changes to apply after drag & drop
     std::vector<PendingParentChange> pendingParentChanges;
 };

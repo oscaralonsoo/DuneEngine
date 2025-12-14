@@ -18,6 +18,8 @@ public:
     Mesh(const MeshImportData &importData);
     ~Mesh() = default;
 
+    void InitializeMesh();
+
     const std::shared_ptr<VertexArray> &GetVertexArray() const;
     const std::shared_ptr<VertexBuffer> &GetVertexBuffer() const;
     const std::shared_ptr<IndexBuffer> &GetIndexBuffer() const;
@@ -28,9 +30,6 @@ public:
     const std::vector<Vertex> &GetVertices() const;
     const std::vector<uint32_t> &GetIndices() const;
 
-    void LoadFromImportData(const MeshImportData& data);
-
-    // Override to calculate mesh memory size
     size_t GetMemorySize() const override;
 
 private:

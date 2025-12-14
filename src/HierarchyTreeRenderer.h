@@ -31,7 +31,7 @@ private:
     // Setup ImGui tree node flags based on GameObject state
     int SetupNodeFlags(std::shared_ptr<GameObject> gameObject, std::shared_ptr<GameObject> selected);
     
-    // Handle node interactions (click, double-click, right-click)
+    // Handle node interactions
     void HandleNodeInteraction(std::shared_ptr<GameObject> gameObject, ModuleScene* scene);
     
     // Render drop zone between nodes for reordering

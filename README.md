@@ -1,189 +1,122 @@
-# Dune Engine
+# DuneEngine# DuneEngine
 
-Dune Engine is a 3D game engine developed using **SDL3** and **OpenGL**, created as an academic project with the goal of learning how to build a game engine and later use it to develop a game.  
-It follows an **editor-based workflow inspired by Unity**, allowing visual interaction with scenes, GameObjects and assets.
+Visualizador de geometría en **OpenGL 3.3** con carga de modelos mediante **Assimp**, texturas con **DevIL** y una cámara tipo **Unity/FPS**.  
+Soporta **drag & drop** de modelos y texturas, selección por *raycast* y transformaciones simples sobre el objeto seleccionado.
 
-The engine is currently in development, but it already includes several solid features with a promising future direction.
-
-🔗 **GitHub repository**  
-https://github.com/oscaralonsoo/DuneEngine
-
-🌐 **Engine website**  
-https://oscaralonsoo.github.io/DuneEngine/
+Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/oscaralonsoo/DuneEngine)
 
 ---
 
-## Team Members
+## 👥 Integrantes del grupo
 
-- **Javier Gómez González** — [@javiergg14](https://github.com/javiergg14)
-- **Oscar Alonso Camenforte** — [@oscaralonsoo](https://github.com/oscaralonsoo)
-- **Toni Llovera Roca** — [@ToniLlovera](https://github.com/ToniLlovera)
-
----
-
-## Platform Support
-
-- Windows  
-- macOS  
-- Linux  
-
-(Cross-platform support via **CMake**)
+| Nombre | GitHub |
+|--------|--------|
+| **Javier Gómez González** | [@javiergg14](https://github.com/javiergg14) |
+| **Oscar Alonso Camenforte** | [@oscaralonsoo](https://github.com/oscaralonsoo) |
+| **Toni Llovera Roca** | [@ToniLlovera](https://github.com/ToniLlovera) |
 
 ---
 
-## How to Use the Engine
+## 🚀 Cómo usar el motor
 
-### Running the Engine
+1. **Abrir el ejecutable**  
+   - Se crea una ventana OpenGL (800×600) con *depth test* activado.  
+   - Se inicializan SDL3, DevIL y Assimp.  
+   - Se muestran logs de versión y GPU en consola.
 
-- Open the executable.
-- An OpenGL window (800×600) is created with depth test enabled.
-- SDL3, DevIL and Assimp are initialized.
-- GPU and OpenGL version information is printed in the console.
-- The scene **StreetEnvironment.fbx** is automatically loaded at startup.
+2. **Cargar modelos y texturas**
+   - Al iniciar se carga automáticamente la *Baker House* con su textura (`Baker_house.png`).
+   - Puedes **arrastrar y soltar (drag & drop)**:
+     - **Modelos**: `.fbx`, `.obj`, `.dae`, `.gltf`, `.glb`, `.3ds`, `.ply`, `.blend`.
+     - **Texturas**: `.png`, `.jpg/jpeg`, `.tga`, `.bmp`, `.psd`, `.gif`, `.hdr`, `.pic`.
+   - Los modelos se instancian **frente a la cámara** (~2.5 unidades).  
+   - Las texturas se aplican al objeto bajo el cursor o al seleccionado.
 
----
+3. **Selección**
+   - Click izquierdo para seleccionar un objeto.  
+   - Se usa *raycast* con prueba AABB para determinar el objeto bajo el cursor.
 
-### Camera Controls (Editor Mode)
-
-| Action | Key / Mouse |
-|------|------------|
-| Move camera | W / A / S / D (Right Mouse Button) |
-| Increase movement speed | SHIFT |
-| Look around | Right Mouse Button + Mouse |
-| Zoom | Mouse Wheel (Right Mouse Button) |
-| Orbit around object | ALT + Right Mouse Button |
-| Focus object | F |
-| Exit | ESC |
-
----
-
-## Scene Interaction
-
-- **Left click** to select GameObjects using raycasting and AABB tests.
-- Drag & drop while holding left click to reparent objects.
-- GameObjects can be:
-  - Renamed
-  - Deleted
-  - Duplicated
-  - Reparented
-- Creation of empty GameObjects.
-- Creation of primitive meshes:
-  - Quad
-  - Cube
-  - Sphere
-  - Plane
-  - Cylinder
-  - Cone
-  - Torus
-  - Capsule
+4. **Render**
+   - Los modelos se renderizan con su *shader* asociado.  
+   - Cada objeto puede usar materiales del modelo o una textura de **override** si se ha arrastrado una imagen sobre él.
 
 ---
 
-## Gizmos & Inspector
+## 🎮 Controles
 
-- **W / E / R** to switch between Translate, Rotate and Scale gizmos.
-- Transform values can be edited directly in the Inspector.
-- Textures can be applied by drag & drop:
-  - Onto objects in the Scene
-  - Or directly in the Inspector
+### Cámara
+| Acción | Tecla / Ratón |
+|--------|----------------|
+| Mover cámara | **W / A / S / D** (con botón derecho pulsado) |
+| Aumentar velocidad de movimiento | **Mantener SHIFT** |
+| Mirar alrededor | **Botón derecho + mover ratón** |
+| Zoom | **Rueda del ratón** (con botón derecho pulsado) |
+| Orbitar alrededor del objeto | **ALT + Botón derecho** |
+| Centrar cámara en objeto | **F** |
+| Salir | **ESC** |
 
----
+### Selección y transformación
+| Acción | Tecla |
+|--------|-------|
+| Seleccionar objeto | **Click izquierdo** |
+| Escalar | **Flechas ↑ / ↓** |
+| Rotar (eje Y) | **Flechas ← / →** |
+| Mover (X/Y) | **W / A / S / D** |
+| Mover (Z) | **Q / E** |
 
-## Asset Management
-
-### Supported Formats
-
-**Models**
-- `.fbx`, `.obj`, `.dae`, `.gltf`, `.glb`, `.3ds`, `.ply`, `.blend`
-
-**Textures**
-- `.png`, `.jpg`, `.jpeg`, `.tga`, `.bmp`, `.psd`, `.gif`, `.hdr`, `.pic`
-
-### Features
-
-- Project / Assets window with folder navigation.
-- Asset search and file visualization.
-- Right-click context menus for creating folders, renaming and deleting assets.
-- Deleting an asset also removes its associated files from `/Library`.
-- Import settings are stored in `.meta` files.
-- The `/Library` folder is regenerated on startup from `/Assets` and `.meta` data.
-- Resource reference counting ensures assets are loaded only once in memory.
+### Visualización
+| Acción | Tecla |
+|--------|-------|
+| Modo wireframe | **1** |
+| Modo sólido | **2** |
 
 ---
 
-## Play, Pause & Stop
+## 🧩 Funcionalidades principales
 
-- Located in the **Scene Panel**, above the Scene view.
-
-**Play**
-- Switches to Game View.
-- Uses the Main Camera.
-- Editor camera movement is disabled.
-
-**Pause**
-- Pauses the simulation.
-
-**Stop**
-- Stops the simulation and restores the initial state.
-
-Additional controls:
-- Simulation speed control
-- Step-by-step simulation
-- Wireframe view toggle
-
----
-
-## Rendering & Debug
-
-- AABB bounding boxes are always visible in Editor Mode.
-- Raycast debug visualization is always active in Scene View.
-- Frustum Culling is applied and visualized.
-- Octree is used as an acceleration structure for selection and culling.
-- Wireframe rendering can be toggled from the Scene Panel.
+- **Carga de modelos** mediante *Assimp* (`fbx`, `obj`, `gltf`, etc.).  
+- **Carga de texturas** mediante *DevIL* (`png`, `jpg`, `hdr`, etc.).  
+- **Drag & Drop** de modelos y texturas directamente sobre la ventana.  
+- **Selección de objetos** por *raycast* y prueba de colisión AABB.  
+- **Cámara** con modo libre FPS, zoom con rueda, órbita y enfoque al objeto.  
+- **Transformaciones** básicas de traslación, rotación y escala.  
+- **Shader system** con carga desde archivo y *uniform helpers*. 
+- **Interfaz de usuario (UI)** con **ImGui**, que incluye:
+  - Ventanas acoplables (DockSpace)  
+  - **Jerarquía** de escena  
+  - **Inspector** con transformaciones, información del mesh y textura  
+  - **Consola** con logs filtrables y scroll automático  
+  - **Panel de configuración** con información de GPU, FPS y escena  
+  - **Toolbar** para añadir primitivas (como cubos)  
+  - **Menú superior** (File / View / Help) con enlaces a la documentación del GitHub  
+- **Logs** de GPU, versión OpenGL y errores de carga. 
 
 ---
 
-## Assignment Requirements Implemented
+## 🌟 Funcionalidades extra
 
-- Automatic loading of `StreetEnvironment.fbx`
-- Full GameObject editing via Inspector
-- Hierarchy editing (create, delete, reparent, empty objects)
-- Transform editing (position, rotation, scale)
-- Mesh and texture drag & drop
-- Configurable Camera component
-- Mouse-based GameObject selection
-- AABB bounding volumes
-- Frustum Culling with debug visualization
-- Octree acceleration structure
-- Scene serialization and loading
-- Custom Library system
-- Play / Pause / Stop simulation
-- Asset management with reference counting
-- Wireframe visualization
+- **Modelos con materiales o con textura única:**  
+  Los modelos pueden usar sus materiales originales o una textura de *override* si se arrastra una imagen sobre ellos.  
+  Esto permite visualizar un modelo con su material o con una textura simple, ideal para depurar UVs.
+
+- **Colocación automática** de nuevos modelos frente a la cámara al soltarlos.  
 
 ---
 
-## Additional Features
+## ⚙️ Dependencias principales
 
-- Asset explorer with search functionality
-- Folder navigation and file preview
-- Asset deletion with Library cleanup
-- Import options saved in `.meta` files
-- Simulation speed and step control
-
----
-
-## Dependencies
-
-- **SDL3** — Window and input handling
-- **GLAD** — OpenGL function loader
-- **GLM** — Mathematics library
-- **Assimp** — Model loading
-- **DevIL** — Image loading
+- [**SDL3**](https://github.com/libsdl-org/SDL) — Ventana e input  
+- [**GLAD**](https://glad.dav1d.de/) — Carga de funciones OpenGL  
+- [**GLM**](https://github.com/g-truc/glm) — Matemáticas  
+- [**Assimp**](https://github.com/assimp/assimp) — Carga de modelos  
+- [**DevIL**](https://github.com/DentonW/DevIL) — Carga de imágenes  
+- [**ImGui**](https://github.com/ocornut/imgui) — Interfaz gráfica para herramientas y depuración
 
 ---
 
-## Notes for the Professor
+## 🧱 Estado actual del proyecto
 
-The workload was distributed evenly among the team members based on individual interests.  
-Project organization and task management were handled using **Trello**.
+Actualmente, **la arquitectura y modularización del proyecto están en proceso de completarse**.  
+Una vez finalizada esta etapa, **se realizará la migración del código** para adaptarlo a la nueva estructura, facilitando su mantenimiento, escalabilidad y futuras ampliaciones del motor.
+
+

@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include "MeshImportData.h"
 #include "VertexArray.h"
+#include "Globals.h"
 #include "Buffer.h"
 
 static AABB ComputeLocalAABB(const std::vector<Vertex> &vertices)
@@ -13,35 +14,23 @@ static AABB ComputeLocalAABB(const std::vector<Vertex> &vertices)
     return box;
 }
 
+Mesh::Mesh(const MeshImportData &importData)
+    : Resource(ResourceType::Mesh), mVertices(importData.vertices), mIndices(importData.indices), mAABB(importData.aabb)
+{
+    InitializeMesh();
+}
+
 Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices)
     : Resource(ResourceType::Mesh), mVertices(vertices), mIndices(indices)
 {
-    mAABB = ComputeLocalAABB(mVertices);
-
-    mVertexBuffer = std::make_shared<VertexBuffer>((float *)mVertices.data(), mVertices.size() * sizeof(Vertex));
-    mIndexBuffer = std::make_shared<IndexBuffer>(mIndices.data(), mIndices.size());
-
-    BufferLayout layout = {
-        {ShaderDataType::Vec3, "aPosition"},
-        {ShaderDataType::Vec3, "aNormals"},
-        {ShaderDataType::Vec2, "aTexCoords"},
-        {ShaderDataType::Vec3, "aTangent"},
-        {ShaderDataType::Vec3, "aBitangent"}};
-
-    mVertexBuffer->SetLayout(layout);
-
-    mVertexArray = std::make_shared<VertexArray>();
-    mVertexArray->AddVertexBuffer(mVertexBuffer);
-    mVertexArray->SetIndexBuffer(mIndexBuffer);
+    InitializeMesh();
 }
 
-Mesh::Mesh(const MeshImportData &importData)
-    : Resource(ResourceType::Mesh), mVertices(importData.vertices), mIndices(importData.indices)
+void Mesh::InitializeMesh()
 {
     mAABB = ComputeLocalAABB(mVertices);
 
     mVertexBuffer = std::make_shared<VertexBuffer>((float *)mVertices.data(), mVertices.size() * sizeof(Vertex));
-
     mIndexBuffer = std::make_shared<IndexBuffer>(mIndices.data(), mIndices.size());
 
     BufferLayout layout = {
@@ -50,7 +39,6 @@ Mesh::Mesh(const MeshImportData &importData)
         {ShaderDataType::Vec2, "aTexCoords"},
         {ShaderDataType::Vec3, "aTangent"},
         {ShaderDataType::Vec3, "aBitangent"}};
-
     mVertexBuffer->SetLayout(layout);
 
     mVertexArray = std::make_shared<VertexArray>();
@@ -91,20 +79,6 @@ const std::vector<uint32_t> &Mesh::GetIndices() const
 const std::vector<Vertex> &Mesh::GetVertices() const
 {
     return mVertices;
-}
-
-void Mesh::LoadFromImportData(const MeshImportData& data)
-{
-    // MeshImportData already contains std::vector<Vertex>, not raw floats
-    mVertices = data.vertices;
-    mIndices = data.indices;
-
-    // reconstruir buffers usando el constructor existente
-    mVertexArray.reset();
-    mVertexBuffer.reset();
-    mIndexBuffer.reset();
-
-    *this = Mesh(mVertices, mIndices);
 }
 
 size_t Mesh::GetMemorySize() const
