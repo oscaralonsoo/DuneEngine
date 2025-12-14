@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Resource.h"
+#include "ModelImportData.h"
 #include "Mesh.h"
 
 #include <assimp/scene.h>
@@ -10,13 +11,9 @@
 class Model : public Resource, public std::enable_shared_from_this<Model>
 {
 public:
-    Model() : Resource(ResourceType::Model) {};
-
-    Model(const std::filesystem::path &path);
+    Model(const ModelImportData &importData);
 
     ~Model() = default;
-
-    void LoadFromFile(const std::filesystem::path &path);
 
     const std::vector<std::shared_ptr<Mesh>> &GetMeshes() const { return mMeshes; };
 
@@ -35,7 +32,7 @@ private:
 
 private:
     std::filesystem::path mFilePath;
-    std::vector<std::shared_ptr<Mesh>>mMeshes;
+    std::vector<std::shared_ptr<Mesh>> mMeshes;
     std::weak_ptr<Model> mParent;
     std::vector<std::shared_ptr<Model>> mChildren;
     std::string mNodeName;

@@ -1,4 +1,6 @@
 #include "Material.h"
+#include "Engine.h"
+#include "ModuleResource.h"
 #include "Globals.h"
 
 std::shared_ptr<Texture> Material::sMissingTexture = nullptr;
@@ -8,8 +10,13 @@ Material::Material(ResourceType type) : Resource(type)
 {
     mName = "New Material";
 
+    std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
+
     if (!sMissingTexture)
-        //sMissingTexture = std::make_shared<Texture>("Assets/textures/missingTexture.jpg");
+    {
+        std::shared_ptr<Resource> resource = resourceManager->RequestResource("Assets/textures/missingTexture.jpg");
+        sMissingTexture = std::dynamic_pointer_cast<Texture>(resource);
+    }
 
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");

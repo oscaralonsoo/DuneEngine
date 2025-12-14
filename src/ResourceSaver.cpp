@@ -11,17 +11,6 @@ void ResourceSaver::Save(const ImportData& importData)
 
     SaveMeta(importData);
 }
-
-bool ResourceSaver::SaveMesh(const MeshImportData& data, const std::string& path)
-{
-    std::ofstream file(path, std::ios::binary);
-    if (!file.is_open())
-        return false;
-
-    file << data;
-    return true;
-}
-
 void ResourceSaver::SaveMeta(const ImportData& importData)
 {
     std::filesystem::path metaPath = importData.assetPath;
@@ -42,21 +31,21 @@ void ResourceSaver::SaveBinary(const ImportData& importData)
     case ResourceType::Texture:
     {
         const TextureImportData& textureData = static_cast<const TextureImportData&>(importData);
-        std::string outputPath = "Library/Textures/" + textureData.uid.ToString() + ".bin";
+        std::string outputPath = "Library/" + textureData.uid.ToString() + ".tex";
         std::ofstream out(outputPath, std::ios::binary);
         out << textureData;
         break;
     }
-    case ResourceType::Mesh:
+    case ResourceType::Model:
     {
-        const MeshImportData& meshData =
-            static_cast<const MeshImportData&>(importData);
+        const ModelImportData& modelData =
+            static_cast<const ModelImportData&>(importData);
 
         std::string outputPath =
-            "Library/Meshes/" + meshData.uid.ToString() + ".bin";
+            "Library/" + modelData.uid.ToString() + ".model";
 
         std::ofstream out(outputPath, std::ios::binary);
-        out << meshData;
+        out << modelData;
         break;
     }
     default:
@@ -78,16 +67,30 @@ std::ostream &operator<<(std::ostream &os, const TextureImportData &texture)
 
 std::ostream& operator<<(std::ostream& os, const MeshImportData& data)
 {
+    // Vertices
     uint32_t vertexCount = static_cast<uint32_t>(data.vertices.size());
-    uint32_t indexCount  = static_cast<uint32_t>(data.indices.size());
-
     os.write(reinterpret_cast<const char*>(&vertexCount), sizeof(uint32_t));
     os.write(reinterpret_cast<const char*>(data.vertices.data()),
-             sizeof(float) * vertexCount);
+             sizeof(Vertex) * vertexCount);
 
+    // Indices
+    uint32_t indexCount = static_cast<uint32_t>(data.indices.size());
     os.write(reinterpret_cast<const char*>(&indexCount), sizeof(uint32_t));
     os.write(reinterpret_cast<const char*>(data.indices.data()),
              sizeof(uint32_t) * indexCount);
+
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ModelImportData& data)
+{
+    uint32_t meshCount = static_cast<uint32_t>(data.meshes.size());
+    os.write(reinterpret_cast<const char*>(&meshCount), sizeof(uint32_t));
+
+    for (const auto& mesh : data.meshes)
+    {
+        os << mesh; // reutiliza MeshImportData
+    }
 
     return os;
 }
