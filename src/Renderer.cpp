@@ -3,10 +3,10 @@
 #include "ModuleRenderer.h"
 #include "ModuleResource.h"
 #include "EditorCamera.h"
-#include "Engine.h"
 #include "RendererAPI.h"
 #include "PrimitiveMesh.h"
 #include "Globals.h"
+#include "GameTime.h"
 
 std::vector<RenderObject> Renderer::sOpaqueRenderQueue;
 std::vector<RenderObject> Renderer::sTransparentRenderQueue;
@@ -16,6 +16,7 @@ std::shared_ptr<Shader> Renderer::sSkyboxShader;
 std::shared_ptr<Shader> Renderer::sSingleColorShader;
 std::shared_ptr<Cubemap> Renderer::sCubemap;
 std::shared_ptr<Mesh> Renderer::sSkyboxCube;
+bool Renderer::sWireframeEnabled = false;
 
 void Renderer::Init()
 {
@@ -50,21 +51,45 @@ void Renderer::ForwardPass()
               { return std::tie(a.material, a.mesh) < std::tie(b.material, b.mesh); });
 
     auto camera = Engine::GetInstance().renderer->renderCamera;
+    auto* editorCamera = Engine::GetInstance().renderer->editorCamera;
 
-    for (const auto &renderObject : sOpaqueRenderQueue)
+    // Apply global wireframe mode if enabled (only in Scene view with editor camera, not in Game view)
+    if (sWireframeEnabled && camera == editorCamera)
     {
-        Material *material = renderObject.material.get();
-        if (!material)
-            continue;
+        RendererAPI::SetPolygonMode(PolygonMode::Line);
+        
+        // Render with blue wireframe using single color shader
+        sSingleColorShader->Bind();
+        sSingleColorShader->SetMat4("view", camera->GetViewMatrix());
+        sSingleColorShader->SetMat4("projection", camera->GetProjectionMatrix());
+        sSingleColorShader->SetVec3("outlineColor", glm::vec3(0.2f, 0.6f, 1.0f)); // Blue color
+        
+        for (const auto &renderObject : sOpaqueRenderQueue)
+        {
+            sSingleColorShader->SetMat4("model", renderObject.transform);
+            RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
+        }
+        
+        RendererAPI::SetPolygonMode(PolygonMode::Fill);
+    }
+    else
+    {
+        // Normal rendering with materials
+        for (const auto &renderObject : sOpaqueRenderQueue)
+        {
+            Material *material = renderObject.material.get();
+            if (!material)
+                continue;
 
-        material->Use();
-        auto shader = material->GetShader();
-        shader->Bind();
-        shader->SetMat4("view", camera->GetViewMatrix());
-        shader->SetMat4("projection", camera->GetProjectionMatrix());
-        shader->SetMat4("model", renderObject.transform);
+            material->Use();
+            auto shader = material->GetShader();
+            shader->Bind();
+            shader->SetMat4("view", camera->GetViewMatrix());
+            shader->SetMat4("projection", camera->GetProjectionMatrix());
+            shader->SetMat4("model", renderObject.transform);
 
-        RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
+            RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
+        }
     }
 
     ResetRenderState();
@@ -83,55 +108,102 @@ void Renderer::TransparentPass()
 
     RendererAPI::SetDepthMask(false);
 
-    for (const auto &renderObject : sTransparentRenderQueue)
+    auto camera = Engine::GetInstance().renderer->renderCamera;
+    auto* editorCamera = Engine::GetInstance().renderer->editorCamera;
+
+    // If global wireframe is enabled, render all transparent objects with blue wireframe (only in Scene view with editor camera)
+    if (sWireframeEnabled && camera == editorCamera)
     {
-        Material *material = renderObject.material.get();
-        if (material == nullptr)
+        RendererAPI::SetPolygonMode(PolygonMode::Line);
+        
+        sSingleColorShader->Bind();
+        sSingleColorShader->SetMat4("view", camera->GetViewMatrix());
+        sSingleColorShader->SetMat4("projection", camera->GetProjectionMatrix());
+        sSingleColorShader->SetVec3("outlineColor", glm::vec3(0.2f, 0.6f, 1.0f)); // Blue color
+        
+        for (const auto &renderObject : sTransparentRenderQueue)
         {
-            // material = s_RendererData.DefaultMaterial.get();
+            Mesh *mesh = renderObject.mesh.get();
+            if (mesh == nullptr)
+                continue;
+                
+            Material *material = renderObject.material.get();
+            if (material)
+            {
+                const MaterialRenderSettings &settings = material->GetRenderSettings();
+                switch (settings.cullMode)
+                {
+                case MaterialRenderSettings::CullMode::Front:
+                    RendererAPI::SetCullFace(CullFace::Front);
+                    break;
+                case MaterialRenderSettings::CullMode::Back:
+                    RendererAPI::SetCullFace(CullFace::Back);
+                    break;
+                case MaterialRenderSettings::CullMode::None:
+                    RendererAPI::SetFaceCulling(false);
+                    break;
+                }
+            }
+            
+            sSingleColorShader->SetMat4("model", renderObject.transform);
+            RendererAPI::DrawIndexed(mesh->GetVertexArray());
         }
-
-        material->Use();
-
-        const std::shared_ptr<Shader> &shader = material->GetShader();
-
-        shader->Bind();
-        auto camera = Engine::GetInstance().renderer->renderCamera;
-        shader->SetMat4("view", camera->GetViewMatrix());
-        shader->SetMat4("projection", camera->GetProjectionMatrix());
-        shader->SetMat4("model", renderObject.transform);
-
-        Mesh *mesh = renderObject.mesh.get();
-
-        if (mesh == nullptr)
+        
+        RendererAPI::SetPolygonMode(PolygonMode::Fill);
+    }
+    else
+    {
+        // Normal rendering with materials
+        for (const auto &renderObject : sTransparentRenderQueue)
         {
-            // mesh = s_RendererData.MissingMesh.get();
-        }
+            Material *material = renderObject.material.get();
+            if (material == nullptr)
+            {
+                // material = s_RendererData.DefaultMaterial.get();
+            }
 
-        const MaterialRenderSettings &settings = material->GetRenderSettings();
-        switch (settings.cullMode)
-        {
-        case MaterialRenderSettings::CullMode::Front:
-            RendererAPI::SetCullFace(CullFace::Front);
-            break;
-        case MaterialRenderSettings::CullMode::Back:
-            RendererAPI::SetCullFace(CullFace::Back);
-            break;
-        case MaterialRenderSettings::CullMode::None:
-            RendererAPI::SetFaceCulling(false);
-            break;
-        }
+            material->Use();
 
-        if (settings.wireframe)
-        {
-            RendererAPI::SetPolygonMode(PolygonMode::Line);
-        }
-        else
-        {
-            RendererAPI::SetPolygonMode(PolygonMode::Fill);
-        }
+            const std::shared_ptr<Shader> &shader = material->GetShader();
 
-        RendererAPI::DrawIndexed(mesh->GetVertexArray());
+            shader->Bind();
+            shader->SetMat4("view", camera->GetViewMatrix());
+            shader->SetMat4("projection", camera->GetProjectionMatrix());
+            shader->SetMat4("model", renderObject.transform);
+
+            Mesh *mesh = renderObject.mesh.get();
+
+            if (mesh == nullptr)
+            {
+                // mesh = s_RendererData.MissingMesh.get();
+            }
+
+            const MaterialRenderSettings &settings = material->GetRenderSettings();
+            switch (settings.cullMode)
+            {
+            case MaterialRenderSettings::CullMode::Front:
+                RendererAPI::SetCullFace(CullFace::Front);
+                break;
+            case MaterialRenderSettings::CullMode::Back:
+                RendererAPI::SetCullFace(CullFace::Back);
+                break;
+            case MaterialRenderSettings::CullMode::None:
+                RendererAPI::SetFaceCulling(false);
+                break;
+            }
+
+            // Apply material-specific wireframe
+            if (settings.wireframe)
+            {
+                RendererAPI::SetPolygonMode(PolygonMode::Line);
+            }
+            else
+            {
+                RendererAPI::SetPolygonMode(PolygonMode::Fill);
+            }
+
+            RendererAPI::DrawIndexed(mesh->GetVertexArray());
+        }
     }
 
     ResetRenderState();
