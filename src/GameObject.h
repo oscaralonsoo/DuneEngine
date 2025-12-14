@@ -4,6 +4,7 @@
 #include "Component.h"
 #include "ComponentTypes.h"
 #include <memory>
+#include "UID.h"
 
 // Forward declaration
 class Component;  
@@ -52,6 +53,9 @@ public:
     std::vector<std::shared_ptr<GameObject>> GetAllDescendants() const;
     bool Update();
 
+    const UID& GetUID() const { return mUID; }
+    void SetUID(const UID& uid) { mUID = uid; }
+
 private:
     bool mActive = true;
     std::string mName;
@@ -61,4 +65,6 @@ private:
     // Parent-Child hierarchy
     std::weak_ptr<GameObject> mParent;
     std::vector<std::shared_ptr<GameObject>> mChildren;
+
+    UID mUID;
 };
