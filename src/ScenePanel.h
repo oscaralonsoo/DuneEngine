@@ -3,7 +3,6 @@
 #include "ModuleEditor.h"
 #include <memory>
 
-// Forward declarations
 class SceneViewController;
 class SceneInteractionHandler;
 class SceneAssetHandler;
@@ -16,14 +15,23 @@ public:
     ~ScenePanel();
 
     bool Start() override;
+
     void OnImGuiRender() override;
+
     void CleanUp() override;
 
 private:
+
+    // Renders the Scene (editor) view
     void RenderSceneView();
+
+    // Renders the Game (play mode) view
     void RenderGameView();
+
+    // Renders the top toolbar (Play / Pause / Step)
     void RenderToolbarControls();
 
+    // Controllers and UI for the panel
     std::unique_ptr<SceneViewController> m_ViewController;
     std::unique_ptr<SceneInteractionHandler> m_InteractionHandler;
     std::unique_ptr<SceneAssetHandler> m_AssetHandler;
