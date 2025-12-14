@@ -2,7 +2,7 @@
 
 #include "ImportData.h"
 
-struct TextureImportData : ImportData
+struct TextureImportData : public ImportData
 {
     int width = 0;
     int height = 0;

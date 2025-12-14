@@ -45,7 +45,6 @@ bool ModuleInput::Awake()
     LOG_INFO("Init SDL input event system");
     bool ret = true;
 
-
     return ret;
 }
 
@@ -107,7 +106,7 @@ bool ModuleInput::PreUpdate()
             // Handle object picking on left mouse button click
             if (event.button.button == SDL_BUTTON_LEFT && !ImGui::GetIO().WantCaptureMouse && !GameTime::IsPlaying())
             {
-                auto& engine = Engine::GetInstance();
+                auto &engine = Engine::GetInstance();
                 SDL_Point mp = GetMousePosition();
 
                 ModuleScene *scene = Engine::GetInstance().scene.get();
@@ -116,11 +115,11 @@ bool ModuleInput::PreUpdate()
                 SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &width, &height);
 
                 std::shared_ptr<GameObject> selected =
-                scene->GetRaycaster()->PickObject(
-                    static_cast<float>(mouseX),
-                    static_cast<float>(mouseY),
-                    width, height,
-                    scene->GetGameObjects());
+                    scene->GetRaycaster()->PickObject(
+                        static_cast<float>(mouseX),
+                        static_cast<float>(mouseY),
+                        width, height,
+                        scene->GetGameObjects());
 
                 scene->SetSelected(selected);
             }
@@ -128,9 +127,9 @@ bool ModuleInput::PreUpdate()
 
         case SDL_EVENT_MOUSE_BUTTON_UP:
             if (event.button.button == SDL_BUTTON_LEFT)
-                {
-                    auto& engine = Engine::GetInstance();
-                }
+            {
+                auto &engine = Engine::GetInstance();
+            }
             mouseButtons[event.button.button - 1] = KEY_UP;
             break;
 
@@ -139,8 +138,8 @@ bool ModuleInput::PreUpdate()
             int scale = Engine::GetInstance().window.get()->GetScale();
             mouseMotionX = event.motion.xrel / static_cast<float>(scale);
             mouseMotionY = event.motion.yrel / static_cast<float>(scale);
-            mouseX       = event.motion.x    / static_cast<float>(scale);
-            mouseY       = event.motion.y    / static_cast<float>(scale);
+            mouseX = event.motion.x / static_cast<float>(scale);
+            mouseY = event.motion.y / static_cast<float>(scale);
         }
         break;
 
@@ -156,7 +155,9 @@ bool ModuleInput::PreUpdate()
 
         case SDL_EVENT_DROP_FILE:
         {
-            // Store the dropped file information for later processing
+            // Store the dropped file information for later processing by panels
+            // Each panel (ProjectPanel, ScenePanel, HierarchyPanel) will check if a file was dropped
+            // and handle it according to their context
             draggedFile = event.drop.data ? event.drop.data : "";
             fileDropped = true;
             dropPosition.x = static_cast<int>(mouseX);
@@ -166,7 +167,7 @@ bool ModuleInput::PreUpdate()
         }
     }
 
-    SDL_Window* win = Engine::GetInstance().window->GetWindow();
+    SDL_Window *win = Engine::GetInstance().window->GetWindow();
 
     bool rmb =
         mouseButtons[SDL_BUTTON_RIGHT - 1] == KEY_DOWN ||
@@ -174,17 +175,16 @@ bool ModuleInput::PreUpdate()
 
     if (rmb && !rmbRelativeMode)
     {
-        SDL_SetWindowRelativeMouseMode(win, true);   // oculta cursor + movimiento relativo
+        SDL_SetWindowRelativeMouseMode(win, true); // oculta cursor + movimiento relativo
         SDL_SetWindowMouseGrab(win, true);
         rmbRelativeMode = true;
     }
     else if (!rmb && rmbRelativeMode)
     {
-        SDL_SetWindowRelativeMouseMode(win, false);  // muestra cursor
+        SDL_SetWindowRelativeMouseMode(win, false); // muestra cursor
         SDL_SetWindowMouseGrab(win, false);
         rmbRelativeMode = false;
     }
-
 
     // Handle keyboard shortcuts
     HandleKeyboardShortcuts();
@@ -224,7 +224,7 @@ void ModuleInput::HandleKeyboardShortcuts()
     // Ctrl+D to Duplicate
     if (GetKey(SDL_SCANCODE_D) == KEY_DOWN && GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT)
     {
-        ModuleScene* scene = Engine::GetInstance().scene.get();
+        ModuleScene *scene = Engine::GetInstance().scene.get();
         if (scene)
         {
             std::shared_ptr<GameObject> selected = scene->GetSelected();
@@ -234,11 +234,11 @@ void ModuleInput::HandleKeyboardShortcuts()
                 auto duplicated = scene->CreateGameObject();
                 duplicated->SetName(scene->GenerateUniqueName(selected->GetName()));
 
-                for (auto& comp : selected->GetComponents())
+                for (auto &comp : selected->GetComponents())
                 {
                     duplicated->CreateComponent(comp->GetType());
                 }
-                for (auto& child : selected->GetChildren())
+                for (auto &child : selected->GetChildren())
                 {
                     scene->DuplicateGameObject(child, duplicated);
                 }
@@ -252,7 +252,7 @@ void ModuleInput::HandleKeyboardShortcuts()
     }
     if (GetKey(SDL_SCANCODE_F5) == KEY_DOWN)
     {
-        ModuleScene* scene = Engine::GetInstance().scene.get();
+        ModuleScene *scene = Engine::GetInstance().scene.get();
         if (scene)
         {
             scene->SaveScene("Assets/Scenes/TestScene.scene");
@@ -263,14 +263,13 @@ void ModuleInput::HandleKeyboardShortcuts()
     // F9 -> Load Scene
     if (GetKey(SDL_SCANCODE_F9) == KEY_DOWN)
     {
-        ModuleScene* scene = Engine::GetInstance().scene.get();
+        ModuleScene *scene = Engine::GetInstance().scene.get();
         if (scene)
         {
             scene->LoadScene("Assets/Scenes/TestScene.scene");
             LOG_INFO("Scene loaded");
         }
     }
-
 
     if (!ImGui::GetIO().WantCaptureKeyboard)
     {
@@ -281,8 +280,8 @@ void ModuleInput::HandleKeyboardShortcuts()
 
         if (!rmbDown)
         {
-            auto& engine = Engine::GetInstance();
-            ModuleScene* scene = engine.scene.get();
+            auto &engine = Engine::GetInstance();
+            ModuleScene *scene = engine.scene.get();
             bool hasSelection = (scene && scene->GetSelected() != nullptr);
         }
     }
@@ -293,7 +292,7 @@ void ModuleInput::HandleKeyboardShortcuts()
     }
 }
 
-void ModuleInput::HandleFileDrop(const SDL_Event& event)
+void ModuleInput::HandleFileDrop(const SDL_Event &event)
 {
     draggedFile = event.drop.data ? event.drop.data : "";
     fileDropped = true;
@@ -305,7 +304,9 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
         std::shared_ptr<GameObject> gameObject = Engine::GetInstance().scene.get()->CreateGameObject();
         gameObject->SetName(std::filesystem::path(draggedFile).filename().stem().string());
 
-        std::shared_ptr<Model> model = std::make_shared<Model>(draggedFile);
+        std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
+        std::shared_ptr<Resource> resource = resourceManager->RequestResource(draggedFile);
+        std::shared_ptr<Model> model = std::dynamic_pointer_cast<Model>(resource);
 
         for (size_t i = 0; i < model->GetMeshes().size(); ++i)
         {
@@ -323,5 +324,3 @@ void ModuleInput::HandleFileDrop(const SDL_Event& event)
 
     Engine::GetInstance().scene->RebuildQuadtree();
 }
-
-

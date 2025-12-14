@@ -1,10 +1,12 @@
 #pragma once
 
+#include "UID.h"
 #include "ImportData.h"
+#include "MeshImportData.h"
 
-struct ModelImportData : ImportData
+struct ModelImportData : public ImportData
 {
-    int id;
-    const char* name;
-    double value;
+    std::vector<MeshImportData> meshes;
+
+    ModelImportData() : ImportData(ResourceType::Model) {}
 };

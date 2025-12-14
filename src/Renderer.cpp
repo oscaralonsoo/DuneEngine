@@ -88,6 +88,29 @@ void Renderer::ForwardPass()
             shader->SetMat4("projection", camera->GetProjectionMatrix());
             shader->SetMat4("model", renderObject.transform);
 
+            const MaterialRenderSettings &settings = material->GetRenderSettings();
+            switch (settings.cullMode)
+            {
+            case MaterialRenderSettings::CullMode::Front:
+                RendererAPI::SetCullFace(CullFace::Front);
+                break;
+            case MaterialRenderSettings::CullMode::Back:
+                RendererAPI::SetCullFace(CullFace::Back);
+                break;
+            case MaterialRenderSettings::CullMode::None:
+                RendererAPI::SetFaceCulling(false);
+                break;
+            }
+
+            if (settings.wireframe)
+            {
+                RendererAPI::SetPolygonMode(PolygonMode::Line);
+            }
+            else
+            {
+                RendererAPI::SetPolygonMode(PolygonMode::Fill);
+            }
+
             RendererAPI::DrawIndexed(renderObject.mesh->GetVertexArray());
         }
     }

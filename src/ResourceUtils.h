@@ -21,11 +21,15 @@ public:
             {".tga", ResourceType::Texture},
             {".bmp", ResourceType::Texture},
             {".dds", ResourceType::Texture},
+            {".tex", ResourceType::Texture},
+
+            {".mesh", ResourceType::Mesh},
 
             {".fbx", ResourceType::Model},
             {".obj", ResourceType::Model},
             {".gltf", ResourceType::Model},
             {".glb", ResourceType::Model},
+            {".model", ResourceType::Model},
 
             {".mat", ResourceType::Material},
 
@@ -122,11 +126,23 @@ public:
 
     static std::string GetLibraryPath(const UID &uid)
     {
-        std::filesystem::path libPath = std::filesystem::path("Library/Textures/" + uid.ToString() + ".bin");
+        const std::filesystem::path libraryDir = "Library";
+        const std::string uidStr = uid.ToString();
 
-        if (std::filesystem::exists(libPath))
+        if (!std::filesystem::exists(libraryDir))
+            return "";
+
+        for (const auto &entry : std::filesystem::directory_iterator(libraryDir))
         {
-            return libPath.string();
+            if (!entry.is_regular_file())
+                continue;
+
+            const std::filesystem::path &path = entry.path();
+
+            if (path.stem() == uidStr)
+            {
+                return path.string();
+            }
         }
 
         return "";

@@ -1,5 +1,7 @@
 #include "ModuleScene.h"
 #include "MeshComponent.h"
+#include "Engine.h"
+#include "ModuleResource.h"
 #include "MaterialComponent.h"
 #include "TransformComponent.h"
 #include "Mesh.h"
@@ -8,7 +10,7 @@
 #include <glad/glad.h>
 #include "Buffer.h"
 #include "VertexArray.h"
-#include "GameTime.h" 
+#include "GameTime.h"
 #include "CameraComponent.h"
 #include <glad/glad.h>
 #include "Material.h"
@@ -23,88 +25,87 @@
 namespace
 {
     std::shared_ptr<GameObject> CloneGameObjectRecursive(
-        const std::shared_ptr<GameObject>& src,
+        const std::shared_ptr<GameObject> &src,
         std::shared_ptr<GameObject> parent = nullptr)
+    {
+        auto dst = std::make_shared<GameObject>();
+        dst->SetName(src->GetName());
+        dst->SetSelected(false);
+
+        // --- Transform ---
+        if (auto *srcTransform = src->GetComponent<TransformComponent>())
         {
-            auto dst = std::make_shared<GameObject>();
-            dst->SetName(src->GetName());
-            dst->SetSelected(false);
-            
-            // --- Transform ---
-            if (auto* srcTransform = src->GetComponent<TransformComponent>())
+            auto *dstTransform = dst->GetComponent<TransformComponent>();
+            if (dstTransform)
             {
-                auto* dstTransform = dst->GetComponent<TransformComponent>();
-                if (dstTransform)
-                {
-                    dstTransform->SetPosition(srcTransform->GetPosition());
-                    dstTransform->SetRotation(srcTransform->GetRotation());
-                    dstTransform->SetScale(srcTransform->GetScale());
-                }
+                dstTransform->SetPosition(srcTransform->GetPosition());
+                dstTransform->SetRotation(srcTransform->GetRotation());
+                dstTransform->SetScale(srcTransform->GetScale());
             }
-            
-            // --- Mesh ---
-            if (auto* srcMesh = src->GetComponent<MeshComponent>())
-            {
-                auto& comp = dst->CreateComponent(ComponentType::Mesh);
-                static_cast<MeshComponent&>(comp).SetMesh(srcMesh->GetMesh());
-            }
-            
-            // --- Material ---
-            if (auto* srcMat = src->GetComponent<MaterialComponent>())
-            {
-                auto& comp = dst->CreateComponent(ComponentType::Material);
-                auto* dstMat = static_cast<MaterialComponent*>(&comp);
-                
-                auto srcMaterial = srcMat->GetMaterial();
-                if (srcMaterial)
-                {
-                    auto clonedMaterial = std::make_shared<Material>(ResourceType::Material);
-                    clonedMaterial->SetShader(srcMaterial->GetShader());
-                    clonedMaterial->GetProperties()     = srcMaterial->GetProperties();
-                    clonedMaterial->GetTextures()       = srcMaterial->GetTextures();
-                    clonedMaterial->GetRenderSettings() = srcMaterial->GetRenderSettings();
-                    dstMat->SetMaterial(clonedMaterial);
-                }
-            }
-            
-            // --- Camera ---
-            if (auto* srcCam = src->GetComponent<CameraComponent>())
-            {
-                auto& comp = dst->CreateComponent(ComponentType::Camera);
-                auto* dstCam = static_cast<CameraComponent*>(&comp);
-                dstCam->SetFOV(srcCam->GetFOV());
-                dstCam->SetNearClip(srcCam->GetNearClip());
-                dstCam->SetFarClip(srcCam->GetFarClip());
-            }
-            
-            // Parent
-            if (parent)
-            dst->SetParent(parent);
-            
-            // --- CLONAR HIJOS ---
-            for (auto& child : src->GetChildren())
-            {
-                CloneGameObjectRecursive(child, dst);
-            }
-            
-            return dst;
         }
-        
-        
-        bool ComputeWorldAABB(const std::shared_ptr<GameObject>& go, AABB& outBox)
+
+        // --- Mesh ---
+        if (auto *srcMesh = src->GetComponent<MeshComponent>())
         {
-            MeshComponent* meshComp = go->GetComponent<MeshComponent>();
-            if (!meshComp)
+            auto &comp = dst->CreateComponent(ComponentType::Mesh);
+            static_cast<MeshComponent &>(comp).SetMesh(srcMesh->GetMesh());
+        }
+
+        // --- Material ---
+        if (auto *srcMat = src->GetComponent<MaterialComponent>())
+        {
+            auto &comp = dst->CreateComponent(ComponentType::Material);
+            auto *dstMat = static_cast<MaterialComponent *>(&comp);
+
+            auto srcMaterial = srcMat->GetMaterial();
+            if (srcMaterial)
+            {
+                auto clonedMaterial = std::make_shared<Material>(ResourceType::Material);
+                clonedMaterial->SetShader(srcMaterial->GetShader());
+                clonedMaterial->GetProperties() = srcMaterial->GetProperties();
+                clonedMaterial->GetTextures() = srcMaterial->GetTextures();
+                clonedMaterial->GetRenderSettings() = srcMaterial->GetRenderSettings();
+                dstMat->SetMaterial(clonedMaterial);
+            }
+        }
+
+        // --- Camera ---
+        if (auto *srcCam = src->GetComponent<CameraComponent>())
+        {
+            auto &comp = dst->CreateComponent(ComponentType::Camera);
+            auto *dstCam = static_cast<CameraComponent *>(&comp);
+            dstCam->SetFOV(srcCam->GetFOV());
+            dstCam->SetNearClip(srcCam->GetNearClip());
+            dstCam->SetFarClip(srcCam->GetFarClip());
+        }
+
+        // Parent
+        if (parent)
+            dst->SetParent(parent);
+
+        // --- CLONAR HIJOS ---
+        for (auto &child : src->GetChildren())
+        {
+            CloneGameObjectRecursive(child, dst);
+        }
+
+        return dst;
+    }
+
+    bool ComputeWorldAABB(const std::shared_ptr<GameObject> &go, AABB &outBox)
+    {
+        MeshComponent *meshComp = go->GetComponent<MeshComponent>();
+        if (!meshComp)
             return false;
-            
+
         std::shared_ptr<Mesh> mesh = meshComp->GetMesh();
         if (!mesh)
             return false;
 
-        const AABB& localBox = mesh->GetAABB();
+        const AABB &localBox = mesh->GetAABB();
 
         glm::mat4 world = glm::mat4(1.0f);
-        if (auto* tc = go->GetComponent<TransformComponent>())
+        if (auto *tc = go->GetComponent<TransformComponent>())
         {
             world = tc->GetWorldTransform();
         }
@@ -114,7 +115,6 @@ namespace
     }
 }
 
-
 ModuleScene::ModuleScene()
 {
     name = "scene";
@@ -122,27 +122,26 @@ ModuleScene::ModuleScene()
 
 bool ModuleScene::Start()
 {
-    root = std::make_shared<GameObject>(); //Create Root
+    root = std::make_shared<GameObject>(); // Create Root
     root->SetName("Root");
     mGameObjects.push_back(root);
 
-    // Add root Components 
+    // Add root Components
     root->CreateComponent(ComponentType::Mesh);
     root->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
 
     root->CreateComponent(ComponentType::Material);
     root->GetComponent<MaterialComponent>()->SetMaterial(
-        std::make_shared<Material>(ResourceType::Material)
-    );
+        std::make_shared<Material>(ResourceType::Material));
 
     raycaster = new Raycaster();
 
     std::shared_ptr<GameObject> cameraGO = std::make_shared<GameObject>();
     cameraGO->SetName("MainCamera");
 
-    auto* camTransform = cameraGO->GetComponent<TransformComponent>();
-    camTransform->SetPosition({ 0.0f, 1.0f, 5.0f });   
-    camTransform->SetRotation({ 0.0f, 0.0f, 0.0f });
+    auto *camTransform = cameraGO->GetComponent<TransformComponent>();
+    camTransform->SetPosition({0.0f, 1.0f, 5.0f});
+    camTransform->SetRotation({0.0f, 0.0f, 0.0f});
 
     cameraGO->CreateComponent(ComponentType::Camera);
 
@@ -160,7 +159,7 @@ bool ModuleScene::Update()
     if (!GameTime::IsPlaying() && !GameTime::IsStepFrame())
         return true;
 
-    for (auto& go : mGameObjects)
+    for (auto &go : mGameObjects)
     {
         if (!go->Update())
             return false;
@@ -204,7 +203,7 @@ void ModuleScene::SetSelected(std::shared_ptr<GameObject> gameObject)
     }
 
     selected = gameObject;
-    
+
     if (gameObject)
     {
         gameObject->SetSelected(true);
@@ -213,13 +212,14 @@ void ModuleScene::SetSelected(std::shared_ptr<GameObject> gameObject)
 
 void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
-    if (!gameObject) return;
+    if (!gameObject)
+        return;
 
     // If has parent, just delete itself
     if (gameObject->GetParent())
     {
         pendingDelete.push_back(gameObject);
-        
+
         // Clear selection if the object being deleted is selected
         if (selected == gameObject)
         {
@@ -232,10 +232,10 @@ void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
         auto children = gameObject->GetAllDescendants();
         children.push_back(gameObject);
 
-        for (auto& child : children)
+        for (auto &child : children)
         {
             pendingDelete.push_back(child);
-            
+
             // Clear selection if any of the objects being deleted is selected
             if (selected == child)
             {
@@ -247,7 +247,7 @@ void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 
 void ModuleScene::ProcessPendingDeletes()
 {
-    for (auto& gameObject : pendingDelete)
+    for (auto &gameObject : pendingDelete)
     {
         // remove from parent
         if (auto parent = gameObject->GetParent())
@@ -267,12 +267,12 @@ void ModuleScene::ProcessPendingDeletes()
     }
 
     pendingDelete.clear();
-    
+
     // Rebuild quadtree after deleting objects to remove stale references
     RebuildQuadtree();
 }
 
-std::string ModuleScene::GenerateUniqueName(const std::string& baseName)
+std::string ModuleScene::GenerateUniqueName(const std::string &baseName)
 {
     std::string candidate = baseName;
     int counter = 1;
@@ -280,7 +280,7 @@ std::string ModuleScene::GenerateUniqueName(const std::string& baseName)
     while (true)
     {
         bool nameExists = false;
-        for (auto& existingGameObject : mGameObjects)
+        for (auto &existingGameObject : mGameObjects)
         {
             if (existingGameObject->GetName() == candidate)
             {
@@ -297,7 +297,7 @@ std::string ModuleScene::GenerateUniqueName(const std::string& baseName)
     return candidate;
 }
 
-std::shared_ptr<GameObject> ModuleScene::CreateGameObjectWithName(const std::string& name)
+std::shared_ptr<GameObject> ModuleScene::CreateGameObjectWithName(const std::string &name)
 {
     auto gameObject = CreateGameObject();
     gameObject->SetName(GenerateUniqueName(name));
@@ -398,18 +398,20 @@ std::shared_ptr<GameObject> ModuleScene::CreateEmptyGameObject()
     return gameObject;
 }
 
-std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::filesystem::path& assetPath)
+std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::filesystem::path &assetPath)
 {
     auto gameObject = CreateGameObjectWithName(assetPath.stem().string());
 
     try
     {
-        auto model = std::make_shared<Model>(assetPath);
+        std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
+        std::shared_ptr<Resource> resource = resourceManager->RequestResource(assetPath);
+        std::shared_ptr<Model> model = std::dynamic_pointer_cast<Model>(resource);
         if (model)
         {
             // Filter meshes that have vertices and indices
             std::vector<std::shared_ptr<Mesh>> validMeshes;
-            for (auto& mesh : model->GetMeshes())
+            for (auto &mesh : model->GetMeshes())
             {
                 if (!mesh->GetVertices().empty() && !mesh->GetIndices().empty())
                 {
@@ -419,22 +421,22 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
 
             if (!validMeshes.empty())
             {
-            if (validMeshes.size() > 1)
-            {
-                for (size_t i = 0; i < validMeshes.size(); ++i)
+                if (validMeshes.size() > 1)
                 {
-                    auto childGo = CreateGameObject();
-                    std::string childName = gameObject->GetName() + "_" + std::to_string(i);
-                    childGo->SetName(GenerateUniqueName(childName));
-                    childGo->CreateComponent(ComponentType::Mesh);
-                    childGo->GetComponent<MeshComponent>()->SetMesh(validMeshes[i]);
-                    childGo->CreateComponent(ComponentType::Material);
-                    childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-                    childGo->SetParent(gameObject);
+                    for (size_t i = 0; i < validMeshes.size(); ++i)
+                    {
+                        auto childGo = CreateGameObject();
+                        std::string childName = gameObject->GetName() + "_" + std::to_string(i);
+                        childGo->SetName(GenerateUniqueName(childName));
+                        childGo->CreateComponent(ComponentType::Mesh);
+                        childGo->GetComponent<MeshComponent>()->SetMesh(validMeshes[i]);
+                        childGo->CreateComponent(ComponentType::Material);
+                        childGo->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+                        childGo->SetParent(gameObject);
 
-                    mGameObjects.push_back(childGo);
+                        mGameObjects.push_back(childGo);
+                    }
                 }
-            }
                 else
                 {
                     // Single valid mesh
@@ -460,7 +462,7 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
             gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
         }
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         // Exception occurred, use fallback
         gameObject->CreateComponent(ComponentType::Mesh);
@@ -471,7 +473,7 @@ std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromModel(const std::fi
     return gameObject;
 }
 
-std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromPrefab(const std::filesystem::path& assetPath)
+std::shared_ptr<GameObject> ModuleScene::CreateGameObjectFromPrefab(const std::filesystem::path &assetPath)
 {
     auto gameObject = CreateGameObjectWithName(assetPath.stem().string());
     return gameObject;
@@ -481,11 +483,11 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
 {
     auto duplicated = CreateGameObject();
     duplicated->SetName(GenerateUniqueName(original->GetName()));
-    
+
     // --- Copy Transform ---
-    if (auto* srcTransform = original->GetComponent<TransformComponent>())
+    if (auto *srcTransform = original->GetComponent<TransformComponent>())
     {
-        auto* dstTransform = duplicated->GetComponent<TransformComponent>();
+        auto *dstTransform = duplicated->GetComponent<TransformComponent>();
         if (dstTransform)
         {
             dstTransform->SetPosition(srcTransform->GetPosition());
@@ -493,48 +495,48 @@ std::shared_ptr<GameObject> ModuleScene::DuplicateGameObject(std::shared_ptr<Gam
             dstTransform->SetScale(srcTransform->GetScale());
         }
     }
-    
+
     // --- Copy Mesh ---
-    if (auto* srcMesh = original->GetComponent<MeshComponent>())
+    if (auto *srcMesh = original->GetComponent<MeshComponent>())
     {
-        auto& comp = duplicated->CreateComponent(ComponentType::Mesh);
-        static_cast<MeshComponent&>(comp).SetMesh(srcMesh->GetMesh());
+        auto &comp = duplicated->CreateComponent(ComponentType::Mesh);
+        static_cast<MeshComponent &>(comp).SetMesh(srcMesh->GetMesh());
     }
-    
+
     // --- Copy Material ---
-    if (auto* srcMat = original->GetComponent<MaterialComponent>())
+    if (auto *srcMat = original->GetComponent<MaterialComponent>())
     {
-        auto& comp = duplicated->CreateComponent(ComponentType::Material);
-        auto* dstMat = static_cast<MaterialComponent*>(&comp);
-        
+        auto &comp = duplicated->CreateComponent(ComponentType::Material);
+        auto *dstMat = static_cast<MaterialComponent *>(&comp);
+
         auto srcMaterial = srcMat->GetMaterial();
         if (srcMaterial)
         {
             auto clonedMaterial = std::make_shared<Material>(ResourceType::Material);
             clonedMaterial->SetShader(srcMaterial->GetShader());
-            clonedMaterial->GetProperties()     = srcMaterial->GetProperties();
-            clonedMaterial->GetTextures()       = srcMaterial->GetTextures();
+            clonedMaterial->GetProperties() = srcMaterial->GetProperties();
+            clonedMaterial->GetTextures() = srcMaterial->GetTextures();
             clonedMaterial->GetRenderSettings() = srcMaterial->GetRenderSettings();
             dstMat->SetMaterial(clonedMaterial);
         }
     }
-    
+
     // --- Copy Camera ---
-    if (auto* srcCam = original->GetComponent<CameraComponent>())
+    if (auto *srcCam = original->GetComponent<CameraComponent>())
     {
-        auto& comp = duplicated->CreateComponent(ComponentType::Camera);
-        auto* dstCam = static_cast<CameraComponent*>(&comp);
+        auto &comp = duplicated->CreateComponent(ComponentType::Camera);
+        auto *dstCam = static_cast<CameraComponent *>(&comp);
         dstCam->SetFOV(srcCam->GetFOV());
         dstCam->SetNearClip(srcCam->GetNearClip());
         dstCam->SetFarClip(srcCam->GetFarClip());
     }
-    
+
     // Copy children recursively
-    for (auto& child : original->GetChildren())
+    for (auto &child : original->GetChildren())
     {
         DuplicateGameObject(child, duplicated);
     }
-    
+
     // Set parent
     duplicated->SetParent(parent);
     if (!duplicated->GetParent())
@@ -548,7 +550,7 @@ void ModuleScene::SaveInitialSnapshot()
 {
     mInitialSnapshot.clear();
 
-    for (const auto& go : mGameObjects)
+    for (const auto &go : mGameObjects)
     {
         if (!go->GetParent())
         {
@@ -567,19 +569,18 @@ void ModuleScene::RestoreSnapshot()
     selected = nullptr;
     mGameObjects.clear();
 
-    for (const auto& root : mInitialSnapshot)
+    for (const auto &root : mInitialSnapshot)
     {
         auto clonedRoot = CloneGameObjectRecursive(root);
         mGameObjects.push_back(clonedRoot);
 
         auto descendants = clonedRoot->GetAllDescendants();
-        for (auto& child : descendants)
+        for (auto &child : descendants)
             mGameObjects.push_back(child);
     }
 
     RebuildQuadtree();
 }
-
 
 void ModuleScene::RebuildQuadtree()
 {
@@ -590,7 +591,7 @@ void ModuleScene::RebuildQuadtree()
     AABB sceneBounds;
     bool hasAny = false;
 
-    for (const auto& go : mGameObjects)
+    for (const auto &go : mGameObjects)
     {
         AABB worldBox;
         if (ComputeWorldAABB(go, worldBox))
@@ -613,7 +614,7 @@ void ModuleScene::RebuildQuadtree()
     // Resetear el árbol con estos límites
     mQuadtree->SetBounds(sceneBounds);
 
-    for (const auto& go : mGameObjects)
+    for (const auto &go : mGameObjects)
     {
         AABB worldBox;
         if (ComputeWorldAABB(go, worldBox))
@@ -625,7 +626,8 @@ void ModuleScene::RebuildQuadtree()
 
 void ModuleScene::AddGameObject(std::shared_ptr<GameObject> go)
 {
-    if (!go) return;
+    if (!go)
+        return;
 
     // Evitar duplicados
     auto it = std::find(mGameObjects.begin(), mGameObjects.end(), go);
@@ -635,17 +637,18 @@ void ModuleScene::AddGameObject(std::shared_ptr<GameObject> go)
     }
 }
 
-void ModuleScene::SaveScene(const std::string& path)
+void ModuleScene::SaveScene(const std::string &path)
 {
     rapidjson::Document doc;
     doc.SetObject();
-    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+    rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
 
     rapidjson::Value gameObjects(rapidjson::kArrayType);
 
-    for (const auto& go : mGameObjects)
+    for (const auto &go : mGameObjects)
     {
-        if (!go) continue;
+        if (!go)
+            continue;
 
         rapidjson::Value goJson(rapidjson::kObjectType);
 
@@ -653,8 +656,7 @@ void ModuleScene::SaveScene(const std::string& path)
         goJson.AddMember(
             "UID",
             rapidjson::Value(go->GetUID().ToString().c_str(), allocator),
-            allocator
-        );
+            allocator);
 
         // Parent UID
         if (auto parent = go->GetParent())
@@ -662,8 +664,7 @@ void ModuleScene::SaveScene(const std::string& path)
             goJson.AddMember(
                 "ParentUID",
                 rapidjson::Value(parent->GetUID().ToString().c_str(), allocator),
-                allocator
-            );
+                allocator);
         }
         else
         {
@@ -674,19 +675,18 @@ void ModuleScene::SaveScene(const std::string& path)
         goJson.AddMember(
             "Name",
             rapidjson::Value(go->GetName().c_str(), allocator),
-            allocator
-        );
+            allocator);
 
         // Transform
-        if (auto* transform = go->GetComponent<TransformComponent>())
+        if (auto *transform = go->GetComponent<TransformComponent>())
         {
             rapidjson::Value pos(rapidjson::kArrayType);
             rapidjson::Value rot(rapidjson::kArrayType);
             rapidjson::Value scl(rapidjson::kArrayType);
 
-            const auto& p = transform->GetPosition();
-            const auto& r = transform->GetRotation();
-            const auto& s = transform->GetScale();
+            const auto &p = transform->GetPosition();
+            const auto &r = transform->GetRotation();
+            const auto &s = transform->GetScale();
 
             pos.PushBack(p.x, allocator).PushBack(p.y, allocator).PushBack(p.z, allocator);
             rot.PushBack(r.x, allocator).PushBack(r.y, allocator).PushBack(r.z, allocator);
@@ -715,7 +715,7 @@ void ModuleScene::SaveScene(const std::string& path)
     }
 }
 
-void ModuleScene::LoadScene(const std::string& path)
+void ModuleScene::LoadScene(const std::string &path)
 {
     std::ifstream file(path);
     if (!file.is_open())
@@ -723,8 +723,7 @@ void ModuleScene::LoadScene(const std::string& path)
 
     std::string jsonStr(
         (std::istreambuf_iterator<char>(file)),
-        std::istreambuf_iterator<char>()
-    );
+        std::istreambuf_iterator<char>());
     file.close();
 
     rapidjson::Document doc;
@@ -740,12 +739,12 @@ void ModuleScene::LoadScene(const std::string& path)
 
     std::unordered_map<std::string, std::shared_ptr<GameObject>> goMap;
 
-    const auto& arr = doc["GameObjects"];
+    const auto &arr = doc["GameObjects"];
 
     // --- First pass: create GameObjects ---
     for (rapidjson::SizeType i = 0; i < arr.Size(); i++)
     {
-        const auto& goJson = arr[i];
+        const auto &goJson = arr[i];
 
         auto go = std::make_shared<GameObject>();
 
@@ -757,29 +756,23 @@ void ModuleScene::LoadScene(const std::string& path)
         go->SetName(goJson["Name"].GetString());
 
         // Transform
-        if (auto* transform = go->GetComponent<TransformComponent>())
+        if (auto *transform = go->GetComponent<TransformComponent>())
         {
-            const auto& pos = goJson["Position"];
-            const auto& rot = goJson["Rotation"];
-            const auto& scl = goJson["Scale"];
+            const auto &pos = goJson["Position"];
+            const auto &rot = goJson["Rotation"];
+            const auto &scl = goJson["Scale"];
 
-            transform->SetPosition({
-                pos[0].GetFloat(),
-                pos[1].GetFloat(),
-                pos[2].GetFloat()
-            });
+            transform->SetPosition({pos[0].GetFloat(),
+                                    pos[1].GetFloat(),
+                                    pos[2].GetFloat()});
 
-            transform->SetRotation({
-                rot[0].GetFloat(),
-                rot[1].GetFloat(),
-                rot[2].GetFloat()
-            });
+            transform->SetRotation({rot[0].GetFloat(),
+                                    rot[1].GetFloat(),
+                                    rot[2].GetFloat()});
 
-            transform->SetScale({
-                scl[0].GetFloat(),
-                scl[1].GetFloat(),
-                scl[2].GetFloat()
-            });
+            transform->SetScale({scl[0].GetFloat(),
+                                 scl[1].GetFloat(),
+                                 scl[2].GetFloat()});
         }
 
         mGameObjects.push_back(go);
@@ -789,12 +782,12 @@ void ModuleScene::LoadScene(const std::string& path)
     // --- Second pass: rebuild hierarchy ---
     for (rapidjson::SizeType i = 0; i < arr.Size(); i++)
     {
-        const auto& goJson = arr[i];
+        const auto &goJson = arr[i];
         const std::string parentUID = goJson["ParentUID"].GetString();
 
         if (!parentUID.empty())
         {
-            auto child  = mGameObjects[i];
+            auto child = mGameObjects[i];
             auto parent = goMap[parentUID];
 
             if (parent)

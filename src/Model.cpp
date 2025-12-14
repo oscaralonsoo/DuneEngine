@@ -1,39 +1,15 @@
 #include "Model.h"
+#include "ModelImportData.h"
 #include "Globals.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
-// Model::Model(const std::filesystem::path &path) : Resource(ResourceType::Model)
-// {
-    
-// }
-
-Model::Model(const std::filesystem::path &path) : Resource(ResourceType::Model)
+Model::Model(const ModelImportData &importData)
+    : Resource(ResourceType::Model)
 {
-    LoadFromFile(path);
-}
-
-void Model::LoadFromFile(const std::filesystem::path &path)
-{
-    mFilePath = std::filesystem::absolute(path);
-
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(mFilePath.string(),
-                                             aiProcess_Triangulate |
-                                                 aiProcess_GenSmoothNormals |
-                                                 aiProcess_CalcTangentSpace |
-                                                 aiProcess_GenBoundingBoxes);
-
-    if (!scene)
+    for (const auto &meshData : importData.meshes)
     {
-        throw std::runtime_error("Failed to load model: invalid or unsupported file");
+        std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(meshData);
+        mMeshes.push_back(mesh);
     }
-
-    mName = mFilePath.filename().string();
-
-    ProcessNodeHierarchy(scene->mRootNode, scene);
 }
 
 void Model::ProcessNodeHierarchy(aiNode *node, const aiScene *scene)

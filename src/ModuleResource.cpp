@@ -11,6 +11,9 @@
 #include "GameObject.h"
 #include "MeshComponent.h"
 #include "MaterialComponent.h"
+#include "TextureImportData.h"
+#include "ModelImportData.h"
+#include "ImportData.h"
 
 #include "IL/il.h"
 
@@ -69,7 +72,21 @@ std::shared_ptr<Resource> ModuleResource::RequestResource(std::filesystem::path 
     std::string binPath = ResourceUtils::GetLibraryPath(uid);
     if (!binPath.empty())
     {
-        return CreateResource(ResourceLoader::Load(uid));
+        ResourceType type = ResourceUtils::GetTypeFromExtension(binPath);
+        switch (type)
+        {
+        case ResourceType::Texture:
+        {
+            return CreateResource(ResourceLoader::LoadTexture(uid));
+        }
+        case ResourceType::Model:
+        {
+            return CreateResource(ResourceLoader::LoadModel(uid));
+        }
+        default:
+            SDL_Log("Unknown resource type %d", static_cast<int>(type));
+            return nullptr;
+        }
     }
     else
     {
@@ -97,17 +114,17 @@ UID ModuleResource::ImportFile(std::filesystem::path assetPath)
         CreateResource(importData);
         break;
     }
-    case ResourceType::Mesh:
-        // MeshImportData importData;
-        // importData.assetPath = assetPath;
-        // importData.uid = uid;
-        // importData.type = ResourceType::Mesh;
+    case ResourceType::Model:
+        ModelImportData importData;
+        importData.assetPath = assetPath;
+        importData.uid = uid;
+        importData.type = ResourceType::Model;
 
-        // importData = ResourceImporter::Import(assetPath, importData);
+        importData = ResourceImporter::Import(assetPath, importData);
 
-        // ResourceSaver::Save(importData);
+        ResourceSaver::Save(importData);
 
-        // CreateResource(importData);
+        CreateResource(importData);
         break;
     }
 
@@ -133,17 +150,16 @@ std::shared_ptr<Resource> ModuleResource::CreateResource(const ImportData &impor
     {
     case ResourceType::Texture:
     {
-        resource = std::make_shared<Texture>(static_cast<const TextureImportData &>(importData));
+        auto textureData = dynamic_cast<const TextureImportData *>(&importData);
+        resource = std::make_shared<Texture>(*textureData);
+
         break;
     }
-    case ResourceType::Mesh:
+    case ResourceType::Model:
     {
-        // resource = std::make_shared<Mesh>(importData);
-        break;
-    }
-    case ResourceType::Material:
-    {
-        // resource = std::make_shared<Material>(importData);
+        auto modelData = dynamic_cast<const ModelImportData *>(&importData);
+        resource = std::make_shared<Model>(*modelData);
+
         break;
     }
     default:
