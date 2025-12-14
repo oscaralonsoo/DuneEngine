@@ -36,28 +36,6 @@ std::shared_ptr<Resource> ModuleResource::RequestResource(std::filesystem::path 
 {
     ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
     
-    // For models (FBX, OBJ), load directly without meta/binary system
-    if (type == ResourceType::Model)
-    {
-        // Check if we already have this model loaded by path
-        for (const auto& [key, resource] : mResources)
-        {
-            if (resource->GetAssetPath() == assetPath)
-                return resource;
-        }
-        
-        // Create new model and cache it
-        auto model = std::make_shared<Model>(assetPath);
-        if (model)
-        {
-            model->SetAssetPath(assetPath);
-            mResources[model->GetUID().ToString()] = model;
-            return model;
-        }
-        return nullptr;
-    }
-    
-    // For other resources, use the meta/binary system
     std::filesystem::path metaPath = assetPath;
     metaPath += ".meta";
 

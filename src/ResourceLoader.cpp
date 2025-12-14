@@ -56,6 +56,9 @@ std::istream &operator>>(std::istream &is, MeshImportData &data)
     data.indices.resize(indexCount);
     is.read(reinterpret_cast<char *>(data.indices.data()), sizeof(uint32_t) * indexCount);
 
+    is.read(reinterpret_cast<char *>(&data.aabb.min), sizeof(glm::vec3));
+    is.read(reinterpret_cast<char *>(&data.aabb.max), sizeof(glm::vec3));
+
     return is;
 }
 
