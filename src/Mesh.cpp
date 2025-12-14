@@ -95,48 +95,9 @@ const std::vector<Vertex> &Mesh::GetVertices() const
 
 void Mesh::LoadFromImportData(const MeshImportData& data)
 {
-    mVertices.clear();
+    // MeshImportData already contains std::vector<Vertex>, not raw floats
+    mVertices = data.vertices;
     mIndices = data.indices;
-
-    // Layout esperado:
-    // pos(3), normal(3), uv(2), tangent(3), bitangent(3) = 14 floats
-    constexpr size_t stride = 14;
-
-    for (size_t i = 0; i < data.vertices.size(); i += stride)
-    {
-        Vertex v;
-
-        v.Position = {
-            data.vertices[i + 0],
-            data.vertices[i + 1],
-            data.vertices[i + 2]
-        };
-
-        v.Normals = {
-            data.vertices[i + 3],
-            data.vertices[i + 4],
-            data.vertices[i + 5]
-        };
-
-        v.TexCoords = {
-            data.vertices[i + 6],
-            data.vertices[i + 7]
-        };
-
-        v.Tangent = {
-            data.vertices[i + 8],
-            data.vertices[i + 9],
-            data.vertices[i + 10]
-        };
-
-        v.Bitangent = {
-            data.vertices[i + 11],
-            data.vertices[i + 12],
-            data.vertices[i + 13]
-        };
-
-        mVertices.push_back(v);
-    }
 
     // reconstruir buffers usando el constructor existente
     mVertexArray.reset();

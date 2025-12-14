@@ -12,6 +12,25 @@ Model::Model(const ModelImportData &importData)
     }
 }
 
+Model::Model(const std::filesystem::path &filePath)
+    : Resource(ResourceType::Model), mFilePath(filePath)
+{
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(filePath.string(),
+        aiProcess_Triangulate | 
+        aiProcess_GenNormals | 
+        aiProcess_CalcTangentSpace |
+        aiProcess_FlipUVs);
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    {
+        SDL_Log("ERROR::ASSIMP::%s", importer.GetErrorString());
+        return;
+    }
+
+    ProcessNodeHierarchy(scene->mRootNode, scene);
+}
+
 void Model::ProcessNodeHierarchy(aiNode *node, const aiScene *scene)
 {
     mNodeName = node->mName.C_Str();

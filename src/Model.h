@@ -12,6 +12,7 @@ class Model : public Resource, public std::enable_shared_from_this<Model>
 {
 public:
     Model(const ModelImportData &importData);
+    Model(const std::filesystem::path &filePath);
 
     ~Model() = default;
 
