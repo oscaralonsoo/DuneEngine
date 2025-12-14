@@ -19,3 +19,5 @@ public:
 std::istream &operator>>(std::istream &is, ModelImportData &data);
 
 std::istream &operator>>(std::istream &is, TextureImportData &texture);
+
+std::istream &operator>>(std::istream &is, MeshImportData &mesh);

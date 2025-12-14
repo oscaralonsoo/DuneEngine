@@ -21,7 +21,9 @@ Material::Material(ResourceType type) : Resource(type)
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");
 
-    mProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // white color default
+    mTextures.albedo = sMissingTexture;
+
+    mProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     mShader = sStandardShader;
 
@@ -40,21 +42,21 @@ Material::Material(const std::string &name, PBRMaterialTextures &materialTexture
     if (!sStandardShader)
         sStandardShader = std::make_shared<Shader>("Assets/shaders/Shader.glsl");
 
-    mTextures.albedo = materialTextures.albedo;
-    mTextures.normal = materialTextures.normal;
-    mTextures.metallic = materialTextures.metallic;
+    mTextures.albedo    = materialTextures.albedo ? materialTextures.albedo : sMissingTexture;
+    mTextures.normal    = materialTextures.normal;
+    mTextures.metallic  = materialTextures.metallic;
     mTextures.roughness = materialTextures.roughness;
-    mTextures.ao = materialTextures.ao;
-    mTextures.emissive = materialTextures.emissive;
+    mTextures.ao        = materialTextures.ao;
+    mTextures.emissive  = materialTextures.emissive;
 
-    mTextureFlags.hasAlbedo = (mTextures.albedo != nullptr);
-    mTextureFlags.hasNormal = (mTextures.normal != nullptr);
-    mTextureFlags.hasMetallic = (mTextures.metallic != nullptr);
+    mTextureFlags.hasAlbedo    = true;
+    mTextureFlags.hasNormal    = (mTextures.normal != nullptr);
+    mTextureFlags.hasMetallic  = (mTextures.metallic != nullptr);
     mTextureFlags.hasRoughness = (mTextures.roughness != nullptr);
-    mTextureFlags.hasAO = (mTextures.ao != nullptr);
-    mTextureFlags.hasEmissive = (mTextures.emissive != nullptr);
+    mTextureFlags.hasAO        = (mTextures.ao != nullptr);
+    mTextureFlags.hasEmissive  = (mTextures.emissive != nullptr);
 
-    mProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // white color default
+    mProperties.color = glm::vec4(1.0f);
 
     if (mTextureFlags.hasMetallic)
         mProperties.metallic = 1.0f;
@@ -67,8 +69,7 @@ Material::Material(const std::string &name, PBRMaterialTextures &materialTexture
     {
         mShader->Bind();
         int slot = 0;
-        if (mTextureFlags.hasAlbedo)
-            mShader->SetInt("material.albedoMap", slot++);
+        mShader->SetInt("material.albedoMap", slot++);
         if (mTextureFlags.hasNormal)
             mShader->SetInt("material.normalMap", slot++);
         if (mTextureFlags.hasMetallic)
@@ -85,12 +86,15 @@ Material::Material(const std::string &name, PBRMaterialTextures &materialTexture
 
 void Material::Use()
 {
-    mTextureFlags.hasAlbedo = (mTextures.albedo != nullptr);
-    mTextureFlags.hasNormal = (mTextures.normal != nullptr);
-    mTextureFlags.hasMetallic = (mTextures.metallic != nullptr);
+    if (!mTextures.albedo)
+        mTextures.albedo = sMissingTexture;
+
+    mTextureFlags.hasAlbedo    = true;
+    mTextureFlags.hasNormal    = (mTextures.normal != nullptr);
+    mTextureFlags.hasMetallic  = (mTextures.metallic != nullptr);
     mTextureFlags.hasRoughness = (mTextures.roughness != nullptr);
-    mTextureFlags.hasAO = (mTextures.ao != nullptr);
-    mTextureFlags.hasEmissive = (mTextures.emissive != nullptr);
+    mTextureFlags.hasAO        = (mTextures.ao != nullptr);
+    mTextureFlags.hasEmissive  = (mTextures.emissive != nullptr);
 
     if (!mShader)
         return;
@@ -137,7 +141,7 @@ void Material::SetTexture(TextureType type, const std::shared_ptr<Texture> &text
     switch (type)
     {
     case TextureType::Albedo:
-        mTextures.albedo = texture;
+        mTextures.albedo = texture ? texture : sMissingTexture;
         break;
     case TextureType::Normal:
         mTextures.normal = texture;
@@ -156,12 +160,12 @@ void Material::SetTexture(TextureType type, const std::shared_ptr<Texture> &text
         break;
     }
 
-    mTextureFlags.hasAlbedo = (mTextures.albedo != nullptr);
-    mTextureFlags.hasNormal = (mTextures.normal != nullptr);
-    mTextureFlags.hasMetallic = (mTextures.metallic != nullptr);
+    mTextureFlags.hasAlbedo    = true;
+    mTextureFlags.hasNormal    = (mTextures.normal != nullptr);
+    mTextureFlags.hasMetallic  = (mTextures.metallic != nullptr);
     mTextureFlags.hasRoughness = (mTextures.roughness != nullptr);
-    mTextureFlags.hasAO = (mTextures.ao != nullptr);
-    mTextureFlags.hasEmissive = (mTextures.emissive != nullptr);
+    mTextureFlags.hasAO        = (mTextures.ao != nullptr);
+    mTextureFlags.hasEmissive  = (mTextures.emissive != nullptr);
 }
 
 MaterialRenderSettings &Material::GetRenderSettings()

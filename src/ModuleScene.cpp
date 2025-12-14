@@ -122,18 +122,6 @@ ModuleScene::ModuleScene()
 
 bool ModuleScene::Start()
 {
-    root = std::make_shared<GameObject>(); // Create Root
-    root->SetName("Root");
-    mGameObjects.push_back(root);
-
-    // Add root Components
-    root->CreateComponent(ComponentType::Mesh);
-    root->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
-
-    root->CreateComponent(ComponentType::Material);
-    root->GetComponent<MaterialComponent>()->SetMaterial(
-        std::make_shared<Material>(ResourceType::Material));
-
     raycaster = new Raycaster();
 
     std::shared_ptr<GameObject> cameraGO = std::make_shared<GameObject>();
@@ -146,6 +134,20 @@ bool ModuleScene::Start()
     cameraGO->CreateComponent(ComponentType::Camera);
 
     mGameObjects.push_back(cameraGO);
+
+    auto streetGO = CreateGameObjectFromModel(
+        "Assets/objects/Street/street2.FBX"
+    );
+    mGameObjects.push_back(streetGO);
+
+    if (auto* transform = streetGO->GetComponent<TransformComponent>())
+    {
+        transform->SetRotation({-90.0f, 0.0f, 0.0f});
+        transform->SetScale({0.1f, 0.1f, 0.1f});
+        glm::vec3 pos = transform->GetPosition();
+        pos.y -= 5.0f;        
+        transform->SetPosition(pos);
+    }
 
     AABB initialBounds(glm::vec3(-1000.0f), glm::vec3(1000.0f));
     mQuadtree = std::make_unique<Quadtree>(initialBounds, 6, 4);
