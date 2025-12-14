@@ -685,12 +685,64 @@ void ModuleScene::SaveScene(const std::string &path)
             goJson.AddMember("Scale", scl, allocator);
         }
 
+        if (auto *materialComp = go->GetComponent<MaterialComponent>())
+        {
+            rapidjson::Value materialJson(rapidjson::kObjectType);
+
+            auto material = materialComp->GetMaterial();
+            if (material)
+            {
+                const auto &props = material->GetProperties();
+                rapidjson::Value color(rapidjson::kArrayType);
+                color.PushBack(props.color.r, allocator)
+                    .PushBack(props.color.g, allocator)
+                    .PushBack(props.color.b, allocator)
+                    .PushBack(props.color.a, allocator);
+
+                rapidjson::Value emissive(rapidjson::kArrayType);
+                emissive.PushBack(props.emissive.r, allocator)
+                    .PushBack(props.emissive.g, allocator)
+                    .PushBack(props.emissive.b, allocator);
+
+                materialJson.AddMember("Color", color, allocator);
+                materialJson.AddMember("Metallic", props.metallic, allocator);
+                materialJson.AddMember("Roughness", props.roughness, allocator);
+                materialJson.AddMember("AO", props.ao, allocator);
+                materialJson.AddMember("Emissive", emissive, allocator);
+
+                const auto &textures = material->GetTextures();
+
+                if (textures.albedo)
+                    materialJson.AddMember("Albedo", rapidjson::Value(textures.albedo->GetName().c_str(), allocator), allocator);
+                if (textures.normal)
+                    materialJson.AddMember("Normal", rapidjson::Value(textures.normal->GetName().c_str(), allocator), allocator);
+                if (textures.metallic)
+                    materialJson.AddMember("MetallicTex", rapidjson::Value(textures.metallic->GetName().c_str(), allocator), allocator);
+                if (textures.roughness)
+                    materialJson.AddMember("RoughnessTex", rapidjson::Value(textures.roughness->GetName().c_str(), allocator), allocator);
+                if (textures.ao)
+                    materialJson.AddMember("AOTex", rapidjson::Value(textures.ao->GetName().c_str(), allocator), allocator);
+                if (textures.emissive)
+                    materialJson.AddMember("EmissiveTex", rapidjson::Value(textures.emissive->GetName().c_str(), allocator), allocator);
+
+                // Guardar RenderSettings
+                const auto &renderSettings = material->GetRenderSettings();
+                materialJson.AddMember("TransparencyMode", static_cast<int>(renderSettings.transparencyMode), allocator);
+                materialJson.AddMember("AlphaCutoff", renderSettings.alphaCutoff, allocator);
+                materialJson.AddMember("BlendMode", static_cast<int>(renderSettings.blendMode), allocator);
+                materialJson.AddMember("CullMode", static_cast<int>(renderSettings.cullMode), allocator);
+                materialJson.AddMember("DepthTest", renderSettings.depthTest, allocator);
+                materialJson.AddMember("Wireframe", renderSettings.wireframe, allocator);
+            }
+
+            goJson.AddMember("MaterialComponent", materialJson, allocator);
+        }
+
         gameObjects.PushBack(goJson, allocator);
     }
 
     doc.AddMember("GameObjects", gameObjects, allocator);
 
-    // Write to file
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
@@ -729,6 +781,8 @@ void ModuleScene::LoadScene(const std::string &path)
 
     const auto &arr = doc["GameObjects"];
 
+    std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
+
     // --- First pass: create GameObjects ---
     for (rapidjson::SizeType i = 0; i < arr.Size(); i++)
     {
@@ -761,6 +815,71 @@ void ModuleScene::LoadScene(const std::string &path)
             transform->SetScale({scl[0].GetFloat(),
                                  scl[1].GetFloat(),
                                  scl[2].GetFloat()});
+        }
+
+        if (goJson.HasMember("MaterialComponent") && goJson["MaterialComponent"].IsObject())
+        {
+            go->CreateComponent(ComponentType::Material);
+            MaterialComponent *materialComponent = go->GetComponent<MaterialComponent>();
+
+            const auto &matJson = goJson["MaterialComponent"];
+            auto material = std::make_shared<Material>();
+
+            // Propiedades PBR
+            if (matJson.HasMember("Color"))
+            {
+                const auto &color = matJson["Color"];
+                material->GetProperties().color = {
+                    color[0].GetFloat(),
+                    color[1].GetFloat(),
+                    color[2].GetFloat(),
+                    color[3].GetFloat()};
+            }
+            if (matJson.HasMember("Metallic"))
+                material->GetProperties().metallic = matJson["Metallic"].GetFloat();
+            if (matJson.HasMember("Roughness"))
+                material->GetProperties().roughness = matJson["Roughness"].GetFloat();
+            if (matJson.HasMember("AO"))
+                material->GetProperties().ao = matJson["AO"].GetFloat();
+            if (matJson.HasMember("Emissive"))
+            {
+                const auto &emissive = matJson["Emissive"];
+                material->GetProperties().emissive = {
+                    emissive[0].GetFloat(),
+                    emissive[1].GetFloat(),
+                    emissive[2].GetFloat()};
+            }
+
+            // Texturas
+            auto &textures = material->GetTextures();
+            if (matJson.HasMember("Albedo"))
+                textures.albedo = std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource(matJson["Albedo"].GetString()));
+            if (matJson.HasMember("Normal"))
+                textures.normal = std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource(matJson["Normal"].GetString()));
+            if (matJson.HasMember("MetallicTex"))
+                textures.metallic = std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource(matJson["MetallicTex"].GetString()));
+            if (matJson.HasMember("RoughnessTex"))
+                textures.roughness = std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource(matJson["RoughnessTex"].GetString()));
+            if (matJson.HasMember("AOTex"))
+                textures.ao = std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource(matJson["AOTex"].GetString()));
+            if (matJson.HasMember("EmissiveTex"))
+                textures.emissive = std::dynamic_pointer_cast<Texture>(resourceManager->RequestResource(matJson["EmissiveTex"].GetString()));
+
+            auto &renderSettings = material->GetRenderSettings();
+            if (matJson.HasMember("TransparencyMode"))
+                renderSettings.transparencyMode = static_cast<MaterialRenderSettings::TransparencyMode>(matJson["TransparencyMode"].GetInt());
+            if (matJson.HasMember("AlphaCutoff"))
+                renderSettings.alphaCutoff = matJson["AlphaCutoff"].GetFloat();
+            if (matJson.HasMember("BlendMode"))
+                renderSettings.blendMode = static_cast<MaterialRenderSettings::BlendMode>(matJson["BlendMode"].GetInt());
+            if (matJson.HasMember("CullMode"))
+                renderSettings.cullMode = static_cast<MaterialRenderSettings::CullMode>(matJson["CullMode"].GetInt());
+            if (matJson.HasMember("DepthTest"))
+                renderSettings.depthTest = matJson["DepthTest"].GetBool();
+            if (matJson.HasMember("Wireframe"))
+                renderSettings.wireframe = matJson["Wireframe"].GetBool();
+
+            materialComponent->SetMaterial(material);
         }
 
         mGameObjects.push_back(go);
