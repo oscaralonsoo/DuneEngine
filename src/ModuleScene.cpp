@@ -135,6 +135,20 @@ bool ModuleScene::Start()
 
     mGameObjects.push_back(cameraGO);
 
+    auto streetGO = CreateGameObjectFromModel(
+        "Assets/objects/Street/street2.FBX"
+    );
+    mGameObjects.push_back(streetGO);
+
+    if (auto* transform = streetGO->GetComponent<TransformComponent>())
+    {
+        transform->SetRotation({-90.0f, 0.0f, 0.0f});
+        transform->SetScale({0.1f, 0.1f, 0.1f});
+        glm::vec3 pos = transform->GetPosition();
+        pos.y -= 5.0f;        
+        transform->SetPosition(pos);
+    }
+
     AABB initialBounds(glm::vec3(-1000.0f), glm::vec3(1000.0f));
     mQuadtree = std::make_unique<Quadtree>(initialBounds, 6, 4);
     RebuildQuadtree();
