@@ -5,13 +5,13 @@
 
 #include <fstream>
 
-void ResourceSaver::Save(const ImportData& importData)
+void ResourceSaver::Save(const ImportData &importData)
 {
     SaveBinary(importData);
 
     SaveMeta(importData);
 }
-void ResourceSaver::SaveMeta(const ImportData& importData)
+void ResourceSaver::SaveMeta(const ImportData &importData)
 {
     std::filesystem::path metaPath = importData.assetPath;
     metaPath += ".meta";
@@ -24,13 +24,13 @@ void ResourceSaver::SaveMeta(const ImportData& importData)
          << "\" type=\"" << ResourceUtils::ToString(importData.type) << "\"/>\n";
 }
 
-void ResourceSaver::SaveBinary(const ImportData& importData)
+void ResourceSaver::SaveBinary(const ImportData &importData)
 {
     switch (importData.type)
     {
     case ResourceType::Texture:
     {
-        const TextureImportData& textureData = static_cast<const TextureImportData&>(importData);
+        const TextureImportData &textureData = static_cast<const TextureImportData &>(importData);
         std::string outputPath = "Library/" + textureData.uid.ToString() + ".tex";
         std::ofstream out(outputPath, std::ios::binary);
         out << textureData;
@@ -38,8 +38,8 @@ void ResourceSaver::SaveBinary(const ImportData& importData)
     }
     case ResourceType::Model:
     {
-        const ModelImportData& modelData =
-            static_cast<const ModelImportData&>(importData);
+        const ModelImportData &modelData =
+            static_cast<const ModelImportData &>(importData);
 
         std::string outputPath =
             "Library/" + modelData.uid.ToString() + ".model";
@@ -54,7 +54,6 @@ void ResourceSaver::SaveBinary(const ImportData& importData)
     }
 }
 
-
 std::ostream &operator<<(std::ostream &os, const TextureImportData &texture)
 {
     os.write((const char *)&texture.width, sizeof(texture.width));
@@ -65,31 +64,39 @@ std::ostream &operator<<(std::ostream &os, const TextureImportData &texture)
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const MeshImportData& data)
+std::ostream &operator<<(std::ostream &os, const MeshImportData &data)
 {
-    // Vertices
     uint32_t vertexCount = static_cast<uint32_t>(data.vertices.size());
-    os.write(reinterpret_cast<const char*>(&vertexCount), sizeof(uint32_t));
-    os.write(reinterpret_cast<const char*>(data.vertices.data()),
-             sizeof(Vertex) * vertexCount);
+    SDL_Log("Saving Mesh: vertices=%u, indices=%u", vertexCount, static_cast<uint32_t>(data.indices.size()));
 
-    // Indices
+    os.write(reinterpret_cast<const char *>(&vertexCount), sizeof(uint32_t));
+
+    for (const auto &v : data.vertices)
+    {
+        os.write(reinterpret_cast<const char *>(&v.Position), sizeof(glm::vec3));
+        os.write(reinterpret_cast<const char *>(&v.Normals), sizeof(glm::vec3));
+        os.write(reinterpret_cast<const char *>(&v.TexCoords), sizeof(glm::vec2));
+        os.write(reinterpret_cast<const char *>(&v.Tangent), sizeof(glm::vec3));
+        os.write(reinterpret_cast<const char *>(&v.Bitangent), sizeof(glm::vec3));
+    }
+
     uint32_t indexCount = static_cast<uint32_t>(data.indices.size());
-    os.write(reinterpret_cast<const char*>(&indexCount), sizeof(uint32_t));
-    os.write(reinterpret_cast<const char*>(data.indices.data()),
-             sizeof(uint32_t) * indexCount);
+    os.write(reinterpret_cast<const char *>(&indexCount), sizeof(uint32_t));
+    os.write(reinterpret_cast<const char *>(data.indices.data()), sizeof(uint32_t) * indexCount);
 
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const ModelImportData& data)
+std::ostream &operator<<(std::ostream &os, const ModelImportData &data)
 {
     uint32_t meshCount = static_cast<uint32_t>(data.meshes.size());
-    os.write(reinterpret_cast<const char*>(&meshCount), sizeof(uint32_t));
+    SDL_Log("Saving Model: meshes=%u", meshCount);
 
-    for (const auto& mesh : data.meshes)
+    os.write(reinterpret_cast<const char *>(&meshCount), sizeof(uint32_t));
+
+    for (const auto &mesh : data.meshes)
     {
-        os << mesh; // reutiliza MeshImportData
+        os << mesh;
     }
 
     return os;

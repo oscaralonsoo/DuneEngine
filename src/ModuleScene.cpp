@@ -122,18 +122,6 @@ ModuleScene::ModuleScene()
 
 bool ModuleScene::Start()
 {
-    root = std::make_shared<GameObject>(); // Create Root
-    root->SetName("Root");
-    mGameObjects.push_back(root);
-
-    // Add root Components
-    root->CreateComponent(ComponentType::Mesh);
-    root->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
-
-    root->CreateComponent(ComponentType::Material);
-    root->GetComponent<MaterialComponent>()->SetMaterial(
-        std::make_shared<Material>(ResourceType::Material));
-
     raycaster = new Raycaster();
 
     std::shared_ptr<GameObject> cameraGO = std::make_shared<GameObject>();
