@@ -2,6 +2,7 @@
 #include "Resource.h"
 #include <glm/glm.hpp>
 #include "AABB.h"
+#include "MeshImportData.h"
 
 class VertexArray;
 class VertexBuffer;
@@ -31,6 +32,8 @@ public:
 
     const std::vector<Vertex> &GetVertices() const;
     const std::vector<uint32_t> &GetIndices() const;
+
+    void LoadFromImportData(const MeshImportData& data);
 
 private:
     std::shared_ptr<VertexArray> mVertexArray;

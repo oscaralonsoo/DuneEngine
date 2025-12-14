@@ -176,7 +176,7 @@ void ScenePanelUI::RenderGameView(
     {
         ImGui::Text("Game View");
         ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "No camera found in the scene!");
-        ImGui::Text("Create a GameObject with a CameraComponent or name one 'MainCamera'.");
+        ImGui::Text("Create a GameObject with a CameraComponent.");
     }
 
     ImGui::EndChild();

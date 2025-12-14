@@ -13,6 +13,12 @@
 #include <glad/glad.h>
 #include "Material.h"
 #include <algorithm>
+#include <fstream>
+#include <unordered_map>
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
+#include "ModuleInput.h"
 
 namespace
 {
@@ -213,6 +219,12 @@ void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
     if (gameObject->GetParent())
     {
         pendingDelete.push_back(gameObject);
+        
+        // Clear selection if the object being deleted is selected
+        if (selected == gameObject)
+        {
+            selected = nullptr;
+        }
     }
     else
     {
@@ -223,12 +235,13 @@ void ModuleScene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
         for (auto& child : children)
         {
             pendingDelete.push_back(child);
+            
+            // Clear selection if any of the objects being deleted is selected
+            if (selected == child)
+            {
+                selected = nullptr;
+            }
         }
-    }
-    
-    if (selected == gameObject)
-    {
-        selected = nullptr;
     }
 }
 
@@ -254,6 +267,9 @@ void ModuleScene::ProcessPendingDeletes()
     }
 
     pendingDelete.clear();
+    
+    // Rebuild quadtree after deleting objects to remove stale references
+    RebuildQuadtree();
 }
 
 std::string ModuleScene::GenerateUniqueName(const std::string& baseName)
@@ -296,6 +312,83 @@ std::shared_ptr<GameObject> ModuleScene::CreateCube()
     gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCube());
     gameObject->CreateComponent(ComponentType::Material);
     gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateSphere()
+{
+    auto gameObject = CreateGameObjectWithName("Sphere");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateSphere());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreatePlane()
+{
+    auto gameObject = CreateGameObjectWithName("Plane");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreatePlane());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCylinder()
+{
+    auto gameObject = CreateGameObjectWithName("Cylinder");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCylinder());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCone()
+{
+    auto gameObject = CreateGameObjectWithName("Cone");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCone());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateTorus()
+{
+    auto gameObject = CreateGameObjectWithName("Torus");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateTorus());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCapsule()
+{
+    auto gameObject = CreateGameObjectWithName("Capsule");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateCapsule());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateQuad()
+{
+    auto gameObject = CreateGameObjectWithName("Quad");
+    gameObject->CreateComponent(ComponentType::Mesh);
+    gameObject->GetComponent<MeshComponent>()->SetMesh(PrimitiveMesh::CreateQuad());
+    gameObject->CreateComponent(ComponentType::Material);
+    gameObject->GetComponent<MaterialComponent>()->SetMaterial(std::make_shared<Material>(ResourceType::Material));
+    return gameObject;
+}
+
+std::shared_ptr<GameObject> ModuleScene::CreateCamera()
+{
+    auto gameObject = CreateGameObjectWithName("Camera");
+    gameObject->CreateComponent(ComponentType::Camera);
     return gameObject;
 }
 
@@ -540,4 +633,174 @@ void ModuleScene::AddGameObject(std::shared_ptr<GameObject> go)
     {
         mGameObjects.push_back(go);
     }
+}
+
+void ModuleScene::SaveScene(const std::string& path)
+{
+    rapidjson::Document doc;
+    doc.SetObject();
+    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+
+    rapidjson::Value gameObjects(rapidjson::kArrayType);
+
+    for (const auto& go : mGameObjects)
+    {
+        if (!go) continue;
+
+        rapidjson::Value goJson(rapidjson::kObjectType);
+
+        // UID
+        goJson.AddMember(
+            "UID",
+            rapidjson::Value(go->GetUID().ToString().c_str(), allocator),
+            allocator
+        );
+
+        // Parent UID
+        if (auto parent = go->GetParent())
+        {
+            goJson.AddMember(
+                "ParentUID",
+                rapidjson::Value(parent->GetUID().ToString().c_str(), allocator),
+                allocator
+            );
+        }
+        else
+        {
+            goJson.AddMember("ParentUID", "", allocator);
+        }
+
+        // Name
+        goJson.AddMember(
+            "Name",
+            rapidjson::Value(go->GetName().c_str(), allocator),
+            allocator
+        );
+
+        // Transform
+        if (auto* transform = go->GetComponent<TransformComponent>())
+        {
+            rapidjson::Value pos(rapidjson::kArrayType);
+            rapidjson::Value rot(rapidjson::kArrayType);
+            rapidjson::Value scl(rapidjson::kArrayType);
+
+            const auto& p = transform->GetPosition();
+            const auto& r = transform->GetRotation();
+            const auto& s = transform->GetScale();
+
+            pos.PushBack(p.x, allocator).PushBack(p.y, allocator).PushBack(p.z, allocator);
+            rot.PushBack(r.x, allocator).PushBack(r.y, allocator).PushBack(r.z, allocator);
+            scl.PushBack(s.x, allocator).PushBack(s.y, allocator).PushBack(s.z, allocator);
+
+            goJson.AddMember("Position", pos, allocator);
+            goJson.AddMember("Rotation", rot, allocator);
+            goJson.AddMember("Scale", scl, allocator);
+        }
+
+        gameObjects.PushBack(goJson, allocator);
+    }
+
+    doc.AddMember("GameObjects", gameObjects, allocator);
+
+    // Write to file
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+
+    std::ofstream file(path);
+    if (file.is_open())
+    {
+        file << buffer.GetString();
+        file.close();
+    }
+}
+
+void ModuleScene::LoadScene(const std::string& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        return;
+
+    std::string jsonStr(
+        (std::istreambuf_iterator<char>(file)),
+        std::istreambuf_iterator<char>()
+    );
+    file.close();
+
+    rapidjson::Document doc;
+    doc.Parse(jsonStr.c_str());
+
+    if (!doc.HasMember("GameObjects") || !doc["GameObjects"].IsArray())
+        return;
+
+    // Clear current scene
+    selected = nullptr;
+    mGameObjects.clear();
+    pendingDelete.clear();
+
+    std::unordered_map<std::string, std::shared_ptr<GameObject>> goMap;
+
+    const auto& arr = doc["GameObjects"];
+
+    // --- First pass: create GameObjects ---
+    for (rapidjson::SizeType i = 0; i < arr.Size(); i++)
+    {
+        const auto& goJson = arr[i];
+
+        auto go = std::make_shared<GameObject>();
+
+        // UID
+        UID uid(goJson["UID"].GetString());
+        go->SetUID(uid);
+
+        // Name
+        go->SetName(goJson["Name"].GetString());
+
+        // Transform
+        if (auto* transform = go->GetComponent<TransformComponent>())
+        {
+            const auto& pos = goJson["Position"];
+            const auto& rot = goJson["Rotation"];
+            const auto& scl = goJson["Scale"];
+
+            transform->SetPosition({
+                pos[0].GetFloat(),
+                pos[1].GetFloat(),
+                pos[2].GetFloat()
+            });
+
+            transform->SetRotation({
+                rot[0].GetFloat(),
+                rot[1].GetFloat(),
+                rot[2].GetFloat()
+            });
+
+            transform->SetScale({
+                scl[0].GetFloat(),
+                scl[1].GetFloat(),
+                scl[2].GetFloat()
+            });
+        }
+
+        mGameObjects.push_back(go);
+        goMap[uid.ToString()] = go;
+    }
+
+    // --- Second pass: rebuild hierarchy ---
+    for (rapidjson::SizeType i = 0; i < arr.Size(); i++)
+    {
+        const auto& goJson = arr[i];
+        const std::string parentUID = goJson["ParentUID"].GetString();
+
+        if (!parentUID.empty())
+        {
+            auto child  = mGameObjects[i];
+            auto parent = goMap[parentUID];
+
+            if (parent)
+                child->SetParent(parent);
+        }
+    }
+
+    RebuildQuadtree();
 }

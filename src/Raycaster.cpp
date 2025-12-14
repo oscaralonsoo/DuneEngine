@@ -72,6 +72,7 @@ std::shared_ptr<GameObject> Raycaster::PickObject(
 
     for (auto& obj : candidates)
     {
+
         MeshComponent *meshComp = obj->GetComponent<MeshComponent>();
         if (!meshComp || !meshComp->GetMesh())
             continue;
@@ -101,8 +102,16 @@ std::shared_ptr<GameObject> Raycaster::PickObject(
 
 bool Raycaster::RayIntersectsAABB(const Ray &ray, const AABB &box, float *tMinOut)
 {
-    glm::vec3 t0 = (box.min - ray.origin) / ray.direction;
-    glm::vec3 t1 = (box.max - ray.origin) / ray.direction;
+    const float epsilon = 1e-8f;
+    glm::vec3 invDir;
+    
+    // Handle near-zero direction components to avoid division by zero
+    invDir.x = (std::abs(ray.direction.x) > epsilon) ? (1.0f / ray.direction.x) : (ray.direction.x >= 0 ? 1e8f : -1e8f);
+    invDir.y = (std::abs(ray.direction.y) > epsilon) ? (1.0f / ray.direction.y) : (ray.direction.y >= 0 ? 1e8f : -1e8f);
+    invDir.z = (std::abs(ray.direction.z) > epsilon) ? (1.0f / ray.direction.z) : (ray.direction.z >= 0 ? 1e8f : -1e8f);
+
+    glm::vec3 t0 = (box.min - ray.origin) * invDir;
+    glm::vec3 t1 = (box.max - ray.origin) * invDir;
 
     glm::vec3 tMinVec = glm::min(t0, t1);
     glm::vec3 tMaxVec = glm::max(t0, t1);
