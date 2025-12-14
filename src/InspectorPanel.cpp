@@ -7,6 +7,7 @@
 #include "MeshComponent.h"
 #include "CameraComponent.h"
 #include "ComponentUIRenderers.h"
+#include "ResourceUIRenderer.h"
 #include <imgui.h>
 #include <algorithm>
 
@@ -23,70 +24,76 @@ void InspectorPanel::OnImGuiRender()
 
     ImGui::Begin("Inspector", nullptr, flags);
 
-    auto scene = Engine::GetInstance().scene;
-    if (scene)
+    if (mSelectedResource)
     {
-        std::shared_ptr<GameObject> selected = scene->GetSelected();
-        if (selected)
+        RenderResourceDetails();
+    }
+    else
+    {
+        // Check for GameObject selection
+        auto scene = Engine::GetInstance().scene;
+        if (scene)
         {
-            static char nameBuffer[256];
-            strcpy(nameBuffer, selected->GetName().c_str());
-            ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer), ImGuiInputTextFlags_EnterReturnsTrue);
-            if (ImGui::IsItemDeactivatedAfterEdit())
+            std::shared_ptr<GameObject> selected = scene->GetSelected();
+            if (selected)
             {
-                selected->SetName(nameBuffer);
-            }
-            ImGui::Separator();
-
-            // Render all components using the new UI renderers
-            const auto& components = selected->GetComponents();
-            float panelWidth = ImGui::GetContentRegionAvail().x;
-            
-            for (const auto& component : components)
-            {
-                // Use the appropriate UI renderer based on component type
-                switch (component->GetType())
+                static char nameBuffer[256];
+                strcpy(nameBuffer, selected->GetName().c_str());
+                ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer), ImGuiInputTextFlags_EnterReturnsTrue);
+                if (ImGui::IsItemDeactivatedAfterEdit())
                 {
-                    case ComponentType::Transform:
-                        ComponentUI::TransformComponentUI::Render(
-                            static_cast<TransformComponent*>(component.get()), 
-                            panelWidth
-                        );
-                        break;
-                    
-                    case ComponentType::Mesh:
-                        ComponentUI::MeshComponentUI::Render(
-                            static_cast<MeshComponent*>(component.get()), 
-                            panelWidth
-                        );
-                        break;
-                    
-                    case ComponentType::Material:
-                        ComponentUI::MaterialComponentUI::Render(
-                            static_cast<MaterialComponent*>(component.get()), 
-                            panelWidth
-                        );
-                        break;
-                    
-                    case ComponentType::Camera:
-                        ComponentUI::CameraComponentUI::Render(
-                            static_cast<CameraComponent*>(component.get()), 
-                            panelWidth
-                        );
-                        break;
-                    
-                    default:
-                        // For any other component types, call the base method if it exists
-                        component->OnInspectorRender(panelWidth);
-                        break;
+                    selected->SetName(nameBuffer);
                 }
-                
                 ImGui::Separator();
+
+                const auto& components = selected->GetComponents();
+                float panelWidth = ImGui::GetContentRegionAvail().x;
+                
+                for (const auto& component : components)
+                {
+                    // Use the appropriate UI renderer
+                    switch (component->GetType())
+                    {
+                        case ComponentType::Transform:
+                            ComponentUI::TransformComponentUI::Render(
+                                static_cast<TransformComponent*>(component.get()), 
+                                panelWidth
+                            );
+                            break;
+                        
+                        case ComponentType::Mesh:
+                            ComponentUI::MeshComponentUI::Render(
+                                static_cast<MeshComponent*>(component.get()), 
+                                panelWidth
+                            );
+                            break;
+                        
+                        case ComponentType::Material:
+                            ComponentUI::MaterialComponentUI::Render(
+                                static_cast<MaterialComponent*>(component.get()), 
+                                panelWidth
+                            );
+                            break;
+                        
+                        case ComponentType::Camera:
+                            ComponentUI::CameraComponentUI::Render(
+                                static_cast<CameraComponent*>(component.get()), 
+                                panelWidth
+                            );
+                            break;
+                        
+                        default:
+                            component->OnInspectorRender(panelWidth);
+                            break;
+                    }
+                    
+                    ImGui::Separator();
+                }
             }
-        }
-        else
-        {
-            ImGui::TextDisabled("No selection");
+            else
+            {
+                ImGui::TextDisabled("No selection");
+            }
         }
     }
 
@@ -95,10 +102,25 @@ void InspectorPanel::OnImGuiRender()
 
 void InspectorPanel::CleanUp()
 {
-
+    mSelectedResource.reset();
 }
 
+void InspectorPanel::SetSelectedResource(std::shared_ptr<Resource> resource, const std::filesystem::path& assetPath)
+{
+    mSelectedResource = resource;
+    mSelectedResourcePath = assetPath;
+}
 
+void InspectorPanel::ClearSelectedResource()
+{
+    mSelectedResource.reset();
+    mSelectedResourcePath.clear();
+}
 
-
- 
+void InspectorPanel::RenderResourceDetails()
+{
+    if (!mSelectedResource)
+        return;
+    
+    ResourceUI::RenderResourceDetails(mSelectedResource, mSelectedResourcePath);
+}

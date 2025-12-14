@@ -92,3 +92,24 @@ const std::vector<Vertex> &Mesh::GetVertices() const
 {
     return mVertices;
 }
+
+void Mesh::LoadFromImportData(const MeshImportData& data)
+{
+    // MeshImportData already contains std::vector<Vertex>, not raw floats
+    mVertices = data.vertices;
+    mIndices = data.indices;
+
+    // reconstruir buffers usando el constructor existente
+    mVertexArray.reset();
+    mVertexBuffer.reset();
+    mIndexBuffer.reset();
+
+    *this = Mesh(mVertices, mIndices);
+}
+
+size_t Mesh::GetMemorySize() const
+{
+    size_t vertexMemory = mVertices.size() * sizeof(Vertex);
+    size_t indexMemory = mIndices.size() * sizeof(uint32_t);
+    return vertexMemory + indexMemory;
+}

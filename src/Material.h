@@ -95,6 +95,9 @@ public:
     void SetTexture(TextureType type, const std::shared_ptr<Texture> &texture);
     const PBRMaterialProperties &GetProperties() const;
 
+    // Override to calculate material memory size
+    size_t GetMemorySize() const override;
+
 private:
     std::shared_ptr<Shader> mShader;
     MaterialRenderSettings mRenderSettings;

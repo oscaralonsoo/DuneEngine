@@ -35,3 +35,8 @@ std::string UID::ToString() const
 {
     return mID;
 }
+
+bool UID::operator==(const UID& other) const
+{
+    return mID == other.mID;
+}

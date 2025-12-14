@@ -43,6 +43,10 @@ public:
     void AddChild(std::shared_ptr<GameObject> child);
     void RemoveChild(std::shared_ptr<GameObject> child);
     const std::vector<std::shared_ptr<GameObject>>& GetChildren() const { return mChildren; }
+    
+    // Reordering
+    void InsertChildAt(std::shared_ptr<GameObject> child, size_t index);
+    size_t GetChildIndex(std::shared_ptr<GameObject> child) const;
 
     virtual void OnChildRemoved(std::shared_ptr<GameObject> removedChild) {}
 

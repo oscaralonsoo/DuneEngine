@@ -192,3 +192,34 @@ PBRMaterialProperties &Material::GetProperties()
 {
     return mProperties;
 }
+
+const PBRMaterialTextures &Material::GetTextures() const
+{
+    return mTextures;
+}
+
+const PBRMaterialProperties &Material::GetProperties() const
+{
+    return mProperties;
+}
+
+size_t Material::GetMemorySize() const
+{
+    size_t totalSize = sizeof(Material);
+    
+    // Add memory from all textures
+    if (mTextures.albedo)
+        totalSize += mTextures.albedo->GetMemorySize();
+    if (mTextures.normal)
+        totalSize += mTextures.normal->GetMemorySize();
+    if (mTextures.metallic)
+        totalSize += mTextures.metallic->GetMemorySize();
+    if (mTextures.roughness)
+        totalSize += mTextures.roughness->GetMemorySize();
+    if (mTextures.ao)
+        totalSize += mTextures.ao->GetMemorySize();
+    if (mTextures.emissive)
+        totalSize += mTextures.emissive->GetMemorySize();
+    
+    return totalSize;
+}

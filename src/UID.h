@@ -10,6 +10,9 @@ public:
 
     std::string ToString() const;
 
+    // Comparison operator
+    bool operator==(const UID& other) const;
+
 private:
     std::string mID;
 };

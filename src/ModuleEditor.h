@@ -71,6 +71,17 @@ public:
         return static_cast<T*>(panels.back().get());
     }
 
+    template<typename T>
+    T* GetPanel()
+    {
+        for (auto& panel : panels)
+        {
+            if (T* p = dynamic_cast<T*>(panel.get()))
+                return p;
+        }
+        return nullptr;
+    }
+
 private:
     std::vector<std::unique_ptr<EditorPanel>> panels;
 };

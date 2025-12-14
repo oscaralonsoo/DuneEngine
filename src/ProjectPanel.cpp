@@ -3,7 +3,9 @@
 #include "ResourceUtils.h"
 #include "Texture.h"
 #include "ModuleResource.h"
-
+#include "ModuleInput.h"
+#include "InspectorPanel.h"
+#include "ModuleEditor.h"
 #include <imgui.h>
 #include <algorithm>
 #include <filesystem>
@@ -56,6 +58,41 @@ void ProjectPanel::RenderContent(ModuleScene* scene)
     {
         RenderDirectoryTree(assetsPath, assetsPath);
     }
+    
+    // Drop target for Assets root 
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+        {
+            const char* relativePath = (const char*)payload->Data;
+            std::filesystem::path draggedPath = "Assets" / std::filesystem::path(relativePath);
+            std::filesystem::path newPath = assetsPath / draggedPath.filename();
+            
+            // Only move if it's not already in Assets root
+            if (draggedPath.parent_path() != assetsPath)
+            {
+                try
+                {
+                    std::filesystem::rename(draggedPath, newPath);
+                    
+                    if (selectedItems.count(draggedPath))
+                    {
+                        selectedItems.erase(draggedPath);
+                        selectedItems.insert(newPath);
+                    }
+                    if (selectedFolder == draggedPath)
+                    {
+                        selectedFolder = newPath;
+                    }
+                    
+                    lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
+                }
+                catch (...) {}
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+    
     ImGui::EndChild();
 
     ImGui::NextColumn();
@@ -96,7 +133,6 @@ bool ProjectPanel::HasSubdirectories(const std::filesystem::path& path)
     }
     catch (...)
     {
-        // If we can't read the directory, assume it has no subdirectories
         return false;
     }
     return false;
@@ -120,14 +156,12 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path,
         if (entryPath == selectedFolder)
             flags |= ImGuiTreeNodeFlags_Selected;
 
-        // Si la carpeta no tiene subcarpetas, agregar flag Leaf para ocultar la flecha
         if (!HasSubdirectories(entryPath))
             flags |= ImGuiTreeNodeFlags_Leaf;
 
         GLuint textureID = GetIconOrThumbnail(entryPath);
         if (textureID != 0)
         {
-            // Voltear la textura verticalmente usando coordenadas UV
             ImGui::Image((ImTextureID)(intptr_t)textureID, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0));
             ImGui::SameLine();
         }
@@ -135,14 +169,23 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path,
         bool nodeOpen = ImGui::TreeNodeEx(
             (filename + "##" + entryPath.string()).c_str(), flags);
 
-        // Click izquierdo → seleccionar carpeta
+        // Drag & Drop Source
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+        {
+            std::string relativePath = std::filesystem::relative(entryPath, "Assets").string();
+            ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
+            ImGui::Text("%s", entryPath.filename().string().c_str());
+            ImGui::EndDragDropSource();
+        }
+
+        // Click izquierdo
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {
             selectedFolder = entryPath;
             selectedItems.clear();
         }
 
-        // Click derecho → menú contextual
+        // Click derecho
         if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         {
             if (selectedItems.find(entryPath) == selectedItems.end())
@@ -185,14 +228,48 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path,
         {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
             {
-                std::filesystem::path draggedPath = (const char*)payload->Data;
+                const char* relativePath = (const char*)payload->Data;
+                std::filesystem::path draggedPath = "Assets" / std::filesystem::path(relativePath);
                 std::filesystem::path newPath = entryPath / draggedPath.filename();
-                try
+
+                if (draggedPath.parent_path() != entryPath && draggedPath != entryPath)
                 {
-                    std::filesystem::rename(draggedPath, newPath);
-                    lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
+                    bool isMovingIntoSubfolder = false;
+                    std::filesystem::path checkPath = entryPath;
+                    while (checkPath.has_parent_path() && checkPath != "Assets")
+                    {
+                        if (checkPath == draggedPath)
+                        {
+                            isMovingIntoSubfolder = true;
+                            break;
+                        }
+                        checkPath = checkPath.parent_path();
+                    }
+                    
+                    if (!isMovingIntoSubfolder)
+                    {
+                        try
+                        {
+                            std::filesystem::rename(draggedPath, newPath);
+                            
+                            // Update selection if the moved item was selected
+                            if (selectedItems.count(draggedPath))
+                            {
+                                selectedItems.erase(draggedPath);
+                                selectedItems.insert(newPath);
+                            }
+                            
+                            // Update selected folder if it was moved
+                            if (selectedFolder == draggedPath)
+                            {
+                                selectedFolder = newPath;
+                            }
+                            
+                            lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
+                        }
+                        catch (...) {}
+                    }
                 }
-                catch (...) {}
             }
             ImGui::EndDragDropTarget();
         }
@@ -202,6 +279,61 @@ void ProjectPanel::RenderDirectoryTree(const std::filesystem::path& path,
             RenderDirectoryTree(entryPath, basePath);
             ImGui::TreePop();
         }
+        
+        // Drop target BETWEEN nodes 
+        ImGui::Spacing();
+        ImGui::InvisibleButton(("##drop_between_" + entryPath.string()).c_str(), ImVec2(-1, 2));
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+            {
+                const char* relativePath = (const char*)payload->Data;
+                std::filesystem::path draggedPath = "Assets" / std::filesystem::path(relativePath);
+                
+                // Move to the same parent as the current entry
+                std::filesystem::path targetParent = entryPath.parent_path();
+                std::filesystem::path newPath = targetParent / draggedPath.filename();
+                
+            
+                if (draggedPath != newPath && draggedPath.parent_path() != targetParent)
+                {
+                    bool isMovingIntoSubfolder = false;
+                    std::filesystem::path checkPath = targetParent;
+                    while (checkPath.has_parent_path() && checkPath != "Assets")
+                    {
+                        if (checkPath == draggedPath)
+                        {
+                            isMovingIntoSubfolder = true;
+                            break;
+                        }
+                        checkPath = checkPath.parent_path();
+                    }
+                    
+                    if (!isMovingIntoSubfolder)
+                    {
+                        try
+                        {
+                            std::filesystem::rename(draggedPath, newPath);
+                            
+                            if (selectedItems.count(draggedPath))
+                            {
+                                selectedItems.erase(draggedPath);
+                                selectedItems.insert(newPath);
+                            }
+                            
+                            if (selectedFolder == draggedPath)
+                            {
+                                selectedFolder = newPath;
+                            }
+                            
+                            lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
+                        }
+                        catch (...) {}
+                    }
+                }
+            }
+            ImGui::EndDragDropTarget();
+        }
     }
 }
 
@@ -209,7 +341,9 @@ void ProjectPanel::RenderContentView()
 {
     ImGui::BeginChild("ContentView", ImVec2(0, 0), true);
 
-    // --- Search ---
+    bool isContentViewHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
+
+    // Search Bar
     ImGui::PushItemWidth(-1);
     if (ImGui::InputTextWithHint("##Search", "Search assets...", searchBuffer, sizeof(searchBuffer)))
     {
@@ -231,7 +365,7 @@ void ProjectPanel::RenderContentView()
 
     ImGui::Separator();
 
-    // --- Botón Back ---
+    // Back Button
     if (selectedFolder.has_parent_path() && selectedFolder.parent_path() != selectedFolder)
     {
         if (ImGui::Button("Back"))
@@ -257,10 +391,9 @@ void ProjectPanel::RenderContentView()
     std::filesystem::path hoveredItem;
     bool anyItemHovered = false;
 
-    // --- Render de items ---
+    // Render All Items
     for (const auto& entry : std::filesystem::directory_iterator(selectedFolder))
     {
-        // Skip .meta files
         if (entry.path().extension() == ".meta")
             continue;
 
@@ -275,15 +408,71 @@ void ProjectPanel::RenderContentView()
 
     ImGui::Columns(1);
 
+    // If a single resource file is selected, notify InspectorPanel
+    if (selectedItems.size() == 1 && !std::filesystem::is_directory(*selectedItems.begin()))
+    {
+        const auto& selectedPath = *selectedItems.begin();
+        ResourceType type = ResourceUtils::GetTypeFromExtension(selectedPath);
+        
+        if (type != ResourceType::Unknown)
+        {
+            auto resource = Engine::GetInstance().resourceManager->RequestResource(selectedPath);
+            if (resource)
+            {
+                auto editor = Engine::GetInstance().editor.get();
+                if (editor)
+                {
+                    if (auto inspectorPanel = editor->GetPanel<InspectorPanel>())
+                    {
+                        inspectorPanel->SetSelectedResource(resource, selectedPath);
+
+                        if (auto scene = Engine::GetInstance().scene.get())
+                        {
+                            scene->SetSelected(nullptr);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        // Clear resource selection in InspectorPanel
+        auto editor = Engine::GetInstance().editor.get();
+        if (editor)
+        {
+            if (auto inspectorPanel = editor->GetPanel<InspectorPanel>())
+            {
+                inspectorPanel->ClearSelectedResource();
+            }
+        }
+    }
+
     ImGuiIO& io = ImGui::GetIO();
 
-    // --- Click away → deseleccionar ---
+    //Handle external file drops
+    if (isContentViewHovered)
+    {
+        ModuleInput* input = Engine::GetInstance().input.get();
+        if (input && input->WasFileDropped())
+        {
+            const std::string& droppedFile = input->GetDraggedFile();
+            if (!droppedFile.empty())
+            {
+                HandleExternalFileDrop(droppedFile);
+                input->ClearDraggedFile();
+                input->ClearDropState();
+            }
+        }
+    }
+
+    // Click away
     if (ImGui::IsWindowHovered() && io.MouseClicked[0] && !anyItemHovered)
     {
         selectedItems.clear();
     }
 
-    // --- Click derecho → seleccionar + abrir popup ---
+    // Click derecho
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && io.MouseClicked[1])
     {
         if (anyItemHovered)
@@ -379,29 +568,22 @@ std::string ProjectPanel::GetFileIcon(const std::filesystem::path& path)
 
 GLuint ProjectPanel::GetIconOrThumbnail(const std::filesystem::path& path)
 {
-    // Return folder icon for directories
     if (std::filesystem::is_directory(path))
     {
         return folderIconTexture ? folderIconTexture->GetID() : 0;
     }
 
-    // Check if we already have a thumbnail cached
     auto thumbIt = thumbnailTextures.find(path);
     if (thumbIt != thumbnailTextures.end())
         return thumbIt->second->GetID();
 
-    // Get resource type for the file
     ResourceType type = ResourceUtils::GetTypeFromExtension(path);
     
-    // For texture files, load and cache the actual texture as thumbnail
     if (type == ResourceType::Texture)
     {
         thumbnailTextures[path] = std::dynamic_pointer_cast<Texture>(Engine::GetInstance().resourceManager->RequestResource(path));
         return thumbnailTextures[path]->GetID();
     }
-    
-    // For other file types, try to find a specific icon
-    // Note: Files with Unknown type will return 0 (no icon) instead of folder icon
     auto iconIt = iconTextures.find(type);
     return (iconIt != iconTextures.end()) ? iconIt->second->GetID() : 0;
 }
@@ -437,7 +619,6 @@ void ProjectPanel::RenderDeleteConfirmationModal()
                     for (const auto& path : pendingDeletePaths)
                     {
                         std::filesystem::remove_all(path);
-                        // Remove from selection if deleted
                         selectedItems.erase(path);
                         if (selectedFolder == path || !std::filesystem::exists(selectedFolder))
                         {
@@ -481,7 +662,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
 
     ImVec2 itemPos = ImGui::GetCursorPos();
 
-    // First, render the selectable area (invisible but handles interaction)
     if (ImGui::Selectable(("##" + assetPath.string()).c_str(), isSelected,
         ImGuiSelectableFlags_AllowDoubleClick,
         ImVec2(kThumbnailSize, kThumbnailSize + 20.0f)))
@@ -504,10 +684,72 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
         }
     }
 
+    // Drag & Drop Source
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    {
+        std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();
+        ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
+        ImGui::Text("%s", assetPath.filename().string().c_str());
+        ImGui::EndDragDropSource();
+    }
+
+    // Drag & Drop Target
+    if (std::filesystem::is_directory(assetPath))
+    {
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_PAYLOAD"))
+            {
+                const char* relativePath = (const char*)payload->Data;
+                std::filesystem::path draggedPath = "Assets" / std::filesystem::path(relativePath);
+                std::filesystem::path newPath = assetPath / draggedPath.filename();
+                   
+                if (draggedPath.parent_path() != assetPath && draggedPath != assetPath)
+                {
+                    // Check if we're not trying to move a folder into its own subfolder
+                    bool isMovingIntoSubfolder = false;
+                    std::filesystem::path checkPath = assetPath;
+                    while (checkPath.has_parent_path() && checkPath != "Assets")
+                    {
+                        if (checkPath == draggedPath)
+                        {
+                            isMovingIntoSubfolder = true;
+                            break;
+                        }
+                        checkPath = checkPath.parent_path();
+                    }
+                    
+                    if (!isMovingIntoSubfolder)
+                    {
+                        try
+                        {
+                            std::filesystem::rename(draggedPath, newPath);
+                            
+                            // Update selection if the moved item was selected
+                            if (selectedItems.count(draggedPath))
+                            {
+                                selectedItems.erase(draggedPath);
+                                selectedItems.insert(newPath);
+                            }
+                            
+                            if (selectedFolder == draggedPath)
+                            {
+                                selectedFolder = newPath;
+                            }
+                            
+                            lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
+                        }
+                        catch (...) {}
+                    }
+                }
+            }
+            ImGui::EndDragDropTarget();
+        }
+    }
+
     // Context menu for this item
     if (ImGui::BeginPopupContextItem())
     {
-        // Ensure this item is selected
         if (selectedItems.find(assetPath) == selectedItems.end())
         {
             selectedItems.clear();
@@ -531,15 +773,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
         }
 
         ImGui::EndPopup();
-    }
-
-    // Drag & Drop
-    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-    {
-        std::string relativePath = std::filesystem::relative(assetPath, "Assets").string();
-        ImGui::SetDragDropPayload("ASSET_PAYLOAD", relativePath.c_str(), relativePath.size() + 1);
-        ImGui::Text("%s", assetPath.filename().string().c_str());
-        ImGui::EndDragDropSource();
     }
 
     ImGui::SetCursorPos(itemPos);
@@ -603,7 +836,6 @@ void ProjectPanel::RenderAssetItem(const std::filesystem::path& assetPath)
             isEditing = false;
         }
         
-        // End editing if item is deactivated
         if (ImGui::IsItemDeactivated())
         {
             isEditing = false;
@@ -622,16 +854,14 @@ void ProjectPanel::HandleExternalFileDrop(const std::filesystem::path& filePath)
     if (!std::filesystem::exists(filePath))
         return;
 
-    // Determine destination path in Assets folder
+    // Determine destination path in the currently selected folder
     std::filesystem::path destPath;
     if (std::filesystem::is_directory(filePath))
     {
-        // For directories, copy to selected folder
         destPath = selectedFolder / filePath.filename();
     }
     else
     {
-        // For files, copy to selected folder
         destPath = selectedFolder / filePath.filename();
     }
 
@@ -650,22 +880,29 @@ void ProjectPanel::HandleExternalFileDrop(const std::filesystem::path& filePath)
     {
         if (std::filesystem::is_directory(filePath))
         {
-            // Copy directory recursively
             std::filesystem::copy(filePath, destPath, std::filesystem::copy_options::recursive);
         }
         else
         {
-            // Copy single file
             std::filesystem::copy_file(filePath, destPath);
+        
+            ResourceType type = ResourceUtils::GetTypeFromExtension(destPath);
+            if (type != ResourceType::Unknown)
+            {
+                Engine::GetInstance().resourceManager->RequestResource(destPath);
+            }
         }
 
-        // Refresh assets
         lastRefreshTime = std::chrono::steady_clock::now() - std::chrono::seconds(3);
     }
     catch (const std::filesystem::filesystem_error& e)
     {
-    
     }
+}
+
+void ProjectPanel::ClearSelection()
+{
+    selectedItems.clear();
 }
 
 void ProjectPanel::CleanUp()

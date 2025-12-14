@@ -6,6 +6,11 @@
 #include "Model.h"
 #include "ResourceUtils.h"
 #include "Globals.h"
+#include "Engine.h"
+#include "ModuleScene.h"
+#include "GameObject.h"
+#include "MeshComponent.h"
+#include "MaterialComponent.h"
 #include "TextureImportData.h"
 #include "ModelImportData.h"
 #include "ImportData.h"
@@ -29,6 +34,30 @@ bool ModuleResource::Start()
 
 std::shared_ptr<Resource> ModuleResource::RequestResource(std::filesystem::path assetPath)
 {
+    ResourceType type = ResourceUtils::GetTypeFromExtension(assetPath);
+    
+    // For models (FBX, OBJ), load directly without meta/binary system
+    if (type == ResourceType::Model)
+    {
+        // Check if we already have this model loaded by path
+        for (const auto& [key, resource] : mResources)
+        {
+            if (resource->GetAssetPath() == assetPath)
+                return resource;
+        }
+        
+        // Create new model and cache it
+        auto model = std::make_shared<Model>(assetPath);
+        if (model)
+        {
+            model->SetAssetPath(assetPath);
+            mResources[model->GetUID().ToString()] = model;
+            return model;
+        }
+        return nullptr;
+    }
+    
+    // For other resources, use the meta/binary system
     std::filesystem::path metaPath = assetPath;
     metaPath += ".meta";
 
@@ -143,4 +172,63 @@ std::shared_ptr<Resource> ModuleResource::CreateResource(const ImportData &impor
     }
 
     return resource;
+}
+
+int ModuleResource::GetResourceUsageCount(UID resourceUID) const
+{
+    int count = 0;
+    
+    auto scene = Engine::GetInstance().scene;
+    if (!scene)
+        return 0;
+    
+    auto gameObjects = scene->GetGameObjects();
+    
+    for (const auto& go : gameObjects)
+    {
+        if (!go)
+            continue;
+        
+        // Check MeshComponent
+        if (auto meshComp = go->GetComponent<MeshComponent>())
+        {
+            if (auto mesh = meshComp->GetMesh())
+            {
+                if (mesh->GetUID() == resourceUID)
+                    count++;
+            }
+        }
+        
+        // Check MaterialComponent
+        if (auto matComp = go->GetComponent<MaterialComponent>())
+        {
+            if (auto material = matComp->GetMaterial())
+            {
+                // Check if material matches
+                if (material->GetUID() == resourceUID)
+                {
+                    count++;
+                }
+                else
+                {
+                    // Check textures material
+                    const auto& textures = material->GetTextures();
+                    if (textures.albedo && textures.albedo->GetUID() == resourceUID)
+                        count++;
+                    if (textures.normal && textures.normal->GetUID() == resourceUID)
+                        count++;
+                    if (textures.metallic && textures.metallic->GetUID() == resourceUID)
+                        count++;
+                    if (textures.roughness && textures.roughness->GetUID() == resourceUID)
+                        count++;
+                    if (textures.ao && textures.ao->GetUID() == resourceUID)
+                        count++;
+                    if (textures.emissive && textures.emissive->GetUID() == resourceUID)
+                        count++;
+                }
+            }
+        }
+    }
+    
+    return count;
 }

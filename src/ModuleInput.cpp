@@ -155,79 +155,13 @@ bool ModuleInput::PreUpdate()
 
         case SDL_EVENT_DROP_FILE:
         {
-            const std::string &file = event.drop.data ? event.drop.data : "";
-            std::shared_ptr<ModuleResource> resourceManager = Engine::GetInstance().resourceManager;
-
-            ResourceType type = ResourceUtils::GetTypeFromExtension(file);
-
-            if (type == ResourceType::Model)
-            {
-                std::shared_ptr<Resource> resource = resourceManager->RequestResource(file);
-                std::shared_ptr<Model> model = std::dynamic_pointer_cast<Model>(resource);
-                std::string baseName = std::filesystem::path(file).filename().stem().string();
-
-                std::shared_ptr<GameObject> parentGameObject = Engine::GetInstance().scene.get()->CreateGameObjectWithName(baseName);
-
-                auto *scene = Engine::GetInstance().scene.get();
-
-                for (size_t i = 0; i < model->GetMeshes().size(); ++i)
-                {
-                    std::shared_ptr<GameObject> childGameObject = scene->CreateGameObject();
-                    if (model->GetMeshes().size() > 1)
-                    {
-                        childGameObject->SetName(baseName + "_" + std::to_string(i));
-                    }
-                    else
-                    {
-                        childGameObject->SetName(baseName);
-                    }
-
-                    auto &mesh = model->GetMeshes()[i];
-
-                    childGameObject->CreateComponent(ComponentType::Transform);
-                    childGameObject->CreateComponent(ComponentType::Mesh);
-                    MeshComponent *meshComp = childGameObject->GetComponent<MeshComponent>();
-                    meshComp->SetMesh(mesh);
-
-                    childGameObject->CreateComponent(ComponentType::Material);
-                    MaterialComponent *materialComponent = childGameObject->GetComponent<MaterialComponent>();
-                    materialComponent->SetMaterial(std::make_shared<Material>(ResourceType::Material));
-
-                    // Set parent-child relation
-                    childGameObject->SetParent(parentGameObject);
-
-                    scene->AddGameObject(childGameObject);
-                }
-
-                Engine::GetInstance().scene->RebuildQuadtree();
-            }
-            else if (type == ResourceType::Texture)
-            {
-                ModuleScene *scene = Engine::GetInstance().scene.get();
-
-                int width, height;
-                SDL_GetWindowSizeInPixels(Engine::GetInstance().window->GetWindow(), &width, &height);
-
-                std::shared_ptr<GameObject> selected =
-                    scene->GetRaycaster()->PickObject(
-                        static_cast<float>(event.drop.x),
-                        static_cast<float>(event.drop.y),
-                        width, height,
-                        scene->GetGameObjects());
-
-                scene->SetSelected(selected);
-
-                if (!selected)
-                    break;
-
-                MaterialComponent *materialComponent = selected->GetComponent<MaterialComponent>();
-                if (!materialComponent)
-                    break;
-
-                std::shared_ptr<Resource> resource = resourceManager->RequestResource(file);
-                std::shared_ptr<Texture> texture = std::dynamic_pointer_cast<Texture>(resource);
-                materialComponent->GetMaterial()->SetTexture(TextureType::Albedo, texture);
-            }
+            // Store the dropped file information for later processing by panels
+            // Each panel (ProjectPanel, ScenePanel, HierarchyPanel) will check if a file was dropped
+            // and handle it according to their context
+            draggedFile = event.drop.data ? event.drop.data : "";
+            fileDropped = true;
+            dropPosition.x = static_cast<int>(mouseX);
+            dropPosition.y = static_cast<int>(mouseY);
         }
         break;
         }

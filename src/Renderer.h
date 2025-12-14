@@ -27,6 +27,10 @@ public:
     static void ResetRenderState();
     static std::shared_ptr<Shader> GetSingleColorShader() { return sSingleColorShader; }
 
+    // Wireframe mode
+    static void SetWireframeMode(bool enabled) { sWireframeEnabled = enabled; }
+    static bool IsWireframeEnabled() { return sWireframeEnabled; }
+
 private:
     static std::vector<RenderObject> sOpaqueRenderQueue;
     static std::vector<RenderObject> sTransparentRenderQueue;
@@ -37,5 +41,7 @@ private:
     static std::shared_ptr<Shader> sSkyboxShader;
     static std::shared_ptr<Shader> sSingleColorShader;
     static std::shared_ptr<Cubemap> sCubemap;
+
+    static bool sWireframeEnabled;
 
 };

@@ -36,6 +36,9 @@ public:
     void SetUID(UID uid) { mUID = uid; }
     UID GetUID() const { return mUID; }
 
+    // Virtual method to get memory size in bytes
+    virtual size_t GetMemorySize() const { return 0; }
+
 protected:
     std::string mName;
     ResourceType mType;

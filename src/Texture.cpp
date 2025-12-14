@@ -196,3 +196,66 @@ GLenum Texture::GetImageInternalFormat() const
 {
     return ToGLInternalFormat(mProperties.format, mProperties.srgb);
 }
+
+size_t Texture::GetMemorySize() const
+{
+    if (mProperties.width == 0 || mProperties.height == 0)
+        return 0;
+
+    size_t bytesPerPixel = 0;
+    
+    switch (mProperties.format)
+    {
+    case ImageFormat::R8:
+        bytesPerPixel = 1;
+        break;
+    case ImageFormat::RG8:
+        bytesPerPixel = 2;
+        break;
+    case ImageFormat::RGB8:
+    case ImageFormat::SRGB8:
+        bytesPerPixel = 3;
+        break;
+    case ImageFormat::RGBA8:
+    case ImageFormat::SRGBA8:
+        bytesPerPixel = 4;
+        break;
+    case ImageFormat::R16F:
+        bytesPerPixel = 2;
+        break;
+    case ImageFormat::RG16F:
+        bytesPerPixel = 4;
+        break;
+    case ImageFormat::RGB16F:
+        bytesPerPixel = 6;
+        break;
+    case ImageFormat::RGBA16F:
+        bytesPerPixel = 8;
+        break;
+    case ImageFormat::R32F:
+        bytesPerPixel = 4;
+        break;
+    case ImageFormat::RGB32F:
+        bytesPerPixel = 12;
+        break;
+    case ImageFormat::RGBA32F:
+        bytesPerPixel = 16;
+        break;
+    case ImageFormat::DEPTH24STENCIL8:
+        bytesPerPixel = 4;
+        break;
+    default:
+        bytesPerPixel = 4;
+        break;
+    }
+
+    size_t baseSize = mProperties.width * mProperties.height * bytesPerPixel;
+    
+    // If mipmaps are generated, add approximately 33% more memory
+    if (mProperties.genMipmaps)
+    {
+        baseSize = baseSize + (baseSize / 3);
+    }
+    
+    return baseSize;
+}

@@ -12,6 +12,7 @@ class Model : public Resource, public std::enable_shared_from_this<Model>
 {
 public:
     Model(const ModelImportData &importData);
+    Model(const std::filesystem::path &filePath);
 
     ~Model() = default;
 
@@ -25,6 +26,9 @@ public:
     const std::vector<std::shared_ptr<Model>> GetChildren() const { return mChildren; }
 
     const glm::mat4 GetTransform() const { return mTransform; }
+
+    // Override to calculate model memory size
+    size_t GetMemorySize() const override;
 
 private:
     void ProcessNodeHierarchy(aiNode *node, const aiScene *scene);

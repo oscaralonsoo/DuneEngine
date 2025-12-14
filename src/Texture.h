@@ -74,6 +74,9 @@ public:
 
     unsigned char *GetData() const { return mData; }
 
+    // Override to calculate texture memory size
+    size_t GetMemorySize() const override;
+
 private:
     GLuint InitializeTexture(const void *pixels, GLuint width, GLuint height);
 

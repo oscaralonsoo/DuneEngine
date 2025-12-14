@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "TransformComponent.h"
 #include "Gizmo.h"
+#include "Renderer.h"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
@@ -41,6 +42,15 @@ void ScenePanelUI::RenderToolbar(
             onStep();
     }
     ImGui::EndDisabled();
+
+    ImGui::SameLine(0.0f, 30.0f);
+
+    // Wireframe toggle button
+    bool wireframeEnabled = Renderer::IsWireframeEnabled();
+    if (ImGui::Checkbox("Wireframe", &wireframeEnabled))
+    {
+        Renderer::SetWireframeMode(wireframeEnabled);
+    }
 
     ImGui::SameLine(0.0f, 30.0f);
 
