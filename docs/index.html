@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dune Engine - Proyecto Universitario</title>
+  <link href="styles.css" rel="stylesheet">
+</head>
+
+<body>
+  <!-- ================= NAV ================= -->
+  <nav class="nav">
+    <div class="nav__container">
+      <a href="#" class="nav__logo">Dune Engine</a>
+      <ul class="nav__menu">
+        <li><a href="#hero">Inicio</a></li>
+        <li><a href="#description">Descripción</a></li>
+        <li><a href="#team">Equipo</a></li>
+        <li><a href="#usage">Uso del Motor</a></li>
+        <li><a href="#controls">Controles</a></li>
+        <li><a href="#features">Funcionalidades</a></li>
+        <li><a href="#dependencies">Dependencias</a></li>
+      </ul>
+      <div class="nav__socials">
+        <a href="https://github.com/oscaralonsoo/DuneEngine"><img src="public/github.png" alt="GitHub"></a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= HERO ================= -->
+  <header id="hero" class="hero">
+    <div class="hero__content">
+      <h1>Dune Engine <span class="highlight">- Proyecto Universitario</span></h1>
+      <p>Visualizador de geometría en <strong>OpenGL 3.3</strong> con carga de modelos mediante <strong>Assimp</strong>, texturas con <strong>DevIL</strong> y cámara tipo Unity/FPS.</p>
+      <div class="hero__buttons">
+        <a href="#installation" class="btn btn--primary">Instalar</a>
+        <a href="#description" class="btn btn--secondary">Más Información</a>
+      </div>
+    </div>
+    <div class="hero__image">
+      <img src="public/dune_engine_logo.png" alt="Dune Engine Logo">
+    </div>
+  </header>
+
+  <!-- ================= DESCRIPTION ================= -->
+  <section id="description" class="section section--alt">
+    <h2>Descripción del Proyecto</h2>
+    <p>Soporta <strong>drag & drop</strong> de modelos y texturas, selección por <em>raycast</em> y transformaciones simples sobre el objeto seleccionado.</p>
+    <p>Repositorio: <a href="https://github.com/oscaralonsoo/DuneEngine" target="_blank">GitHub</a></p>
+  </section>
+
+  <!-- ================= TEAM ================= -->
+  <section id="team" class="section">
+    <h2>Integrantes del Grupo</h2>
+    <div class="grid grid--3">
+      <article class="card card--team">
+        <h3>Javier Gómez González</h3>
+        <p><a href="https://github.com/javiergg14" target="_blank">@javiergg14</a></p>
+      </article>
+      <article class="card card--team">
+        <h3>Oscar Alonso Camenforte</h3>
+        <p><a href="https://github.com/oscaralonsoo" target="_blank">@oscaralonsoo</a></p>
+      </article>
+      <article class="card card--team">
+        <h3>Toni Llovera Roca</h3>
+        <p><a href="https://github.com/ToniLlovera" target="_blank">@ToniLlovera</a></p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= USAGE ================= -->
+  <section id="usage" class="section section--alt">
+    <h2>Cómo usar el Motor</h2>
+    <div class="grid grid--1">
+      <article class="card">
+        <h3>Abrir el ejecutable</h3>
+        <ul>
+          <li>Se crea una ventana OpenGL (800×600) con <em>depth test</em> activado.</li>
+          <li>Se inicializan SDL3, DevIL y Assimp.</li>
+          <li>Se muestran logs de versión y GPU en consola.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Cargar modelos y texturas</h3>
+        <ul>
+          <li>Al iniciar se carga automáticamente la Baker House con su textura (<code>Baker_house.png</code>).</li>
+          <li>Se puede arrastrar y soltar modelos (.fbx, .obj, .dae, .gltf, .glb, .3ds, .ply, .blend) y texturas (.png, .jpg, .tga, .bmp, .psd, .gif, .hdr, .pic).</li>
+          <li>Los modelos se instancian frente a la cámara (~2.5 unidades).</li>
+          <li>Las texturas se aplican al objeto bajo el cursor o al seleccionado.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Selección</h3>
+        <p>Click izquierdo para seleccionar un objeto. Se usa <em>raycast</em> con prueba AABB.</p>
+      </article>
+      <article class="card">
+        <h3>Render</h3>
+        <p>Los modelos se renderizan con su shader asociado y pueden usar materiales originales o textura de override.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= CONTROLS ================= -->
+  <section id="controls" class="section">
+    <h2>Controles</h2>
+    <div class="grid grid--3">
+      <article class="card">
+        <h3>Cámara</h3>
+        <p>W/A/S/D (botón derecho pulsado), SHIFT para velocidad, ALT + botón derecho para orbitar, rueda del ratón para zoom, F para centrar, ESC para salir.</p>
+      </article>
+      <article class="card">
+        <h3>Selección y Transformación</h3>
+        <p>Click izquierdo para seleccionar, flechas para escalar/rotar, W/A/S/D y Q/E para mover.</p>
+      </article>
+      <article class="card">
+        <h3>Visualización</h3>
+        <p>1: wireframe, 2: sólido</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= FEATURES ================= -->
+  <section id="features" class="section section--alt">
+    <h2>Funcionalidades Principales</h2>
+    <ul>
+      <li>Carga de modelos mediante Assimp.</li>
+      <li>Carga de texturas mediante DevIL.</li>
+      <li>Drag & Drop de modelos y texturas.</li>
+      <li>Selección por raycast con colisión AABB.</li>
+      <li>Cámara FPS libre, órbita y zoom.</li>
+      <li>Transformaciones básicas de objetos.</li>
+      <li>Shader system con carga desde archivo.</li>
+      <li>UI con ImGui (DockSpace, jerarquía, inspector, consola, panel GPU/escena, toolbar, menú superior).</li>
+      <li>Logs de GPU, versión OpenGL y errores.</li>
+    </ul>
+    <h3>Funcionalidades Extra</h3>
+    <ul>
+      <li>Modelos con materiales o con textura única.</li>
+      <li>Colocación automática de modelos frente a la cámara.</li>
+    </ul>
+  </section>
+
+  <!-- ================= DEPENDENCIES ================= -->
+  <section id="dependencies" class="section">
+    <h2>Dependencias Principales</h2>
+    <ul>
+      <li><a href="https://github.com/libsdl-org/SDL" target="_blank">SDL3</a> — Ventana e input</li>
+      <li><a href="https://glad.dav1d.de/" target="_blank">GLAD</a> — Carga de funciones OpenGL</li>
+      <li><a href="https://github.com/g-truc/glm" target="_blank">GLM</a> — Matemáticas</li>
+      <li><a href="https://github.com/assimp/assimp" target="_blank">Assimp</a> — Carga de modelos</li>
+      <li><a href="https://github.com/DentonW/DevIL" target="_blank">DevIL</a> — Carga de imágenes</li>
+    </ul>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <p>© 2025 Dune Engine - Proyecto Universitario</p>
+    <div class="footer__links">
+      <a href="https://github.com/oscaralonsoo/DuneEngine" target="_blank">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>

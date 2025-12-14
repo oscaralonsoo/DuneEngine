@@ -1,4 +1,4 @@
-# DuneEngine
+# DuneEngine# DuneEngine
 
 Visualizador de geometría en **OpenGL 3.3** con carga de modelos mediante **Assimp**, texturas con **DevIL** y una cámara tipo **Unity/FPS**.  
 Soporta **drag & drop** de modelos y texturas, selección por *raycast* y transformaciones simples sobre el objeto seleccionado.
@@ -80,8 +80,8 @@ Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/osc
 - **Selección de objetos** por *raycast* y prueba de colisión AABB.  
 - **Cámara** con modo libre FPS, zoom con rueda, órbita y enfoque al objeto.  
 - **Transformaciones** básicas de traslación, rotación y escala.  
-- **Shader system** con carga desde archivo y *uniform helpers*.
-- - **Interfaz de usuario (UI)** con **ImGui**, que incluye:
+- **Shader system** con carga desde archivo y *uniform helpers*. 
+- **Interfaz de usuario (UI)** con **ImGui**, que incluye:
   - Ventanas acoplables (DockSpace)  
   - **Jerarquía** de escena  
   - **Inspector** con transformaciones, información del mesh y textura  
@@ -89,7 +89,7 @@ Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/osc
   - **Panel de configuración** con información de GPU, FPS y escena  
   - **Toolbar** para añadir primitivas (como cubos)  
   - **Menú superior** (File / View / Help) con enlaces a la documentación del GitHub  
-- **Logs** de GPU, versión OpenGL y errores de carga.
+- **Logs** de GPU, versión OpenGL y errores de carga. 
 
 ---
 
@@ -110,9 +110,13 @@ Repositorio: [https://github.com/oscaralonsoo/DuneEngine](https://github.com/osc
 - [**GLM**](https://github.com/g-truc/glm) — Matemáticas  
 - [**Assimp**](https://github.com/assimp/assimp) — Carga de modelos  
 - [**DevIL**](https://github.com/DentonW/DevIL) — Carga de imágenes  
+- [**ImGui**](https://github.com/ocornut/imgui) — Interfaz gráfica para herramientas y depuración
 
 ---
 
+## 🧱 Estado actual del proyecto
 
+Actualmente, **la arquitectura y modularización del proyecto están en proceso de completarse**.  
+Una vez finalizada esta etapa, **se realizará la migración del código** para adaptarlo a la nueva estructura, facilitando su mantenimiento, escalabilidad y futuras ampliaciones del motor.
 
 
