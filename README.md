@@ -1,4 +1,4 @@
-# DuneEngine# DuneEngine
+# DuneEngine
 
 Visualizador de geometría en **OpenGL 3.3** con carga de modelos mediante **Assimp**, texturas con **DevIL** y una cámara tipo **Unity/FPS**.  
 Soporta **drag & drop** de modelos y texturas, selección por *raycast* y transformaciones simples sobre el objeto seleccionado.
